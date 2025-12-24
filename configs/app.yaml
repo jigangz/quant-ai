@@ -1,0 +1,3 @@
+app:
+  name: quant-ai-backend
+  env: dev
