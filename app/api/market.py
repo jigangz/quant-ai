@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, HTTPException
-from typing import List
+
 
 from app.db.prices_repo import get_prices, upsert_prices
 from app.providers.yahoo import fetch_ohlcv
