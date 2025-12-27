@@ -11,3 +11,5 @@ psycopg[binary]>=3.1
 pydantic-settings>=2.0
 yfinance 
 pandas
+joblib
+scikit-learn

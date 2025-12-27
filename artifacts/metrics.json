@@ -1,0 +1,8 @@
+{
+  "ticker": "AAPL",
+  "model": "LogisticRegression",
+  "train_size": 3496,
+  "val_size": 749,
+  "accuracy": 0.5634178905206942,
+  "auc": 0.5454427533725354
+}

@@ -4,15 +4,19 @@ import yfinance as yf
 
 def fetch_ohlcv(
     ticker: str,
-    period: str = "1mo",
+    period: str = "max",   
     interval: str = "1d",
 ) -> pd.DataFrame:
     """
     Fetch OHLCV data from Yahoo Finance.
 
+    Default behavior:
+    - period="max" to ensure enough history for
+      rolling features and future-return labels.
+
     Args:
         ticker: Stock ticker, e.g. "AAPL"
-        period: Data range, e.g. "5d", "1mo", "3mo", "1y", "max"
+        period: Data range, e.g. "5d", "1mo", "1y", "max"
         interval: Data interval, e.g. "1d", "1h"
 
     Returns:
@@ -32,7 +36,7 @@ def fetch_ohlcv(
 
     df = df.reset_index()
 
-    
+    # Handle MultiIndex columns (Yahoo edge case)
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = [col[0] for col in df.columns]
 
@@ -50,4 +54,3 @@ def fetch_ohlcv(
     df["ticker"] = ticker.upper()
 
     return df[["ticker", "date", "open", "high", "low", "close", "volume"]]
-
