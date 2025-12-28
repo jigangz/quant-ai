@@ -14,3 +14,4 @@ pandas
 joblib
 scikit-learn
 optuna
+shap
