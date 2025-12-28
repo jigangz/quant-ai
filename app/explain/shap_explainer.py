@@ -1,7 +1,7 @@
 import joblib
 import shap
 import pandas as pd
-from typing import Dict, List
+from typing import Dict
 
 from app.db.prices_repo import get_prices
 from app.ml.features.technical import add_technical_features
