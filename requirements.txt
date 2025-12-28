@@ -13,3 +13,4 @@ yfinance
 pandas
 joblib
 scikit-learn
+optuna
