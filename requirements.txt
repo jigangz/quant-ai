@@ -15,3 +15,5 @@ joblib
 scikit-learn
 optuna
 shap
+sentence-transformers
+faiss-cpu

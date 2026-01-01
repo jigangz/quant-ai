@@ -1,18 +1,17 @@
-from fastapi import APIRouter, Query
-from app.explain.shap_explainer import ShapExplainer
+from fastapi import APIRouter
+
+from app.services.explain_service import explain
 
 router = APIRouter()
 
-explainer = ShapExplainer("artifacts/model.joblib")
-
 
 @router.get("/explain")
-def explain(
-    ticker: str = Query(...),
-    lookback: int = Query(1000),
-    top_k: int = Query(10),
+def explain_api(
+    ticker: str,
+    lookback: int = 1000,
+    top_k: int = 10,
 ):
-    return explainer.explain(
+    return explain(
         ticker=ticker,
         lookback=lookback,
         top_k=top_k,

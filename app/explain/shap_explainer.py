@@ -11,7 +11,9 @@ from app.ml.features.build import build_xy
 
 class ShapExplainer:
     def __init__(self, model_path: str):
-        self.model = joblib.load(model_path)
+        self.pipeline = joblib.load(model_path)
+        self.clf = self.pipeline.named_steps["clf"]
+        self.imputer = self.pipeline.named_steps["imputer"]
 
     def explain(
         self,
@@ -20,7 +22,7 @@ class ShapExplainer:
         top_k: int = 10,
     ) -> Dict:
         """
-        Return SHAP summary for a ticker.
+        Generate SHAP summary for a ticker.
         """
 
         # === Load data ===
@@ -32,21 +34,15 @@ class ShapExplainer:
 
         X, _ = build_xy(df_labeled)
 
+        X_imp = self.imputer.transform(X)
+
         # === SHAP ===
-        explainer = shap.LinearExplainer(
-            self.model.named_steps["clf"],
-            self.model.named_steps["imputer"].transform(X),
-        )
+        background = X_imp[:200]  # small, stable background
+        explainer = shap.LinearExplainer(self.clf, background)
 
-        shap_values = explainer.shap_values(
-            self.model.named_steps["imputer"].transform(X)
-        )
+        shap_values = explainer.shap_values(X_imp)
 
-        shap_df = pd.DataFrame(
-            shap_values,
-            columns=X.columns,
-        )
-
+        shap_df = pd.DataFrame(shap_values, columns=X.columns)
         mean_abs_shap = shap_df.abs().mean().sort_values(ascending=False)
 
         top_features = [
