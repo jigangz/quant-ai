@@ -1,43 +1,35 @@
 import faiss
 import numpy as np
-from app.vector.store import VectorStore
+from typing import List
+
+from app.vector.store import vector_store
 
 
 class FaissIndex:
     def __init__(self, dim: int):
         self.index = faiss.IndexFlatIP(dim)
-        self.store = VectorStore()
-        self.next_id = 0
+        self.dim = dim
 
-    def add(self, embeddings: np.ndarray, records: list[dict]):
-        """
-        embeddings: (N, dim)
-        records: list of metadata dicts
-        """
-        assert len(embeddings) == len(records)
-
-        start_id = self.next_id
+    def add(self, embeddings: np.ndarray, records: List[dict]):
+        start_id = self.index.ntotal
         self.index.add(embeddings)
 
         for i, record in enumerate(records):
-            self.store.add(start_id + i, record)
-
-        self.next_id += len(records)
+            vector_store.add(start_id + i, record)
 
     def search(self, query_vec: np.ndarray, top_k: int = 5):
-        """
-        query_vec: (1, dim)
-        """
         scores, indices = self.index.search(query_vec, top_k)
 
         results = []
         for idx, score in zip(indices[0], scores[0]):
             if idx == -1:
                 continue
-            record = self.store.get(idx)
+            record = vector_store.get(int(idx))
             if record:
-                record = record.copy()
-                record["score"] = float(score)
-                results.append(record)
-
+                results.append(
+                    {
+                        **record,
+                        "score": float(score),
+                    }
+                )
         return results
