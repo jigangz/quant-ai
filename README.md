@@ -20,7 +20,7 @@ A data-driven quantitative research and prediction platform.
 | 2 | Provider Abstraction | ✅ Complete |
 | 3 | DatasetBuilder + Multi-ticker | ✅ Complete |
 | 4 | Feature Groups System | ✅ Complete |
-| 5 | ModelFactory + TrainingService | ⬜ Pending |
+| 5 | ModelFactory + TrainingService | ✅ Complete |
 | 6 | /train API + Model Registry | ⬜ Pending |
 | 7 | Backtesting Engine | ⬜ Pending |
 | 8 | Contract Tests + CI | ⬜ Pending |

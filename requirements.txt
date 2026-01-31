@@ -15,5 +15,9 @@ joblib
 scikit-learn
 optuna
 shap
+
+# ML Models (optional - install as needed)
+xgboost
+lightgbm
 sentence-transformers
 faiss-cpu
