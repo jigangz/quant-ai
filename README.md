@@ -18,7 +18,7 @@ A data-driven quantitative research and prediction platform.
 |-------|------|--------|
 | 1 | Settings + Docker | ✅ Complete |
 | 2 | Provider Abstraction | ✅ Complete |
-| 3 | DatasetBuilder + Multi-ticker | ⬜ Pending |
+| 3 | DatasetBuilder + Multi-ticker | ✅ Complete |
 | 4 | Feature Groups System | ⬜ Pending |
 | 5 | ModelFactory + TrainingService | ⬜ Pending |
 | 6 | /train API + Model Registry | ⬜ Pending |
