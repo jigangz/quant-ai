@@ -17,7 +17,7 @@ A data-driven quantitative research and prediction platform.
 | Batch | Task | Status |
 |-------|------|--------|
 | 1 | Settings + Docker | ✅ Complete |
-| 2 | Provider Abstraction | ⬜ Pending |
+| 2 | Provider Abstraction | ✅ Complete |
 | 3 | DatasetBuilder + Multi-ticker | ⬜ Pending |
 | 4 | Feature Groups System | ⬜ Pending |
 | 5 | ModelFactory + TrainingService | ⬜ Pending |
