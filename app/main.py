@@ -22,6 +22,7 @@ from app.api import (
     features,
     train,
     models,
+    backtest,
 )
 
 # ===================================
@@ -117,6 +118,7 @@ app.include_router(features.router, tags=["Features"])
 app.include_router(train.router, tags=["Training"])
 app.include_router(models.router, tags=["Model Registry"])
 app.include_router(predict.router, tags=["Prediction"])
+app.include_router(backtest.router, tags=["Backtest"])
 app.include_router(explain.router, tags=["Explainability"])
 app.include_router(search.router, tags=["Search"])
 app.include_router(agents.router, tags=["Agents"])
