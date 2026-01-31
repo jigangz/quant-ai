@@ -15,7 +15,8 @@ import pandas as pd
 import numpy as np
 
 from app.providers import get_market_provider
-from app.ml.features.technical import add_technical_features, FEATURE_GROUPS
+from app.ml.features.technical import add_technical_features
+from app.ml.features.registry import feature_registry
 from app.ml.dataset.schemas import (
     DatasetConfig,
     DatasetResult,
@@ -213,22 +214,17 @@ class DatasetBuilder:
     
     def _get_feature_columns(self, df: pd.DataFrame) -> list[str]:
         """Get feature column names based on configured feature groups."""
-        feature_cols = []
-        for group in self.config.feature_groups:
-            if group in FEATURE_GROUPS:
-                feature_cols.extend(FEATURE_GROUPS[group])
-            else:
-                logger.warning(f"Unknown feature group: {group}")
+        # Use feature registry to get feature names
+        feature_cols = feature_registry.get_feature_names(self.config.feature_groups)
         
-        # Remove duplicates while preserving order
-        seen = set()
-        unique_cols = []
-        for col in feature_cols:
-            if col not in seen and col in df.columns:
-                seen.add(col)
-                unique_cols.append(col)
+        # Filter to only columns that exist in the DataFrame
+        existing_cols = [col for col in feature_cols if col in df.columns]
         
-        return unique_cols
+        if len(existing_cols) < len(feature_cols):
+            missing = set(feature_cols) - set(existing_cols)
+            logger.warning(f"Missing features in DataFrame: {missing}")
+        
+        return existing_cols
     
     def _time_series_split(
         self,

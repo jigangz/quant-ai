@@ -19,6 +19,7 @@ from app.api import (
     agents,
     rag,
     predict,
+    features,
 )
 
 # ===================================
@@ -107,6 +108,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # ===================================
 app.include_router(health.router, tags=["Health"])
 app.include_router(market.router, tags=["Market Data"])
+app.include_router(features.router, tags=["Features"])
 app.include_router(predict.router, tags=["Prediction"])
 app.include_router(explain.router, tags=["Explainability"])
 app.include_router(search.router, tags=["Search"])
