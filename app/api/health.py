@@ -11,7 +11,7 @@ router = APIRouter()
 def health():
     """
     Health check endpoint.
-    
+
     Returns:
         - status: "ok" if service is running
         - settings: public configuration (no secrets)

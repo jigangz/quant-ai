@@ -5,6 +5,7 @@ from app.services.predict_service import predict
 
 router = APIRouter()
 
+
 # ============================
 # v2 Request Schema
 # Used by frontend (POST /predict)
@@ -13,6 +14,7 @@ class PredictRequest(BaseModel):
     ticker: str
     horizons: list[int] = [5]
     features: dict = {}
+
 
 # ============================
 # v1: Legacy GET endpoint
@@ -27,6 +29,7 @@ def predict_api_get(
         ticker=ticker,
         lookback=lookback,
     )
+
 
 # ============================
 # v2: POST endpoint for UI

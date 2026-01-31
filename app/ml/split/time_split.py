@@ -22,7 +22,6 @@ def time_series_split(
     if train_ratio + val_ratio >= 1.0:
         raise ValueError("train_ratio + val_ratio must be < 1.0")
 
-    
     df = df.sort_values("date").reset_index(drop=True)
 
     n = len(df)

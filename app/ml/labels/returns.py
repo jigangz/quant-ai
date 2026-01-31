@@ -1,5 +1,3 @@
-
-
 import pandas as pd
 from app.ml.config import HORIZON_DAYS
 
@@ -23,13 +21,10 @@ def add_future_return_label(
     df = df.sort_values("date").copy()
 
     df["future_price"] = df[price_col].shift(-HORIZON_DAYS)
-    df["future_return"] = (
-        df["future_price"] - df[price_col]
-    ) / df[price_col]
+    df["future_return"] = (df["future_price"] - df[price_col]) / df[price_col]
 
     df["label"] = (df["future_return"] > 0).astype(int)
 
-    
     df = df.dropna(subset=["future_return"])
 
     return df

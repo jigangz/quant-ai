@@ -23,5 +23,4 @@ class VectorStore:
         return len(self._data)
 
 
-
 vector_store = VectorStore()

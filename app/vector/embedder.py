@@ -1,4 +1,3 @@
-
 from sentence_transformers import SentenceTransformer
 import numpy as np
 
@@ -16,7 +15,7 @@ def embed_texts(texts: list[str]) -> np.ndarray:
     model = get_embedder()
     embeddings = model.encode(
         texts,
-        normalize_embeddings=True, 
+        normalize_embeddings=True,
         show_progress_bar=False,
     )
     return embeddings

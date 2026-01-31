@@ -23,13 +23,10 @@ def suggest_logistic_params(trial):
         "solver": "saga",
         "penalty": "elasticnet",
         "l1_ratio": l1_ratio,
-        "class_weight": trial.suggest_categorical(
-            "class_weight", [None, "balanced"]
-        ),
+        "class_weight": trial.suggest_categorical("class_weight", [None, "balanced"]),
         "max_iter": 2000,
         "n_jobs": -1,
     }
-
 
 
 # =========================
@@ -91,10 +88,7 @@ if __name__ == "__main__":
     artifacts = Path("artifacts")
     artifacts.mkdir(exist_ok=True)
 
-    study.trials_dataframe().to_csv(
-        artifacts / "optuna_trials.csv", index=False
-    )
+    study.trials_dataframe().to_csv(artifacts / "optuna_trials.csv", index=False)
 
     with open(artifacts / "best_params.json", "w") as f:
         json.dump(study.best_params, f, indent=2)
-

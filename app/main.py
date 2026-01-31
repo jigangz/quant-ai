@@ -25,11 +25,14 @@ from app.api import (
 # ===================================
 # Logging Configuration
 # ===================================
+LOG_FORMAT_TEXT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+LOG_FORMAT_JSON = (
+    '{"time":"%(asctime)s","level":"%(levelname)s",'
+    '"logger":"%(name)s","message":"%(message)s"}'
+)
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s" 
-    if settings.LOG_FORMAT == "text" 
-    else '{"time":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","message":"%(message)s"}',
+    format=LOG_FORMAT_TEXT if settings.LOG_FORMAT == "text" else LOG_FORMAT_JSON,
 )
 logger = logging.getLogger(__name__)
 
@@ -80,7 +83,7 @@ async def add_request_id(request: Request, call_next):
     """Add unique request ID to each request for tracing."""
     request_id = request.headers.get("X-Request-ID", str(uuid.uuid4())[:8])
     request.state.request_id = request_id
-    
+
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id
     return response
@@ -92,7 +95,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     """Global exception handler."""
     request_id = getattr(request.state, "request_id", "unknown")
     logger.error(f"[{request_id}] Unhandled error: {exc}", exc_info=True)
-    
+
     return JSONResponse(
         status_code=500,
         content={

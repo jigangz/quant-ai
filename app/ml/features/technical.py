@@ -42,14 +42,16 @@ def add_technical_features(df: pd.DataFrame) -> pd.DataFrame:
     # ===== Volatility =====
     df["volatility_5"] = df["close"].rolling(window=5).std()
     df["volatility_20"] = df["close"].rolling(window=20).std()
-    
+
     # ===== Bollinger Bands =====
     df["bb_middle"] = df["ma_20"]
     df["bb_std"] = df["close"].rolling(window=20).std()
     df["bb_upper"] = df["bb_middle"] + 2 * df["bb_std"]
     df["bb_lower"] = df["bb_middle"] - 2 * df["bb_std"]
     df["bb_width"] = (df["bb_upper"] - df["bb_lower"]) / df["bb_middle"]
-    df["bb_position"] = (df["close"] - df["bb_lower"]) / (df["bb_upper"] - df["bb_lower"])
+    df["bb_position"] = (df["close"] - df["bb_lower"]) / (
+        df["bb_upper"] - df["bb_lower"]
+    )
 
     # ===== RSI (Relative Strength Index) =====
     delta = df["close"].diff()
@@ -81,7 +83,7 @@ def add_technical_features(df: pd.DataFrame) -> pd.DataFrame:
     df["returns_1d"] = df["close"].pct_change(1)
     df["returns_5d"] = df["close"].pct_change(5)
     df["returns_20d"] = df["close"].pct_change(20)
-    
+
     # ===== Price Position =====
     df["price_vs_ma20"] = (df["close"] - df["ma_20"]) / df["ma_20"]
     df["price_vs_ma50"] = (df["close"] - df["ma_50"]) / df["ma_50"]
@@ -95,32 +97,48 @@ def add_technical_features(df: pd.DataFrame) -> pd.DataFrame:
 # Feature group definitions for DatasetBuilder
 FEATURE_GROUPS = {
     "ta_basic": [
-        "ma_5", "ma_10", "ma_20",
-        "ema_12", "ema_26",
+        "ma_5",
+        "ma_10",
+        "ma_20",
+        "ema_12",
+        "ema_26",
     ],
     "ta_advanced": [
-        "macd", "macd_signal", "macd_hist",
-        "stoch_k", "stoch_d",
+        "macd",
+        "macd_signal",
+        "macd_hist",
+        "stoch_k",
+        "stoch_d",
     ],
     "momentum": [
         "rsi_14",
-        "returns_1d", "returns_5d", "returns_20d",
+        "returns_1d",
+        "returns_5d",
+        "returns_20d",
     ],
     "volatility": [
-        "volatility_5", "volatility_20",
+        "volatility_5",
+        "volatility_20",
         "atr_14",
-        "bb_upper", "bb_lower", "bb_width", "bb_position",
+        "bb_upper",
+        "bb_lower",
+        "bb_width",
+        "bb_position",
     ],
     "volume": [
-        "volume_ma_20", "volume_ratio",
+        "volume_ma_20",
+        "volume_ratio",
     ],
     "price_position": [
-        "price_vs_ma20", "price_vs_ma50",
+        "price_vs_ma20",
+        "price_vs_ma50",
     ],
     # Legacy group for backward compatibility
     "technical": [
-        "ma_5", "ma_20",
-        "ema_12", "ema_26",
+        "ma_5",
+        "ma_20",
+        "ema_12",
+        "ema_26",
         "macd",
         "rsi_14",
         "volatility_20",
@@ -128,6 +146,4 @@ FEATURE_GROUPS = {
 }
 
 # All available features
-ALL_FEATURES = list(set(
-    feat for group in FEATURE_GROUPS.values() for feat in group
-))
+ALL_FEATURES = list(set(feat for group in FEATURE_GROUPS.values() for feat in group))

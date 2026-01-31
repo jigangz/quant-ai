@@ -6,7 +6,7 @@ from various sources.
 
 Usage:
     from app.providers import get_market_provider, get_sentiment_provider
-    
+
     market = get_market_provider()
     df = market.fetch("AAPL", start_date=date(2024, 1, 1))
 """
@@ -33,7 +33,7 @@ from app.providers.news.mock import MockNewsProvider
 __all__ = [
     # Base classes
     "BaseProvider",
-    "MarketProvider", 
+    "MarketProvider",
     "SentimentProvider",
     "NewsProvider",
     # Schemas

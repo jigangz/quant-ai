@@ -49,11 +49,7 @@ def predict(
 
     prob_up = float(_model.predict_proba(X_last)[0, 1])
 
-    signal = (
-        "LONG" if prob_up > 0.55
-        else "SHORT" if prob_up < 0.45
-        else "HOLD"
-    )
+    signal = "LONG" if prob_up > 0.55 else "SHORT" if prob_up < 0.45 else "HOLD"
 
     return {
         "status": "ok",

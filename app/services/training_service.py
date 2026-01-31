@@ -34,53 +34,53 @@ logger = logging.getLogger(__name__)
 
 class TrainRequest(BaseModel):
     """Request for training a model."""
-    
+
     # Data
     tickers: list[str] = Field(min_length=1)
     start_date: date | None = None
     end_date: date | None = None
-    
+
     # Features
     feature_groups: list[str] = Field(default=["ta_basic", "momentum"])
-    
+
     # Labels
     horizon_days: int = Field(default=5, ge=1, le=60)
     label_type: str = "direction"
-    
+
     # Model
     model_type: str = "logistic"
     model_params: dict[str, Any] = Field(default_factory=dict)
-    
+
     # Split
     train_ratio: float = Field(default=0.7, ge=0.5, le=0.9)
     val_ratio: float = Field(default=0.15, ge=0.05, le=0.3)
-    
+
     # Options
     save_model: bool = True
     model_name: str | None = None
-    
+
     class Config:
         extra = "forbid"
 
 
 class TrainResult(BaseModel):
     """Result of training."""
-    
+
     # Status
     success: bool
     error: str | None = None
-    
+
     # Model info
     model_id: str | None = None
     model_type: str
     model_path: str | None = None
-    
+
     # Data info
     tickers: list[str]
     feature_groups: list[str]
     feature_names: list[str] = []
     n_features: int = 0
-    
+
     # Split info
     train_samples: int = 0
     val_samples: int = 0
@@ -88,14 +88,14 @@ class TrainResult(BaseModel):
     train_date_range: tuple[str, str] | None = None
     val_date_range: tuple[str, str] | None = None
     test_date_range: tuple[str, str] | None = None
-    
+
     # Metrics
     metrics: dict[str, float] = {}
-    
+
     # Timing
     training_time_seconds: float = 0.0
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
         arbitrary_types_allowed = True
 
@@ -103,7 +103,7 @@ class TrainResult(BaseModel):
 class TrainingService:
     """
     Service for training ML models.
-    
+
     Usage:
         service = TrainingService()
         result = service.train(TrainRequest(
@@ -112,27 +112,28 @@ class TrainingService:
             feature_groups=["ta_basic", "momentum"],
         ))
     """
-    
+
     def __init__(self, artifacts_path: str | None = None):
         self.artifacts_path = Path(artifacts_path or settings.STORAGE_LOCAL_PATH)
         self.artifacts_path.mkdir(parents=True, exist_ok=True)
-    
+
     def train(self, request: TrainRequest) -> TrainResult:
         """
         Train a model based on the request.
-        
+
         Args:
             request: Training configuration
-        
+
         Returns:
             TrainResult with metrics and model info
         """
         import time
+
         start_time = time.time()
-        
+
         try:
             logger.info(f"Starting training: {request.model_type} on {request.tickers}")
-            
+
             # 1. Build dataset
             dataset_config = DatasetConfig(
                 tickers=request.tickers,
@@ -148,32 +149,35 @@ class TrainingService:
                     val_ratio=request.val_ratio,
                 ),
             )
-            
+
             builder = DatasetBuilder(dataset_config)
             dataset = builder.build()
-            
+
             logger.info(
                 f"Dataset built: {dataset.metadata.total_samples} samples, "
                 f"{dataset.metadata.n_features} features"
             )
-            
+
             # 2. Create model
             model = get_model(request.model_type, **request.model_params)
-            
+
             # 3. Train
             logger.info("Training model...")
             model.fit(dataset.X_train, dataset.y_train)
-            
+
             # 4. Evaluate
             metrics = self._evaluate(
                 model,
-                dataset.X_train, dataset.y_train,
-                dataset.X_val, dataset.y_val,
-                dataset.X_test, dataset.y_test,
+                dataset.X_train,
+                dataset.y_train,
+                dataset.X_val,
+                dataset.y_val,
+                dataset.X_test,
+                dataset.y_test,
             )
-            
+
             logger.info(f"Metrics: {metrics}")
-            
+
             # 5. Set metadata
             model.set_metadata(
                 feature_names=dataset.metadata.feature_names,
@@ -185,19 +189,19 @@ class TrainingService:
                 train_end_date=dataset.metadata.train_date_range[1],
                 metrics=metrics,
             )
-            
+
             # 6. Save model
             model_path = None
             model_id = None
-            
+
             if request.save_model:
                 model_id = self._generate_model_id(request)
                 model_path = self.artifacts_path / model_id
                 model.save(model_path)
                 logger.info(f"Model saved to: {model_path}")
-            
+
             training_time = time.time() - start_time
-            
+
             return TrainResult(
                 success=True,
                 model_id=model_id,
@@ -216,7 +220,7 @@ class TrainingService:
                 metrics=metrics,
                 training_time_seconds=training_time,
             )
-            
+
         except Exception as e:
             logger.error(f"Training failed: {e}", exc_info=True)
             return TrainResult(
@@ -227,17 +231,20 @@ class TrainingService:
                 feature_groups=request.feature_groups,
                 training_time_seconds=time.time() - start_time,
             )
-    
+
     def _evaluate(
         self,
         model,
-        X_train, y_train,
-        X_val, y_val,
-        X_test, y_test,
+        X_train,
+        y_train,
+        X_val,
+        y_val,
+        X_test,
+        y_test,
     ) -> dict[str, float]:
         """Evaluate model on all splits."""
         metrics = {}
-        
+
         for split_name, X, y in [
             ("train", X_train, y_train),
             ("val", X_val, y_val),
@@ -245,27 +252,31 @@ class TrainingService:
         ]:
             if len(X) == 0:
                 continue
-            
+
             y_pred = model.predict(X)
             y_prob = model.predict_proba(X)[:, 1]
-            
+
             metrics[f"{split_name}_accuracy"] = round(accuracy_score(y, y_pred), 4)
-            metrics[f"{split_name}_precision"] = round(precision_score(y, y_pred, zero_division=0), 4)
-            metrics[f"{split_name}_recall"] = round(recall_score(y, y_pred, zero_division=0), 4)
+            metrics[f"{split_name}_precision"] = round(
+                precision_score(y, y_pred, zero_division=0), 4
+            )
+            metrics[f"{split_name}_recall"] = round(
+                recall_score(y, y_pred, zero_division=0), 4
+            )
             metrics[f"{split_name}_f1"] = round(f1_score(y, y_pred, zero_division=0), 4)
-            
+
             # AUC only if both classes present
             if len(set(y)) > 1:
                 metrics[f"{split_name}_auc"] = round(roc_auc_score(y, y_prob), 4)
-        
+
         return metrics
-    
+
     def _generate_model_id(self, request: TrainRequest) -> str:
         """Generate a unique model ID."""
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         tickers_str = "_".join(request.tickers[:3])
         if len(request.tickers) > 3:
             tickers_str += f"_plus{len(request.tickers) - 3}"
-        
+
         name = request.model_name or request.model_type
         return f"{name}_{tickers_str}_{timestamp}"
