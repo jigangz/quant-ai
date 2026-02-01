@@ -60,23 +60,47 @@ class ModelRecord(BaseModel):
 
 
 class TrainingRunRecord(BaseModel):
-    """Training run history."""
+    """Training run history - complete experiment tracking."""
 
     id: str = Field(default_factory=lambda: str(uuid4()))
     model_id: str | None = None  # Linked after successful training
 
-    # Request params
+    # === Reproducibility ===
+    git_sha: str | None = None          # Git commit hash
+    git_branch: str | None = None       # Git branch name
+    git_dirty: bool = False             # Uncommitted changes?
+    data_hash: str | None = None        # Hash of training data
+    config_hash: str | None = None      # Hash of full config
+
+    # === Request params ===
     tickers: list[str]
     model_type: str
     feature_groups: list[str]
     model_params: dict[str, Any] = {}
     horizon_days: int = 5
+    label_type: str = "direction"
+    train_ratio: float = 0.7
+    val_ratio: float = 0.15
 
-    # Results
+    # === Data info ===
+    start_date: str | None = None
+    end_date: str | None = None
+    train_samples: int = 0
+    val_samples: int = 0
+    test_samples: int = 0
+    train_date_range: tuple[str, str] | None = None
+    val_date_range: tuple[str, str] | None = None
+    test_date_range: tuple[str, str] | None = None
+
+    # === Results ===
     success: bool = False
     error: str | None = None
     metrics: dict[str, float] = {}
     training_time_seconds: float = 0.0
+
+    # === Environment ===
+    python_version: str | None = None
+    packages: dict[str, str] = {}  # key packages + versions
 
     # Timestamps
     started_at: datetime = Field(default_factory=datetime.utcnow)
