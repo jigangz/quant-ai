@@ -22,12 +22,39 @@ services:
     environment:
       - ENV=dev
       - DATABASE_URL=postgresql+psycopg://quant:quant@postgres:5432/quantdb
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./app:/app/app:ro
       - ./scripts:/app/scripts:ro
       - ./artifacts:/app/artifacts
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ===================================
+  # Background Worker (RQ)
+  # ===================================
+  worker:
+    build:
+      context: .
+      target: development
+    command: python -m app.jobs.worker
+    env_file:
+      - .env
+    environment:
+      - ENV=dev
+      - DATABASE_URL=postgresql+psycopg://quant:quant@postgres:5432/quantdb
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./app:/app/app:ro
+      - ./artifacts:/app/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
@@ -53,7 +80,7 @@ services:
     restart: unless-stopped
 
   # ===================================
-  # Redis (for V3 job queue)
+  # Redis (Job Queue)
   # ===================================
   redis:
     image: redis:7-alpine
@@ -67,8 +94,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    profiles:
-      - full  # Only start with: docker-compose --profile full up
 
 volumes:
   postgres_data:

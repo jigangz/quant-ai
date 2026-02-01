@@ -23,6 +23,7 @@ from app.api import (
     train,
     models,
     backtest,
+    runs,
 )
 
 # ===================================
@@ -125,6 +126,7 @@ app.include_router(health.router, tags=["Health"])
 app.include_router(market.router, tags=["Market Data"])
 app.include_router(features.router, tags=["Features"])
 app.include_router(train.router, tags=["Training"])
+app.include_router(runs.router, tags=["Training Runs"])
 app.include_router(models.router, tags=["Model Registry"])
 app.include_router(predict.router, tags=["Prediction"])
 app.include_router(backtest.router, tags=["Backtest"])
