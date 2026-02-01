@@ -8,9 +8,9 @@ Outputs structured JSON that can be used as RAG evidence.
 """
 
 import logging
-from typing import Any, Literal
+from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)

@@ -27,7 +27,7 @@ from sklearn.metrics import (
 
 from app.core.settings import settings
 from app.ml.dataset import DatasetBuilder, DatasetConfig, LabelConfig, SplitConfig
-from app.ml.models import ModelFactory, get_model
+from app.ml.models import get_model
 
 logger = logging.getLogger(__name__)
 

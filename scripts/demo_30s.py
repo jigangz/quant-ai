@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """
-Demo 30s - 快速演示
+30-second demo - Quick health check and model list.
 
-展示:
-1. Health check - 服务状态
-2. 列出已有模型
-
-用法:
+Usage:
     python scripts/demo_30s.py
     python scripts/demo_30s.py --base-url http://your-server:8000
 """

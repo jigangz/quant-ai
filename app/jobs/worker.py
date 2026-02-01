@@ -11,10 +11,9 @@ Or via Docker:
 
 import logging
 import os
-import sys
 
 from redis import Redis
-from rq import Worker, Queue, Connection
+from rq import Worker, Connection
 
 # Setup logging
 logging.basicConfig(

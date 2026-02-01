@@ -39,6 +39,7 @@ try:
 
     if XGBOOST_AVAILABLE:
         __all__.append("XGBoostModel")
+        globals()["XGBoostModel"] = XGBoostModel
 except ImportError:
     pass
 
@@ -47,6 +48,7 @@ try:
 
     if LIGHTGBM_AVAILABLE:
         __all__.append("LightGBMModel")
+        globals()["LightGBMModel"] = LightGBMModel
 except ImportError:
     pass
 
@@ -55,5 +57,6 @@ try:
 
     if CATBOOST_AVAILABLE:
         __all__.append("CatBoostModel")
+        globals()["CatBoostModel"] = CatBoostModel
 except ImportError:
     pass

@@ -6,7 +6,7 @@ to ensure consistent data schema across different data sources.
 """
 
 from abc import ABC, abstractmethod
-from datetime import date, datetime
+from datetime import date
 from typing import Literal
 
 import pandas as pd

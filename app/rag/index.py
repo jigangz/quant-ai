@@ -9,12 +9,10 @@ Indexes:
 """
 
 import logging
-from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from app.core.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +79,6 @@ class RAGIndex:
         embeddings = embed_texts(texts)
         
         # Store documents
-        start_idx = len(self.documents)
         self.documents.extend(docs)
         
         # Add to index

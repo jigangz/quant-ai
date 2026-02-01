@@ -133,7 +133,7 @@ class ModelCache:
             # Find oldest that's not promoted
             for key in self._cache:
                 if key != self._promoted_id:
-                    evicted = self._cache.pop(key)
+                    self._cache.pop(key)
                     logger.info(f"Evicted model from cache: {key}")
                     break
             else:

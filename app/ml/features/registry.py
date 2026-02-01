@@ -6,7 +6,7 @@ Allows dynamic registration and selection of features without if/else.
 """
 
 import logging
-from typing import Callable, Protocol
+from typing import Protocol
 from dataclasses import dataclass, field
 
 import pandas as pd

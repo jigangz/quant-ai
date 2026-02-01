@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-Demo 2min - 完整演示
+2-minute demo - Full training and backtest flow.
 
-展示:
-1. Health check - 服务状态
-2. 获取市场数据
-3. 训练模型 (Logistic + XGBoost)
-4. 列出模型
-5. 运行回测
-6. 结果分析
+Steps:
+1. Health check
+2. Fetch market data
+3. Train models (Logistic + XGBoost)
+4. List models
+5. Run backtest
+6. Show results
 
-用法:
+Usage:
     python scripts/demo_2min.py
     python scripts/demo_2min.py --base-url http://your-server:8000
-    python scripts/demo_2min.py --ticker MSFT --skip-train  # 跳过训练
+    python scripts/demo_2min.py --ticker MSFT --skip-train
 """
 
 import argparse

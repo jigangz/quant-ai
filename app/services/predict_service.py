@@ -9,11 +9,10 @@ Supports:
 
 import logging
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 import pandas as pd
 
-from app.core.settings import settings
 from app.db.prices_repo import get_prices
 from app.ml.features.technical import add_technical_features
 from app.services.model_cache import get_model_cache

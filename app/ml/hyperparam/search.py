@@ -9,9 +9,8 @@ Supports:
 
 import logging
 import time
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
-import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 from sklearn.metrics import roc_auc_score

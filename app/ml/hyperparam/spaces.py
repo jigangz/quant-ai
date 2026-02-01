@@ -4,7 +4,7 @@ Search Spaces for Hyperparameter Optimization
 Defines parameter ranges for each model type.
 """
 
-from typing import Any, Literal
+from typing import Any
 
 # Search space definitions
 # Format: {param_name: (type, *args)}

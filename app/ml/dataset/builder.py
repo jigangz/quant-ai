@@ -9,10 +9,8 @@ Builds training datasets from raw market data with:
 """
 
 import logging
-from datetime import date
 
 import pandas as pd
-import numpy as np
 
 from app.providers import get_market_provider
 from app.ml.features.technical import add_technical_features

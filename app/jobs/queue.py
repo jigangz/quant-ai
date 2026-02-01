@@ -15,7 +15,6 @@ from redis import Redis
 from rq import Queue
 from rq.job import Job
 
-from app.core.settings import settings
 
 logger = logging.getLogger(__name__)
 

@@ -17,7 +17,7 @@ V3 Enhancements:
 """
 
 import logging
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Any, Literal
 
@@ -31,7 +31,6 @@ from app.backtest.metrics import (
     calculate_strategy_metrics,
     generate_report_markdown,
 )
-from app.core.settings import settings
 from app.db.model_registry import get_model_registry
 from app.db.prices_repo import get_prices
 from app.ml.features.technical import add_technical_features

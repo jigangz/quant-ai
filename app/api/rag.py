@@ -10,7 +10,7 @@ POST /rag/search - Raw semantic search
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)

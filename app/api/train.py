@@ -9,7 +9,6 @@ Use async=false for quick tests, async=true for production.
 """
 
 import logging
-import os
 from datetime import datetime
 from typing import Literal
 

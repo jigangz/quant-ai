@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """
-V3 Interview Demo - 面试级演示
+V3 Full Demo - Showcases all major features.
 
-展示:
-1. 训练多个模型 (Logistic, XGBoost, LightGBM)
-2. 比较回测曲线
-3. Promote 最佳模型
-4. 使用生产模型预测
-5. RAG 回答"为什么模型这样预测"
+Steps:
+1. Train multiple models (Logistic, XGBoost, LightGBM)
+2. Compare backtest results
+3. Promote best model to production
+4. Predict with production model
+5. Technical analysis with SHAP
+6. RAG Q&A
 
-用法:
+Usage:
     python scripts/demo_v3.py
     python scripts/demo_v3.py --base-url http://your-server:8000
-    python scripts/demo_v3.py --quick  # 跳过训练，使用已有模型
+    python scripts/demo_v3.py --quick  # use existing models
 """
 
 import argparse
@@ -85,7 +86,7 @@ def api_call(base_url: str, method: str, path: str, data: dict = None, timeout: 
     except requests.exceptions.HTTPError as e:
         try:
             return {"error": resp.json()}
-        except:
+        except Exception:
             return {"error": str(e)}
     except Exception as e:
         return {"error": str(e)}

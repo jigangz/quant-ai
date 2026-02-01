@@ -6,7 +6,6 @@ All features use only past data (no future leakage).
 """
 
 import pandas as pd
-import numpy as np
 
 
 def add_technical_features(df: pd.DataFrame) -> pd.DataFrame:

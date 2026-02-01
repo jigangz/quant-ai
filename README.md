@@ -1,11 +1,12 @@
-# Quant AI Backend
+# Quant AI
 
-A data-driven quantitative research and prediction platform.
+ML-powered stock direction prediction platform with backtesting and explainability.
 
-**面试官 2 分钟看懂这个项目：**
-1. 🎯 **做什么**: 用机器学习预测股票涨跌方向
-2. 🔧 **怎么做**: FastAPI + 可插拔 ML 模型 + 回测引擎
-3. ⚠️ **核心难点**: 防止数据泄漏 + 模型版本化 + 策略评估
+**TL;DR:**
+- Predicts stock price direction using ML models
+- Handles time-series data properly (no look-ahead bias)
+- Full backtesting with transaction costs and position sizing
+- Model versioning and experiment tracking
 
 ---
 
@@ -25,17 +26,14 @@ A data-driven quantitative research and prediction platform.
 │       │    │   TrainingService      │  │ Backtest  │  │  SHAP  │   │
 │       │    │ - DatasetBuilder       │  │  Engine   │  │Explainer│  │
 │       │    │ - ModelFactory         │  └───────────┘  └────────┘   │
-│       │    │ - Train + Evaluate     │                              │
 │       │    └────────────────────────┘                              │
-└───────┼─────────────┬───────────────────────────────────────────────┘
-        │             │
-┌───────┼─────────────┼───────────────────────────────────────────────┐
-│       │    ML Layer │                                               │
-│  ┌────┴────┐  ┌─────┴─────┐  ┌────────────┐  ┌─────────────────┐   │
-│  │ Feature │  │  Model    │  │   Label    │  │   Time-Series   │   │
+└───────┼─────────────────────────────────────────────────────────────┘
+        │
+┌───────┼─────────────────────────────────────────────────────────────┐
+│       │    ML Layer                                                 │
+│  ┌────┴────┐  ┌───────────┐  ┌────────────┐  ┌─────────────────┐   │
+│  │ Feature │  │   Model   │  │   Label    │  │   Time-Series   │   │
 │  │Registry │  │  Factory  │  │  Generator │  │     Splitter    │   │
-│  │(Groups) │  │(Logistic/ │  │(Direction/ │  │  (No Leakage!)  │   │
-│  │         │  │ XGBoost)  │  │  Returns)  │  │                 │   │
 │  └─────────┘  └───────────┘  └────────────┘  └─────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
         │
@@ -44,124 +42,96 @@ A data-driven quantitative research and prediction platform.
 │  ┌────┴────────┐  ┌────────────────┐  ┌─────────────────────────┐  │
 │  │   Market    │  │     Model      │  │      Artifacts          │  │
 │  │  Provider   │  │   Registry     │  │    (local/S3)           │  │
-│  │  (Yahoo)    │  │  (Supabase)    │  │                         │  │
 │  └─────────────┘  └────────────────┘  └─────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔒 Data Leak Prevention
+## Data Leak Prevention
 
-**问题**: 时序数据如果随机 shuffle 切分，会把"未来"数据混进训练集 → 模型在生产环境失效。
-
-**解决方案**: `DatasetBuilder._time_series_split()` 按日期切分，不 shuffle：
+Time-series data requires special handling. Random shuffling leaks future data into training.
 
 ```python
-# ❌ 错误: 随机切分
-X_train, X_test = train_test_split(X, shuffle=True)  # 未来数据泄漏!
+# Wrong: random split leaks future data
+X_train, X_test = train_test_split(X, shuffle=True)
 
-# ✅ 正确: 按时间顺序切分
-# 2020-01-01 ~ 2023-06-30 → 训练集
-# 2023-07-01 ~ 2023-09-30 → 验证集  
-# 2023-10-01 ~ 2024-01-01 → 测试集
+# Correct: split by date
+# 2020-01 to 2023-06 → train
+# 2023-07 to 2023-09 → validation
+# 2023-10 to 2024-01 → test
 ```
 
-**关键代码** (`app/ml/dataset/builder.py`):
+Implementation in `DatasetBuilder._time_series_split()`:
 ```python
 def _time_series_split(self, df):
-    # Split by DATE, not by row index
     unique_dates = df["date"].unique()
-    train_end_date = unique_dates[int(len(unique_dates) * 0.7)]
-    
-    train_df = df[df["date"] <= train_end_date]
-    # ... val and test follow sequentially
+    train_end = unique_dates[int(len(unique_dates) * 0.7)]
+    train_df = df[df["date"] <= train_end]
+    # val and test follow sequentially
 ```
 
 ---
 
-## 📦 Model Versioning
+## Model Versioning
 
-**目标**: 追踪每个模型的来源、参数、性能，支持回滚。
+Each trained model is tracked with full metadata.
 
-**存储结构**:
 ```
 artifacts/
-├── logistic_AAPL_20240131_143022/
-│   ├── model.joblib        # 模型权重
-│   ├── metadata.json       # 训练参数、特征列表
-│   └── metrics.json        # 评估指标
-└── xgboost_AAPL_MSFT_20240201_091500/
-    └── ...
+├── xgboost_AAPL_20240131/
+│   ├── model.joblib
+│   ├── metadata.json
+│   └── metrics.json
 ```
 
-**Model Registry** (`app/db/model_registry.py`):
+Registry schema:
 ```python
-class ModelRecord(BaseModel):
-    id: str           # UUID
-    name: str         # "logistic_AAPL_20240131"
-    version: int      # 自增版本号
-    model_type: str   # "logistic" | "xgboost"
-    tickers: list     # ["AAPL", "MSFT"]
-    feature_groups: list  # ["ta_basic", "momentum"]
-    metrics: dict     # {"accuracy": 0.56, "auc": 0.62}
-    artifact_path: str    # 本地或 S3 路径
+class ModelRecord:
+    id: str
+    name: str
+    version: int
+    model_type: str        # logistic, xgboost, lightgbm, catboost
+    tickers: list[str]
+    feature_groups: list[str]
+    metrics: dict          # {val_auc: 0.62, val_f1: 0.58}
+    artifact_path: str
     created_at: datetime
 ```
 
-**支持的存储后端**:
-- `local`: 本地文件系统 (开发)
-- `supabase`: Supabase Storage (生产)
+---
+
+## Backtest Metrics
+
+**Classification:**
+| Metric | Target |
+|--------|--------|
+| AUC | > 0.55 |
+| F1 | > 0.50 |
+
+**Strategy:**
+| Metric | Target |
+|--------|--------|
+| Sharpe | > 1.0 |
+| Max Drawdown | < 20% |
+| Win Rate | > 50% |
 
 ---
 
-## 📊 Backtest Evaluation
+## Version History
 
-**回测流程**:
-```
-1. 加载模型 → 2. 生成预测 → 3. 模拟交易 → 4. 计算指标 → 5. 对比 Buy & Hold
-```
-
-**分类指标** (Classification Metrics):
-| 指标 | 含义 | 目标 |
-|------|------|------|
-| AUC | 模型区分能力 | > 0.55 |
-| F1 | 精确率和召回率的调和平均 | > 0.50 |
-| Precision | 预测涨时真正涨的比例 | 高 |
-| Recall | 真正涨时被预测到的比例 | 高 |
-
-**策略指标** (Strategy Metrics):
-| 指标 | 含义 | 目标 |
-|------|------|------|
-| CAGR | 年化复合收益率 | > Buy & Hold |
-| Sharpe Ratio | 风险调整后收益 | > 1.0 |
-| Max Drawdown | 最大回撤 | < 20% |
-| Win Rate | 盈利交易占比 | > 50% |
-| Profit Factor | 总盈利/总亏损 | > 1.5 |
-
-**API 示例**:
-```bash
-curl -X POST http://localhost:8000/backtest \
-  -H "Content-Type: application/json" \
-  -d '{"model_id": "abc123", "signal_threshold": 0.55}'
-```
-
----
-
-## Version Overview
-
-| Version | Focus | Status |
-|---------|-------|--------|
-| **V1** | Data collection, feature engineering, baseline model, SHAP explainability | ✅ Complete |
-| **V2** | Multi-ticker, multi-model, training API, model registry, backtesting | ✅ Complete |
-| **V3** | Async training, experiment tracking, 5 models, RAG, agents | ✅ Complete |
-| **V4** | Real-time data, alerts, multi-user, production deployment | 📋 Planned |
+| Version | Features | Status |
+|---------|----------|--------|
+| V1 | Data pipeline, baseline model, SHAP | ✅ |
+| V2 | Multi-ticker, model registry, backtesting | ✅ |
+| V3 | Async training, 5 models, RAG, agents | ✅ |
+| V4 | Real-time, alerts, multi-user | Planned |
 
 ---
 
 ## Quick Start
 
-### 🐳 Docker (Recommended)
+### Docker
 
 ```bash
 git clone https://github.com/jigangz/quant-ai.git
@@ -170,17 +140,16 @@ cp .env.example .env
 docker-compose up
 ```
 
-### 🐍 Local Development
+### Local
 
 ```bash
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
 uvicorn app.main:app --reload
 ```
 
-### ✅ Verify
+### Verify
 
 ```bash
 curl http://localhost:8000/health
@@ -188,100 +157,77 @@ curl http://localhost:8000/health
 
 ---
 
-## 🎬 Demo Scripts
-
-### 30 秒快速演示
+## Demo
 
 ```bash
+# Quick check
 python scripts/demo_30s.py
-```
 
-展示: Health check → 列出已有模型
-
-### 2 分钟完整演示
-
-```bash
+# Full demo
 python scripts/demo_2min.py
-```
 
-展示: 训练 → 模型注册 → 回测 → 结果分析
-
-### V3 面试级演示 (推荐)
-
-```bash
+# V3 showcase (recommended)
 python scripts/demo_v3.py
-python scripts/demo_v3.py --quick  # 跳过训练
+python scripts/demo_v3.py --quick  # skip training
 ```
 
-展示完整 V3 功能:
-- 训练 3 个模型 (Logistic, XGBoost, LightGBM)
-- 比较回测曲线 (Sharpe, Return, MaxDD)
-- Promote 最佳模型到生产
-- 使用生产模型预测
-- 技术分析 Agent + SHAP
-- RAG 回答"为什么这样预测"
+The V3 demo shows:
+- Training 3 models (Logistic, XGBoost, LightGBM)
+- Backtest comparison (Sharpe, returns, drawdown)
+- Model promotion to production
+- Predictions with promoted model
+- Technical analysis with SHAP
+- RAG-based explanations
 
 ---
 
-## API Endpoints
+## API
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/health` | GET | 服务状态 + 配置信息 |
-| `/data/market` | GET | 获取市场数据 |
-| `/train` | POST | 训练模型 |
-| `/models` | GET | 列出所有模型 |
-| `/models/{id}` | GET | 获取模型详情 |
-| `/predict` | POST | 模型预测 |
-| `/backtest` | POST | 运行回测 |
-| `/explain` | GET | SHAP 解释 |
+| `/health` | GET | Service status |
+| `/train` | POST | Train model (async by default) |
+| `/runs/{id}` | GET | Training run status |
+| `/models` | GET | List models |
+| `/models/{id}/promote` | POST | Promote to production |
+| `/predict` | POST | Get prediction |
+| `/backtest` | POST | Run backtest |
+| `/agents/technical` | POST | Technical analysis |
+| `/rag/answer` | POST | Question answering |
 
 ---
 
 ## Project Structure
 
 ```
-quant-ai/
-├── app/
-│   ├── api/              # FastAPI routes
-│   │   ├── train.py      # POST /train
-│   │   ├── backtest.py   # POST /backtest
-│   │   └── ...
-│   ├── core/
-│   │   └── settings.py   # Pydantic Settings
-│   ├── ml/
-│   │   ├── dataset/      # DatasetBuilder + schemas
-│   │   ├── features/     # FeatureRegistry + groups
-│   │   └── models/       # ModelFactory + implementations
-│   ├── backtest/
-│   │   ├── engine.py     # BacktestEngine
-│   │   └── metrics.py    # CAGR, Sharpe, etc.
-│   ├── db/
-│   │   └── model_registry.py  # Model versioning
-│   ├── providers/        # Data providers
-│   └── services/         # Business logic
-├── scripts/
-│   ├── demo_30s.py       # Quick demo
-│   ├── demo_2min.py      # Full demo
-│   └── train.py          # Legacy training script
-├── artifacts/            # Model storage
-├── docker-compose.yml
-└── README.md
+app/
+├── api/           # FastAPI routes
+├── backtest/      # Backtest engine + metrics
+├── db/            # Model registry
+├── explain/       # SHAP explainer
+├── jobs/          # Async job queue (Redis/RQ)
+├── ml/
+│   ├── dataset/   # DatasetBuilder
+│   ├── features/  # Feature registry
+│   ├── hyperparam/# Optuna search
+│   └── models/    # Model factory (5 types)
+├── providers/     # Data providers (Yahoo)
+├── rag/           # FAISS + RAG
+└── services/      # Business logic
 ```
 
 ---
 
 ## Configuration
 
-See `.env.example` for all options.
+Key environment variables (see `.env.example`):
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ENV` | Environment | `dev` |
-| `DEFAULT_MODEL_TYPE` | Model type | `logistic` |
-| `DEFAULT_FEATURE_GROUPS` | Feature groups | `ta_basic,momentum` |
-| `STORAGE_BACKEND` | Artifact storage | `local` |
-| `SUPABASE_URL` | Supabase URL (optional) | - |
+| Variable | Default |
+|----------|---------|
+| `ENV` | dev |
+| `REDIS_URL` | redis://localhost:6379 |
+| `DEFAULT_MODEL_TYPE` | logistic |
+| `STORAGE_BACKEND` | local |
 
 ---
 
