@@ -215,11 +215,25 @@ class BacktestEngine:
             benchmark_curve = list((1 + benchmark_returns_series).cumprod())
 
             # 7. Generate report
+            if request.start_date:
+                start_str = str(request.start_date)
+            elif all_dates:
+                start_str = min(all_dates).strftime("%Y-%m-%d")
+            else:
+                start_str = "N/A"
+
+            if request.end_date:
+                end_str = str(request.end_date)
+            elif all_dates:
+                end_str = max(all_dates).strftime("%Y-%m-%d")
+            else:
+                end_str = "N/A"
+
             config = {
                 "model_id": request.model_id,
                 "tickers": tickers,
-                "start_date": str(request.start_date) if request.start_date else min(all_dates).strftime("%Y-%m-%d") if all_dates else "N/A",
-                "end_date": str(request.end_date) if request.end_date else max(all_dates).strftime("%Y-%m-%d") if all_dates else "N/A",
+                "start_date": start_str,
+                "end_date": end_str,
                 "transaction_cost_bps": request.transaction_cost_bps,
             }
             report_md = generate_report_markdown(

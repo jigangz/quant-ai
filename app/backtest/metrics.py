@@ -128,7 +128,9 @@ def calculate_strategy_metrics(
         "max_drawdown": round(max_drawdown * 100, 2),  # percentage
         "volatility": round(volatility * 100, 2),  # percentage
         "win_rate": round(win_rate * 100, 2),  # percentage
-        "profit_factor": round(profit_factor, 2) if profit_factor != float("inf") else None,
+        "profit_factor": (
+            round(profit_factor, 2) if profit_factor != float("inf") else None
+        ),
         "n_trades": int(total_trades),
     }
 
@@ -167,7 +169,8 @@ def calculate_strategy_metrics(
         if len(returns) == len(benchmark_returns) and bench_volatility > 0:
             covariance = np.cov(returns, benchmark_returns)[0, 1]
             beta = covariance / (benchmark_returns.std() ** 2)
-            alpha = (returns.mean() - beta * benchmark_returns.mean()) * periods_per_year
+            excess = returns.mean() - beta * benchmark_returns.mean()
+            alpha = excess * periods_per_year
             metrics["alpha"] = round(alpha * 100, 2)
             metrics["beta"] = round(beta, 2)
 
@@ -195,7 +198,8 @@ def generate_report_markdown(
         "",
         f"**Model:** {config.get('model_id', 'N/A')}",
         f"**Ticker(s):** {', '.join(config.get('tickers', []))}",
-        f"**Period:** {config.get('start_date', 'N/A')} → {config.get('end_date', 'N/A')}",
+        f"**Period:** {config.get('start_date', 'N/A')} → "
+        f"{config.get('end_date', 'N/A')}",
         f"**Transaction Cost:** {config.get('transaction_cost_bps', 10)} bps",
         "",
         "---",

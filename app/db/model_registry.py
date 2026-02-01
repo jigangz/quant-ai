@@ -185,7 +185,9 @@ class LocalModelRegistry:
             return TrainingRunRecord(**runs[run_id])
         return None
 
-    def list_runs(self, model_id: str | None = None, limit: int = 50) -> list[TrainingRunRecord]:
+    def list_runs(
+        self, model_id: str | None = None, limit: int = 50
+    ) -> list[TrainingRunRecord]:
         runs = self._load_runs()
         result = []
         for data in runs.values():
