@@ -51,6 +51,11 @@ class TrainRequest(BaseModel):
     model_type: str = "logistic"
     model_params: dict[str, Any] = Field(default_factory=dict)
 
+    # Hyperparameter search
+    search_mode: str = Field(default="none", pattern="^(none|grid|optuna)$")
+    search_trials: int = Field(default=20, ge=1, le=200)
+    search_timeout: int | None = Field(default=300, ge=10, le=3600)
+
     # Split
     train_ratio: float = Field(default=0.7, ge=0.5, le=0.9)
     val_ratio: float = Field(default=0.15, ge=0.05, le=0.3)
@@ -78,6 +83,12 @@ class TrainResult(BaseModel):
     # Data info
     tickers: list[str]
     feature_groups: list[str]
+    
+    # Hyperparameter search info
+    search_mode: str = "none"
+    search_trials_completed: int = 0
+    search_best_params: dict[str, Any] = {}
+    search_time_seconds: float = 0.0
     feature_names: list[str] = []
     n_features: int = 0
 
@@ -130,6 +141,7 @@ class TrainingService:
         import time
 
         start_time = time.time()
+        search_result = None
 
         try:
             logger.info(f"Starting training: {request.model_type} on {request.tickers}")
@@ -158,10 +170,41 @@ class TrainingService:
                 f"{dataset.metadata.n_features} features"
             )
 
-            # 2. Create model
-            model = get_model(request.model_type, **request.model_params)
+            # 2. Hyperparameter search (if enabled)
+            model_params = request.model_params.copy()
+            
+            if request.search_mode != "none":
+                from app.ml.hyperparam import HyperparamSearch, SearchConfig
+                
+                logger.info(f"Running {request.search_mode} search ({request.search_trials} trials)")
+                
+                search = HyperparamSearch(
+                    model_type=request.model_type,
+                    X_train=dataset.X_train,
+                    y_train=dataset.y_train,
+                    X_val=dataset.X_val,
+                    y_val=dataset.y_val,
+                    base_params=request.model_params,
+                )
+                
+                search_config = SearchConfig(
+                    mode=request.search_mode,
+                    n_trials=request.search_trials,
+                    timeout_seconds=request.search_timeout,
+                )
+                
+                search_result = search.run(search_config)
+                model_params = {**request.model_params, **search_result.best_params}
+                
+                logger.info(
+                    f"Search complete: best {search_config.metric}={search_result.best_score:.4f}, "
+                    f"params={search_result.best_params}"
+                )
 
-            # 3. Train
+            # 3. Create model with best params
+            model = get_model(request.model_type, **model_params)
+
+            # 4. Train
             logger.info("Training model...")
             model.fit(dataset.X_train, dataset.y_train)
 
@@ -219,6 +262,11 @@ class TrainingService:
                 test_date_range=dataset.metadata.test_date_range,
                 metrics=metrics,
                 training_time_seconds=training_time,
+                # Search info
+                search_mode=request.search_mode,
+                search_trials_completed=search_result.n_trials_completed if search_result else 0,
+                search_best_params=search_result.best_params if search_result else {},
+                search_time_seconds=search_result.total_time_seconds if search_result else 0.0,
             )
 
         except Exception as e:
