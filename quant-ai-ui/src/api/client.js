@@ -1,7 +1,7 @@
-const BASE = import.meta.env.VITE_API_BASE;
+const BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 /**
- *  fetch 
+ * Base fetch wrapper
  */
 async function request(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -19,18 +19,16 @@ async function request(path, options = {}) {
   return res.json();
 }
 
-/**
- * ===== Market data =====
- */
+// ===================================
+// Market Data
+// ===================================
 export function getMarket(ticker) {
   return request(`/data/market?ticker=${ticker}`);
 }
 
-/**
- * ===== Prediction =====
- * v1  stub / baseline
- * v2  multi-horizon
- */
+// ===================================
+// Prediction
+// ===================================
 export function predict(payload) {
   return request(`/predict`, {
     method: "POST",
@@ -38,16 +36,82 @@ export function predict(payload) {
   });
 }
 
-/**
- * ===== SHAP explain =====
- */
+// ===================================
+// SHAP Explain
+// ===================================
 export function explain(ticker) {
   return request(`/explain?ticker=${ticker}`);
 }
 
-/**
- * ===== Vector search =====
- */
+// ===================================
+// Search
+// ===================================
 export function search(q) {
   return request(`/search?q=${encodeURIComponent(q)}`);
+}
+
+// ===================================
+// Training
+// ===================================
+export function train(payload) {
+  return request(`/train`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getRunStatus(runId) {
+  return request(`/runs/${runId}`);
+}
+
+export function listRuns(limit = 20) {
+  return request(`/runs?limit=${limit}`);
+}
+
+// ===================================
+// Models
+// ===================================
+export function listModels(status = "active", limit = 50) {
+  return request(`/models?status=${status}&limit=${limit}`);
+}
+
+export function getModel(modelId) {
+  return request(`/models/${modelId}`);
+}
+
+export function promoteModel(modelId) {
+  return request(`/models/${modelId}/promote`, {
+    method: "POST",
+  });
+}
+
+export function demoteModel() {
+  return request(`/models/promoted`, {
+    method: "DELETE",
+  });
+}
+
+export function getPromotedModel() {
+  return request(`/models/promoted`);
+}
+
+export function listModelTypes() {
+  return request(`/models/types`);
+}
+
+// ===================================
+// Features
+// ===================================
+export function listFeatureGroups() {
+  return request(`/features/groups`);
+}
+
+// ===================================
+// RAG
+// ===================================
+export function ragAnswer(query, topK = 5) {
+  return request(`/rag/answer`, {
+    method: "POST",
+    body: JSON.stringify({ query, top_k: topK }),
+  });
 }
