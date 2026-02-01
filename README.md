@@ -153,8 +153,9 @@ curl -X POST http://localhost:8000/backtest \
 | Version | Focus | Status |
 |---------|-------|--------|
 | **V1** | Data collection, feature engineering, baseline model, SHAP explainability | ✅ Complete |
-| **V2** | Multi-ticker, multi-model, training API, model registry, backtesting | ✅ Complete (10 batches) |
-| **V3** | Async training, experiment tracking, UI training panel, RAG | 📋 Planned |
+| **V2** | Multi-ticker, multi-model, training API, model registry, backtesting | ✅ Complete |
+| **V3** | Async training, experiment tracking, 5 models, RAG, agents | ✅ Complete |
+| **V4** | Real-time data, alerts, multi-user, production deployment | 📋 Planned |
 
 ---
 
@@ -204,6 +205,21 @@ python scripts/demo_2min.py
 ```
 
 展示: 训练 → 模型注册 → 回测 → 结果分析
+
+### V3 面试级演示 (推荐)
+
+```bash
+python scripts/demo_v3.py
+python scripts/demo_v3.py --quick  # 跳过训练
+```
+
+展示完整 V3 功能:
+- 训练 3 个模型 (Logistic, XGBoost, LightGBM)
+- 比较回测曲线 (Sharpe, Return, MaxDD)
+- Promote 最佳模型到生产
+- 使用生产模型预测
+- 技术分析 Agent + SHAP
+- RAG 回答"为什么这样预测"
 
 ---
 
