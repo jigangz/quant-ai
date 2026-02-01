@@ -2,6 +2,7 @@
 Model Factory
 
 Creates model instances based on model type.
+Supports: logistic, random_forest, xgboost, lightgbm, catboost
 """
 
 import logging
@@ -12,17 +13,25 @@ from .sklearn_models import LogisticModel, RandomForestModel
 
 logger = logging.getLogger(__name__)
 
-# Model type alias
-ModelType = Literal["logistic", "random_forest", "xgboost", "lightgbm"]
+# Model type alias (all supported models)
+ModelType = Literal["logistic", "random_forest", "xgboost", "lightgbm", "catboost"]
 
 
 class ModelFactory:
     """
     Factory for creating ML model instances.
 
+    Supports 5 model types:
+    - logistic: Logistic Regression (sklearn)
+    - random_forest: Random Forest (sklearn)
+    - xgboost: XGBoost gradient boosting
+    - lightgbm: LightGBM gradient boosting
+    - catboost: CatBoost gradient boosting
+
     Usage:
         model = ModelFactory.create("logistic", C=0.5)
         model = ModelFactory.create("xgboost", n_estimators=200)
+        model = ModelFactory.create("catboost", depth=8, use_gpu=True)
     """
 
     _registry: dict[str, Type[BaseModel]] = {}
@@ -71,87 +80,65 @@ class ModelFactory:
                 "type": model_type,
                 "class": model_class.__name__,
                 "module": model_class.__module__,
+                "available": True,
             }
             for model_type, model_class in cls._registry.items()
         ]
 
+    @classmethod
+    def is_available(cls, model_type: str) -> bool:
+        """Check if a model type is available."""
+        return model_type in cls._registry
 
-# Register default models
+
+# ===================================
+# Register Models
+# ===================================
+
+# Always available: sklearn models
 ModelFactory.register("logistic", LogisticModel)
 ModelFactory.register("random_forest", RandomForestModel)
 
-# Try to register XGBoost
+# XGBoost (optional)
 try:
     from .xgboost_model import XGBoostModel, XGBOOST_AVAILABLE
 
     if XGBOOST_AVAILABLE:
         ModelFactory.register("xgboost", XGBoostModel)
+        logger.info("XGBoost registered")
 except ImportError:
-    pass
+    logger.debug("XGBoost not installed")
 
-# Try to register LightGBM
+# LightGBM (optional)
 try:
-    import lightgbm as lgb
-    from sklearn.pipeline import Pipeline
-    from sklearn.impute import SimpleImputer
-    import numpy as np
-    import pandas as pd
+    from .lightgbm_model import LightGBMModel, LIGHTGBM_AVAILABLE
 
-    class LightGBMModel(BaseModel):
-        """LightGBM model."""
-
-        model_type = "lightgbm"
-
-        def __init__(
-            self,
-            n_estimators: int = 100,
-            max_depth: int = 6,
-            learning_rate: float = 0.1,
-            num_leaves: int = 31,
-            **kwargs,
-        ):
-            super().__init__(
-                n_estimators=n_estimators,
-                max_depth=max_depth,
-                learning_rate=learning_rate,
-                num_leaves=num_leaves,
-                **kwargs,
-            )
-
-            self.model = Pipeline(
-                [
-                    ("imputer", SimpleImputer(strategy="median")),
-                    (
-                        "clf",
-                        lgb.LGBMClassifier(
-                            n_estimators=n_estimators,
-                            max_depth=max_depth,
-                            learning_rate=learning_rate,
-                            num_leaves=num_leaves,
-                            random_state=42,
-                            verbose=-1,
-                        ),
-                    ),
-                ]
-            )
-
-        def fit(self, X: pd.DataFrame, y: pd.Series) -> "LightGBMModel":
-            self.model.fit(X, y)
-            self.is_fitted = True
-            return self
-
-        def predict(self, X: pd.DataFrame) -> np.ndarray:
-            return self.model.predict(X)
-
-        def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
-            return self.model.predict_proba(X)
-
-    ModelFactory.register("lightgbm", LightGBMModel)
+    if LIGHTGBM_AVAILABLE:
+        ModelFactory.register("lightgbm", LightGBMModel)
+        logger.info("LightGBM registered")
 except ImportError:
     logger.debug("LightGBM not installed")
 
+# CatBoost (optional)
+try:
+    from .catboost_model import CatBoostModel, CATBOOST_AVAILABLE
 
-# Convenience function
+    if CATBOOST_AVAILABLE:
+        ModelFactory.register("catboost", CatBoostModel)
+        logger.info("CatBoost registered")
+except ImportError:
+    logger.debug("CatBoost not installed")
+
+
+# ===================================
+# Convenience Functions
+# ===================================
+
 def get_model(model_type: str, **params) -> BaseModel:
     """Create a model instance (convenience function)."""
     return ModelFactory.create(model_type, **params)
+
+
+def list_available_models() -> list[str]:
+    """List all available model types."""
+    return ModelFactory.list_models()

@@ -25,5 +25,6 @@ shap
 # ML Models (optional - install as needed)
 xgboost
 lightgbm
+catboost
 sentence-transformers
 faiss-cpu

@@ -1,6 +1,7 @@
 """
 Models API - Model Registry endpoints
 
+GET /models/types - List available model types
 GET /models - List all models
 GET /models/{id} - Get model metadata
 PATCH /models/{id} - Update model (e.g., archive)
@@ -17,6 +18,52 @@ from app.db.model_registry import ModelRecord, get_model_registry
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+# ===================================
+# Model Type Info
+# ===================================
+class ModelTypeInfo(BaseModel):
+    """Info about an available model type."""
+    
+    type: str
+    class_name: str
+    available: bool = True
+
+
+class ModelTypesResponse(BaseModel):
+    """Response for GET /models/types."""
+    
+    types: list[ModelTypeInfo]
+    total: int
+
+
+@router.get("/models/types", response_model=ModelTypesResponse)
+def list_model_types():
+    """
+    List all available model types.
+    
+    Returns which model types can be used for training:
+    - logistic: Logistic Regression (always available)
+    - random_forest: Random Forest (always available)
+    - xgboost: XGBoost (optional)
+    - lightgbm: LightGBM (optional)
+    - catboost: CatBoost (optional)
+    """
+    from app.ml.models import ModelFactory
+    
+    model_info = ModelFactory.get_model_info()
+    
+    types = [
+        ModelTypeInfo(
+            type=info["type"],
+            class_name=info["class"],
+            available=info.get("available", True),
+        )
+        for info in model_info
+    ]
+    
+    return ModelTypesResponse(types=types, total=len(types))
 
 
 # ===================================
