@@ -2,175 +2,177 @@
 Prediction Service
 
 Supports:
-- Default model (artifacts/model.joblib) for backward compatibility
+- Promoted model (production) as default
 - Loading specific models by model_id from registry
+- LRU caching via ModelCache
 """
 
 import logging
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Any
 
-import joblib
 import pandas as pd
 
 from app.core.settings import settings
 from app.db.prices_repo import get_prices
 from app.ml.features.technical import add_technical_features
-from app.ml.labels.returns import add_future_return_label
-from app.ml.features.build import build_xy
+from app.services.model_cache import get_model_cache
 
 logger = logging.getLogger(__name__)
 
-# ===================================
-# Model Cache
-# ===================================
-_model_cache: Dict[str, object] = {}
-_default_model = None
 
-
-def _get_default_model():
-    """Load the default model (backward compatibility)."""
-    global _default_model
-    if _default_model is None:
-        default_path = Path("artifacts/model.joblib")
-        if default_path.exists():
-            _default_model = joblib.load(default_path)
-            logger.info(f"Loaded default model from {default_path}")
-        else:
-            logger.warning(f"Default model not found at {default_path}")
-    return _default_model
-
-
-def load_model(model_id: str):
+def get_model(model_id: str | None = None):
     """
-    Load a model by ID from the registry.
-
-    Caches loaded models for performance.
-    """
-    if model_id in _model_cache:
-        return _model_cache[model_id]
-
-    from app.db.model_registry import get_model_registry
-
-    registry = get_model_registry()
-    model_record = registry.get_model(model_id)
-
-    if not model_record:
-        logger.error(f"Model not found in registry: {model_id}")
-        return None
-
-    if not model_record.artifact_path:
-        logger.error(f"Model has no artifact path: {model_id}")
-        return None
-
-    # Load from artifact path
-    artifact_path = Path(model_record.artifact_path)
-    if not artifact_path.exists():
-        # Try with .joblib extension
-        artifact_path = Path(f"{model_record.artifact_path}.joblib")
-
-    if not artifact_path.exists():
-        logger.error(f"Model artifact not found: {artifact_path}")
-        return None
-
-    try:
-        model = joblib.load(artifact_path)
-        _model_cache[model_id] = model
-        logger.info(f"Loaded model {model_id} from {artifact_path}")
-        return model
-    except Exception as e:
-        logger.error(f"Failed to load model {model_id}: {e}")
-        return None
-
-
-def clear_model_cache():
-    """Clear the model cache (for testing/reloading)."""
-    global _model_cache, _default_model
-    _model_cache = {}
-    _default_model = None
-
-
-# ===================================
-# Prediction
-# ===================================
-def predict(
-    ticker: str,
-    lookback: int = 500,
-    model_id: str | None = None,
-) -> Dict:
-    """
-    Core prediction service.
-
+    Get a model for prediction.
+    
     Args:
-        ticker: Stock ticker symbol
-        lookback: Number of historical data points
-        model_id: Optional model ID to use (defaults to legacy model)
-
+        model_id: Specific model ID, or None to use promoted model
+        
     Returns:
-        Prediction result with probability and signal
+        Loaded model or None
     """
-    # === 1. Load model ===
+    cache = get_model_cache()
+    
     if model_id:
-        model = load_model(model_id)
-        if not model:
-            return {
-                "status": "error",
-                "message": f"Model not found: {model_id}",
-                "model_id": model_id,
-            }
+        # Load specific model
+        return cache.get(model_id)
     else:
-        model = _get_default_model()
-        if not model:
+        # Use promoted model
+        _, model = cache.get_promoted()
+        if model:
+            return model
+        
+        # Fallback: try to load legacy default model
+        return _get_legacy_default_model()
+
+
+def _get_legacy_default_model():
+    """Load legacy default model (backward compatibility)."""
+    import joblib
+    
+    default_path = Path("artifacts/model.joblib")
+    if default_path.exists():
+        try:
+            model = joblib.load(default_path)
+            logger.info(f"Loaded legacy default model from {default_path}")
+            return model
+        except Exception as e:
+            logger.error(f"Failed to load legacy model: {e}")
+    
+    return None
+
+
+class PredictionService:
+    """
+    Service for making predictions.
+    
+    Usage:
+        service = PredictionService()
+        result = service.predict(ticker="AAPL", model_id="abc123")
+    """
+    
+    def predict(
+        self,
+        ticker: str,
+        model_id: str | None = None,
+        horizons: list[int] | None = None,
+        features: dict | None = None,
+    ) -> dict[str, Any]:
+        """
+        Make predictions for a ticker.
+        
+        Args:
+            ticker: Stock ticker
+            model_id: Model ID (uses promoted if not specified)
+            horizons: Prediction horizons in days
+            features: Pre-computed features (optional)
+            
+        Returns:
+            Prediction result with probabilities
+        """
+        horizons = horizons or [5]
+        
+        # Get model
+        model = get_model(model_id)
+        if model is None:
             return {
-                "status": "error",
-                "message": "No default model available. Train a model first.",
+                "success": False,
+                "error": "No model available. Train one or promote a model.",
+                "ticker": ticker,
             }
+        
+        try:
+            # Get features
+            if features:
+                # Use provided features
+                X = pd.DataFrame([features])
+            else:
+                # Build features from market data
+                X = self._build_features(ticker)
+            
+            if X is None or len(X) == 0:
+                return {
+                    "success": False,
+                    "error": f"Could not build features for {ticker}",
+                    "ticker": ticker,
+                }
+            
+            # Make prediction
+            proba = model.predict_proba(X)
+            pred = model.predict(X)
+            
+            # Get the last row (most recent)
+            latest_proba = proba[-1] if len(proba.shape) > 1 else proba
+            latest_pred = pred[-1] if hasattr(pred, '__len__') else pred
+            
+            return {
+                "success": True,
+                "ticker": ticker,
+                "model_id": model_id or "promoted",
+                "prediction": int(latest_pred),
+                "probability": {
+                    "down": float(latest_proba[0]),
+                    "up": float(latest_proba[1]),
+                },
+                "signal": "LONG" if latest_pred == 1 else "SHORT",
+                "confidence": float(max(latest_proba)),
+            }
+            
+        except Exception as e:
+            logger.error(f"Prediction failed: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": str(e),
+                "ticker": ticker,
+            }
+    
+    def _build_features(self, ticker: str) -> pd.DataFrame | None:
+        """Build features from market data."""
+        try:
+            # Get recent price data
+            df = get_prices(ticker, limit=100)
+            
+            if df is None or len(df) < 50:
+                logger.warning(f"Insufficient data for {ticker}")
+                return None
+            
+            # Add technical features
+            df = add_technical_features(df)
+            
+            # Get feature columns (exclude non-features)
+            exclude_cols = ["date", "ticker", "open", "high", "low", "close", "volume"]
+            feature_cols = [c for c in df.columns if c not in exclude_cols]
+            
+            # Return last row with features
+            return df[feature_cols].tail(1)
+            
+        except Exception as e:
+            logger.error(f"Failed to build features for {ticker}: {e}")
+            return None
 
-    # === 2. Load data ===
-    rows = get_prices(ticker, lookback)
-    if not rows:
-        return {
-            "status": "error",
-            "message": "No price data found",
-        }
 
-    df = pd.DataFrame(rows)
-
-    # === 3. Feature engineering ===
-    df_feat = add_technical_features(df)
-    df_labeled = add_future_return_label(df_feat)
-
-    X, _ = build_xy(df_labeled)
-
-    if X.empty:
-        return {
-            "status": "error",
-            "message": "Not enough data after feature engineering",
-        }
-
-    # === 4. Predict on last row only (most recent) ===
-    X_last = X.tail(1)
-
-    try:
-        prob_up = float(model.predict_proba(X_last)[0, 1])
-    except Exception as e:
-        logger.error(f"Prediction failed: {e}")
-        return {
-            "status": "error",
-            "message": f"Prediction failed: {str(e)}",
-        }
-
-    signal = "LONG" if prob_up > 0.55 else "SHORT" if prob_up < 0.45 else "HOLD"
-
-    result = {
-        "status": "ok",
-        "ticker": ticker,
-        "samples": int(len(X)),
-        "prob_up": prob_up,
-        "signal": signal,
-    }
-
-    if model_id:
-        result["model_id"] = model_id
-
-    return result
+# Convenience function
+def predict(ticker: str, model_id: str | None = None, **kwargs) -> dict:
+    """Make a prediction (convenience function)."""
+    service = PredictionService()
+    return service.predict(ticker=ticker, model_id=model_id, **kwargs)
