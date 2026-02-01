@@ -1,0 +1,58 @@
+# ===================================
+# Render Web Service Configuration
+# https://render.com/docs/blueprint-spec
+# ===================================
+
+services:
+  - type: web
+    name: quant-ai-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # Instance configuration
+    plan: free  # or starter, standard, pro
+    region: oregon  # or ohio, frankfurt, singapore
+
+    # Scaling (for paid plans)
+    # numInstances: 1
+    # scaling:
+    #   minInstances: 1
+    #   maxInstances: 3
+    #   targetMemoryPercent: 80
+    #   targetCPUPercent: 80
+
+    # Health check
+    healthCheckPath: /health
+
+    # Environment variables
+    envVars:
+      - key: ENV
+        value: prod
+      - key: LOG_LEVEL
+        value: INFO
+      - key: LOG_FORMAT
+        value: json
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: STORAGE_BACKEND
+        value: supabase
+      - key: SUPABASE_URL
+        sync: false  # Set manually in Render dashboard
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+
+    # Auto-deploy on push
+    autoDeploy: true
+    branch: main
+
+    # Build filter (only deploy on app changes)
+    buildFilter:
+      paths:
+        - app/**
+        - requirements.txt
+        - Dockerfile

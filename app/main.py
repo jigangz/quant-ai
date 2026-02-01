@@ -2,8 +2,6 @@
 Quant AI Backend - FastAPI Application
 """
 
-import logging
-import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -11,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.settings import settings
+from app.core.logging import setup_logging, get_logger, request_id_ctx
+from app.middleware import RateLimitMiddleware, RequestContextMiddleware
 from app.api import (
     health,
     market,
@@ -26,18 +26,10 @@ from app.api import (
 )
 
 # ===================================
-# Logging Configuration
+# Setup Structured Logging
 # ===================================
-LOG_FORMAT_TEXT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-LOG_FORMAT_JSON = (
-    '{"time":"%(asctime)s","level":"%(levelname)s",'
-    '"logger":"%(name)s","message":"%(message)s"}'
-)
-logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL),
-    format=LOG_FORMAT_TEXT if settings.LOG_FORMAT == "text" else LOG_FORMAT_JSON,
-)
-logger = logging.getLogger(__name__)
+setup_logging()
+logger = get_logger(__name__)
 
 
 # ===================================
@@ -47,9 +39,16 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     # Startup
-    logger.info(f"Starting Quant AI Backend (env={settings.ENV})")
-    logger.info(f"Providers enabled: {settings.providers_list}")
-    logger.info(f"Storage backend: {settings.STORAGE_BACKEND}")
+    logger.info(
+        "Starting Quant AI Backend",
+        extra={
+            "extra_data": {
+                "env": settings.ENV,
+                "providers": settings.providers_list,
+                "storage": settings.STORAGE_BACKEND,
+            }
+        },
+    )
     yield
     # Shutdown
     logger.info("Shutting down Quant AI Backend")
@@ -67,10 +66,10 @@ app = FastAPI(
 
 
 # ===================================
-# Middleware
+# Middleware (order matters: last added = first executed)
 # ===================================
 
-# CORS
+# CORS (outermost)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
@@ -79,25 +78,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Rate Limiting
+app.add_middleware(
+    RateLimitMiddleware,
+    requests_per_minute=settings.RATE_LIMIT_PER_MINUTE,
+)
 
-# Request ID middleware
-@app.middleware("http")
-async def add_request_id(request: Request, call_next):
-    """Add unique request ID to each request for tracing."""
-    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4())[:8])
-    request.state.request_id = request_id
-
-    response = await call_next(request)
-    response.headers["X-Request-ID"] = request_id
-    return response
+# Request Context (innermost - sets up logging context)
+app.add_middleware(RequestContextMiddleware)
 
 
-# Error handler
+# ===================================
+# Exception Handler
+# ===================================
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Global exception handler."""
-    request_id = getattr(request.state, "request_id", "unknown")
-    logger.error(f"[{request_id}] Unhandled error: {exc}", exc_info=True)
+    """Global exception handler with request_id."""
+    request_id = getattr(request.state, "request_id", request_id_ctx.get("-"))
+
+    logger.error(
+        f"Unhandled error: {exc}",
+        extra={
+            "extra_data": {
+                "error_type": type(exc).__name__,
+                "path": request.url.path,
+            }
+        },
+        exc_info=True,
+    )
 
     return JSONResponse(
         status_code=500,
@@ -106,6 +114,7 @@ async def global_exception_handler(request: Request, exc: Exception):
             "request_id": request_id,
             "detail": str(exc) if settings.DEBUG else None,
         },
+        headers={"X-Request-ID": request_id},
     )
 
 
