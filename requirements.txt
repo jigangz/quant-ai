@@ -19,9 +19,11 @@ sqlalchemy>=2.0
 httpx>=0.24.0
 requests>=2.31.0
 
-# Optional: Supabase (for production)
+# Database (PostgreSQL for production)
+psycopg[binary]>=3.1
+
+# Optional: Supabase client (for model registry)
 # supabase>=2.0
-# psycopg[binary]>=3.1
 
 # Optional: Job Queue (for async training)
 # redis>=4.0

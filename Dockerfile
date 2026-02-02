@@ -29,7 +29,7 @@ RUN useradd --create-home --shell /bin/bash appuser
 COPY --chown=appuser:appuser app ./app
 COPY --chown=appuser:appuser scripts ./scripts
 
-RUN mkdir -p ./artifacts && chown appuser:appuser ./artifacts
+RUN mkdir -p ./artifacts ./data && chown appuser:appuser ./artifacts ./data
 
 USER appuser
 

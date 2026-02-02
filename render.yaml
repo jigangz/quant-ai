@@ -13,9 +13,16 @@ services:
     envVars:
       - key: ENV
         value: prod
+      - key: DATABASE_URL
+        value: sqlite:///./data/quant.db
       - key: STORAGE_BACKEND
         value: local
       - key: STORAGE_LOCAL_PATH
         value: ./artifacts
+      # Supabase (set manually in dashboard for production)
+      # - key: SUPABASE_URL
+      #   sync: false
+      # - key: SUPABASE_KEY
+      #   sync: false
     autoDeploy: true
     branch: main
