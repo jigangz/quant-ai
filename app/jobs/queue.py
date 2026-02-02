@@ -1,46 +1,59 @@
 """
-Job Queue - Redis + RQ setup
+Job Queue - Redis + RQ setup (optional)
 
-Provides:
-- Redis connection
-- RQ queue instance
-- Helper to enqueue training jobs
+Falls back to sync execution if Redis is not available.
 """
 
 import logging
 import os
 from typing import Any
 
-from redis import Redis
-from rq import Queue
-from rq.job import Job
-
-
 logger = logging.getLogger(__name__)
 
+# Try to import Redis/RQ
+try:
+    from redis import Redis
+    from rq import Queue
+    from rq.job import Job
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+    Redis = None
+    Queue = None
+    Job = None
+    logger.info("Redis/RQ not installed, async jobs disabled")
+
 # Redis connection (lazy init)
-_redis_conn: Redis | None = None
-_queue: Queue | None = None
+_redis_conn = None
+_queue = None
 
 
-def get_redis() -> Redis:
+def get_redis():
     """Get Redis connection (singleton)."""
     global _redis_conn
     
+    if not REDIS_AVAILABLE:
+        raise RuntimeError("Redis not installed")
+    
     if _redis_conn is None:
-        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        redis_url = os.getenv("REDIS_URL", "")
+        if not redis_url:
+            raise RuntimeError("REDIS_URL not configured")
+        
         logger.info(f"Connecting to Redis: {redis_url}")
         _redis_conn = Redis.from_url(redis_url)
-        # Test connection
         _redis_conn.ping()
         logger.info("Redis connected")
     
     return _redis_conn
 
 
-def get_queue(name: str = "default") -> Queue:
+def get_queue(name: str = "default"):
     """Get RQ queue instance."""
     global _queue
+    
+    if not REDIS_AVAILABLE:
+        raise RuntimeError("Redis not installed")
     
     if _queue is None or _queue.name != name:
         _queue = Queue(name, connection=get_redis())
@@ -48,16 +61,27 @@ def get_queue(name: str = "default") -> Queue:
     return _queue
 
 
-def enqueue_training_job(request_dict: dict[str, Any]) -> Job:
-    """
-    Enqueue a training job.
+def is_redis_available() -> bool:
+    """Check if Redis is available and configured."""
+    if not REDIS_AVAILABLE:
+        return False
     
-    Args:
-        request_dict: Training request as dict (serializable)
-        
-    Returns:
-        RQ Job instance with job.id
-    """
+    redis_url = os.getenv("REDIS_URL", "")
+    if not redis_url:
+        return False
+    
+    try:
+        get_redis().ping()
+        return True
+    except Exception:
+        return False
+
+
+def enqueue_training_job(request_dict: dict[str, Any]):
+    """Enqueue a training job."""
+    if not is_redis_available():
+        raise RuntimeError("Redis not available for async jobs")
+    
     from app.jobs.tasks import run_training_task
     
     queue = get_queue("training")
@@ -65,17 +89,20 @@ def enqueue_training_job(request_dict: dict[str, Any]) -> Job:
     job = queue.enqueue(
         run_training_task,
         request_dict,
-        job_timeout="30m",  # Max 30 minutes
-        result_ttl=86400,   # Keep result for 24h
-        failure_ttl=86400,  # Keep failures for 24h
+        job_timeout="30m",
+        result_ttl=86400,
+        failure_ttl=86400,
     )
     
     logger.info(f"Enqueued training job: {job.id}")
     return job
 
 
-def get_job(job_id: str) -> Job | None:
+def get_job(job_id: str):
     """Get job by ID."""
+    if not REDIS_AVAILABLE:
+        return None
+    
     try:
         return Job.fetch(job_id, connection=get_redis())
     except Exception as e:
@@ -84,20 +111,14 @@ def get_job(job_id: str) -> Job | None:
 
 
 def get_job_status(job_id: str) -> dict[str, Any]:
-    """
-    Get job status and result.
-    
-    Returns:
-        {
-            "job_id": str,
-            "status": "queued" | "started" | "finished" | "failed",
-            "result": Any (if finished),
-            "error": str (if failed),
-            "enqueued_at": datetime,
-            "started_at": datetime,
-            "ended_at": datetime,
+    """Get job status and result."""
+    if not REDIS_AVAILABLE:
+        return {
+            "job_id": job_id,
+            "status": "not_found",
+            "error": "Redis not available",
         }
-    """
+    
     job = get_job(job_id)
     
     if job is None:
@@ -126,7 +147,6 @@ def get_job_status(job_id: str) -> dict[str, Any]:
         "ended_at": job.ended_at.isoformat() if job.ended_at else None,
     }
     
-    # Add result or error
     if job.is_finished:
         result["result"] = job.result
     elif job.is_failed:

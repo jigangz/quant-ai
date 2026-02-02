@@ -103,9 +103,8 @@ def train_model(
 def _check_redis() -> bool:
     """Check if Redis is available."""
     try:
-        from app.jobs.queue import get_redis
-        get_redis().ping()
-        return True
+        from app.jobs.queue import is_redis_available
+        return is_redis_available()
     except Exception as e:
         logger.debug(f"Redis not available: {e}")
         return False

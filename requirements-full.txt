@@ -1,0 +1,28 @@
+# Full dependencies (development + all features)
+-r requirements.txt
+
+# Database (production)
+supabase>=2.0
+psycopg[binary]>=3.1
+
+# Job Queue
+redis>=4.0
+rq>=1.15
+
+# ML Models (optional)
+xgboost>=2.0.0
+lightgbm>=4.0.0
+catboost>=1.2.0
+optuna>=3.0.0
+
+# Explainability
+shap>=0.42.0
+
+# RAG / Embeddings
+sentence-transformers>=2.2.0
+faiss-cpu>=1.7.0
+
+# Dev / Test
+pytest>=7.0.0
+pytest-cov>=4.0.0
+ruff>=0.1.0
