@@ -43,11 +43,10 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install core dependencies
+      - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install fastapi uvicorn pydantic-settings
-          pip install pandas scikit-learn joblib yfinance
+          pip install -r requirements.txt
           pip install pytest pytest-cov httpx
 
       - name: Create directories
