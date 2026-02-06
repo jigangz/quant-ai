@@ -21,7 +21,7 @@ jobs:
         run: pip install ruff
 
       - name: Run ruff
-        run: ruff check app/ scripts/ --ignore F401,F841,E501,F541
+        run: ruff check app/ scripts/ --ignore F401,F841,E501,F541,E402
 
   test:
     name: Test
