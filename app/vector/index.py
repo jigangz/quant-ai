@@ -1,12 +1,24 @@
-import faiss
 import numpy as np
 from typing import List
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import faiss
+    FAISS_AVAILABLE = True
+except ImportError:
+    faiss = None
+    FAISS_AVAILABLE = False
+    logger.info("faiss not installed, vector search disabled")
 
 from app.vector.store import vector_store
 
 
 class FaissIndex:
     def __init__(self, dim: int):
+        if not FAISS_AVAILABLE:
+            raise ImportError("faiss-cpu is required for vector search. Install with: pip install faiss-cpu")
         self.index = faiss.IndexFlatIP(dim)
         self.dim = dim
 

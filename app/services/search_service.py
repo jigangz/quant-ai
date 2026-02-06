@@ -1,50 +1,37 @@
 """
-Search service using FAISS-based vector index.
+Search service using FAISS-based vector index (optional).
 
-This module provides a semantic search capability over stored text
-embeddings. The previous implementation attempted to call a
-``search`` method on the in-memory ``VectorStore`` metadata store,
-which does not support searching and only holds metadata.  As a
-result, queries to the ``/search`` API endpoint resulted in an
-``AttributeError`` complaining that ``VectorStore`` has no attribute
-``search``.  To resolve this, we now initialise a FAISS index
-(``FaissIndex``) on first use and delegate all similarity search
-requests to it.  The index is created with an embedding dimension
-determined dynamically from the model used in ``embedder.embed_texts``.
-
-Because this is a simple demonstration, the index starts out empty
-and therefore returns no results until vectors have been added via
-other services.  Future versions may populate the index with
-explanations, notes or other domain-specific text.
+If faiss-cpu is not installed, search returns a 'not available' response
+instead of crashing the app.
 """
 
 from __future__ import annotations
 
+import logging
 from typing import Dict
 
 from app.vector.embedder import embed_texts
-from app.vector.index import FaissIndex
 
-_faiss_index: FaissIndex | None = None
+logger = logging.getLogger(__name__)
+
+_faiss_index = None
+_faiss_available = False
+
+try:
+    from app.vector.index import FaissIndex, FAISS_AVAILABLE
+    _faiss_available = FAISS_AVAILABLE
+except ImportError:
+    _faiss_available = False
+    logger.info("FAISS not available, /search endpoint will return 501")
 
 
-def _get_faiss_index() -> FaissIndex:
-    """Lazily initialise and return a global FAISS index.
-
-    The index is initialised on first access with a dimensionality
-    matching the embedding model.  Subsequent calls return the
-    previously created instance.
-
-    Returns
-    -------
-    FaissIndex
-        The global FAISS vector index.
-    """
+def _get_faiss_index():
+    """Lazily initialise and return a global FAISS index."""
     global _faiss_index
+    if not _faiss_available:
+        return None
     if _faiss_index is None:
-        # Determine the embedding dimensionality by encoding a dummy
-        # string.  This avoids hard‑coding model dimensions and ensures
-        # consistency with the embedder configuration.
+        from app.vector.index import FaissIndex
         test_vec = embed_texts(["test"])
         dim = test_vec.shape[1]
         _faiss_index = FaissIndex(dim=dim)
@@ -54,26 +41,17 @@ def _get_faiss_index() -> FaissIndex:
 def search(query: str, top_k: int = 5) -> Dict:
     """Perform a semantic search over indexed embeddings.
 
-    Parameters
-    ----------
-    query : str
-        The natural language query to embed and search for similar
-        documents.
-    top_k : int, optional
-        The maximum number of results to return, by default 5.
-
-    Returns
-    -------
-    dict
-        A dictionary containing the query, status and a list of
-        matching records with similarity scores.  If no vectors have
-        been indexed yet, the results list will be empty.
+    Returns a 'not_available' status if FAISS is not installed.
     """
-    # Embed the query text into a vector.  The embedder returns a
-    # numpy array with shape (1, dim).
-    q_vec = embed_texts([query])
+    if not _faiss_available:
+        return {
+            "status": "not_available",
+            "query": query,
+            "message": "Search requires faiss-cpu. Install with: pip install faiss-cpu sentence-transformers",
+            "results": [],
+        }
 
-    # Retrieve or initialise the FAISS index and perform the search.
+    q_vec = embed_texts([query])
     index = _get_faiss_index()
     results = index.search(q_vec, top_k=top_k)
 

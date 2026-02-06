@@ -19,12 +19,12 @@ sqlalchemy>=2.0
 httpx>=0.24.0
 requests>=2.31.0
 
-# RAG / Embeddings (minimal)
-sentence-transformers>=2.2.0
-faiss-cpu>=1.7.0
-
 # Database (PostgreSQL for production)
 psycopg[binary]>=3.1
+
+# Optional: RAG / Embeddings (heavy deps, install separately)
+# sentence-transformers>=2.2.0
+# faiss-cpu>=1.7.0
 
 # Optional: Supabase client (for model registry)
 # supabase>=2.0
