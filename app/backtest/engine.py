@@ -160,13 +160,19 @@ class BacktestEngine:
             raise ValueError(f"Model has no artifact: {model_id}")
 
         artifact_path = Path(record.artifact_path)
-        if not artifact_path.exists():
-            artifact_path = Path(f"{record.artifact_path}.joblib")
 
-        if not artifact_path.exists():
-            raise ValueError(f"Model artifact not found: {artifact_path}")
+        # Model saved as directory (model.joblib inside) or as single file
+        if artifact_path.is_dir():
+            model_file = artifact_path / "model.joblib"
+        elif artifact_path.exists():
+            model_file = artifact_path
+        else:
+            model_file = Path(f"{record.artifact_path}.joblib")
 
-        model = joblib.load(artifact_path)
+        if not model_file.exists():
+            raise ValueError(f"Model artifact not found: {model_file} (checked dir: {artifact_path})")
+
+        model = joblib.load(model_file)
         self.model_cache[model_id] = model
         return model
 
