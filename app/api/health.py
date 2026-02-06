@@ -18,6 +18,7 @@ def health():
     """
     return {
         "status": "ok",
+        "version": "2.1.0",
         "settings": settings.get_public_settings(),
     }
 
