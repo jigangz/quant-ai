@@ -9,15 +9,24 @@ interface Props {
 }
 
 // Map sentiment score to a gradient background color
-function sentimentGradient(score: number): string {
+function sentimentGradient(score: number | null): string {
+  if (score == null) return 'bg-dark-hover border-l-2 border-l-gray-600';
   if (score > 0.3) return 'bg-bull/10 border-l-2 border-l-bull';
   if (score < -0.3) return 'bg-bear/10 border-l-2 border-l-bear';
   return 'bg-dark-hover border-l-2 border-l-gray-600';
 }
 
-function sentimentBadgeVariant(label: string): 'success' | 'danger' | 'neutral' {
-  if (label === 'bullish') return 'success';
-  if (label === 'bearish') return 'danger';
+function sentimentBadgeVariant(score: number | null): 'success' | 'danger' | 'neutral' {
+  if (score == null) return 'neutral';
+  if (score > 0.3) return 'success';
+  if (score < -0.3) return 'danger';
+  return 'neutral';
+}
+
+function sentimentLabel(score: number | null): string {
+  if (score == null) return 'neutral';
+  if (score > 0.3) return 'bullish';
+  if (score < -0.3) return 'bearish';
   return 'neutral';
 }
 
@@ -57,8 +66,8 @@ export default function NewsPanel({ news, selectedDate, loading }: Props) {
     );
   }
 
-  // Sort by sentiment score (most bullish first)
-  const sorted = [...news].sort((a, b) => b.sentiment_score - a.sentiment_score);
+  // Sort by sentiment score (most bullish first, nulls last)
+  const sorted = [...news].sort((a, b) => (b.sentiment_score ?? 0) - (a.sentiment_score ?? 0));
 
   return (
     <div className="flex flex-col gap-2 animate-fade-in">
@@ -72,23 +81,24 @@ export default function NewsPanel({ news, selectedDate, loading }: Props) {
           className={`p-3 rounded-sm transition-colors ${sentimentGradient(item.sentiment_score)}`}
         >
           <div className="flex items-start gap-2 mb-1.5">
-            <Badge variant={sentimentBadgeVariant(item.sentiment_label)}>
-              {item.sentiment_label}
+            <Badge variant={sentimentBadgeVariant(item.sentiment_score)}>
+              {sentimentLabel(item.sentiment_score)}
             </Badge>
             <Badge variant={categoryColors[item.category] || 'neutral'}>
               {item.category}
             </Badge>
-            <span
-              className="ml-auto text-xs font-mono px-1.5 py-0.5 rounded-sm"
-              style={{
-                // Gradient from red to green based on sentiment score
-                backgroundColor: `rgba(${item.sentiment_score > 0 ? '16,185,129' : '239,68,68'}, ${Math.abs(item.sentiment_score) * 0.3})`,
-                color: item.sentiment_score > 0 ? '#10b981' : item.sentiment_score < 0 ? '#ef4444' : '#888',
-              }}
-            >
-              {item.sentiment_score > 0 ? '+' : ''}
-              {item.sentiment_score.toFixed(2)}
-            </span>
+            {item.sentiment_score != null && (
+              <span
+                className="ml-auto text-xs font-mono px-1.5 py-0.5 rounded-sm"
+                style={{
+                  backgroundColor: `rgba(${item.sentiment_score > 0 ? '16,185,129' : '239,68,68'}, ${Math.abs(item.sentiment_score) * 0.3})`,
+                  color: item.sentiment_score > 0 ? '#10b981' : item.sentiment_score < 0 ? '#ef4444' : '#888',
+                }}
+              >
+                {item.sentiment_score > 0 ? '+' : ''}
+                {item.sentiment_score.toFixed(2)}
+              </span>
+            )}
           </div>
 
           <a
@@ -97,7 +107,7 @@ export default function NewsPanel({ news, selectedDate, loading }: Props) {
             rel="noreferrer"
             className="text-sm text-gray-200 hover:text-white font-medium leading-snug flex items-start gap-1"
           >
-            {item.title}
+            {item.headline}
             <ExternalLink className="w-3 h-3 flex-shrink-0 mt-0.5 text-gray-600" />
           </a>
 
@@ -107,18 +117,18 @@ export default function NewsPanel({ news, selectedDate, loading }: Props) {
             </p>
           )}
 
-          {(item.reason_bull || item.reason_bear) && (
+          {(item.bullish_reason || item.bearish_reason) && (
             <div className="mt-2 flex flex-col gap-1">
-              {item.reason_bull && (
+              {item.bullish_reason && (
                 <div className="text-xs text-bull/80 flex items-start gap-1">
                   <span className="font-bold">▲</span>
-                  <span>{item.reason_bull}</span>
+                  <span>{item.bullish_reason}</span>
                 </div>
               )}
-              {item.reason_bear && (
+              {item.bearish_reason && (
                 <div className="text-xs text-bear/80 flex items-start gap-1">
                   <span className="font-bold">▼</span>
-                  <span>{item.reason_bear}</span>
+                  <span>{item.bearish_reason}</span>
                 </div>
               )}
             </div>

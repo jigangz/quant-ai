@@ -24,15 +24,14 @@ export async function fetchMarketData(ticker: string, period = '3mo'): Promise<M
 export interface NewsItem {
   id: string;
   date: string;
-  title: string;
+  headline: string;   // backend field name
   summary: string;
   source: string;
   url: string;
   category: string;
-  sentiment_score: number;
-  sentiment_label: 'bullish' | 'bearish' | 'neutral';
-  reason_bull: string | null;
-  reason_bear: string | null;
+  sentiment_score: number | null;
+  bullish_reason: string | null;
+  bearish_reason: string | null;
 }
 
 export async function fetchNews(ticker: string, date?: string): Promise<NewsItem[]> {
@@ -90,7 +89,26 @@ export interface PredictionResult {
 
 export async function predict(ticker: string): Promise<PredictionResult> {
   const { data } = await api.post('/predict', { ticker });
-  return data;
+  // Adapt backend format: { predictions: [{ horizon, probability, confidence }] }
+  // to frontend format: { horizons: { t1, t3, t5 } }
+  const horizonMap: Record<number, 't1' | 't3' | 't5'> = { 1: 't1', 3: 't3', 5: 't5' };
+  const horizons: PredictionResult['horizons'] = {
+    t1: { direction: 'UP', confidence: 0.5 },
+    t3: { direction: 'UP', confidence: 0.5 },
+    t5: { direction: 'UP', confidence: 0.5 },
+  };
+  if (data.predictions) {
+    for (const p of data.predictions) {
+      const key = horizonMap[p.horizon];
+      if (key) {
+        horizons[key] = {
+          direction: (p.probability?.up ?? 0) >= 0.5 ? 'UP' : 'DOWN',
+          confidence: p.confidence ?? Math.max(p.probability?.up ?? 0, p.probability?.down ?? 0),
+        };
+      }
+    }
+  }
+  return { ticker: data.ticker ?? ticker, date: data.date ?? new Date().toISOString().slice(0, 10), horizons };
 }
 
 // SHAP / Explain
