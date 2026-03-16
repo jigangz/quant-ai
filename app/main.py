@@ -24,6 +24,7 @@ from app.api import (
     models,
     backtest,
     runs,
+    news,
 )
 
 # ===================================
@@ -134,6 +135,7 @@ app.include_router(explain.router, tags=["Explainability"])
 app.include_router(search.router, tags=["Search"])
 app.include_router(agents.router, tags=["Agents"])
 app.include_router(rag.router, tags=["RAG"])
+app.include_router(news.router, tags=["News Data"])
 
 
 # ===================================

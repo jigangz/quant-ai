@@ -96,7 +96,10 @@ class ProviderFactory:
         if cache_key not in cls._instances:
             if provider_name == "mock":
                 cls._instances[cache_key] = MockNewsProvider()
-            # Future: add newsapi, benzinga, etc.
+            elif provider_name == "polygon":
+                from app.providers.news.polygon import PolygonNewsProvider
+
+                cls._instances[cache_key] = PolygonNewsProvider()
             else:
                 raise ValueError(f"Unknown news provider: {provider_name}")
 
