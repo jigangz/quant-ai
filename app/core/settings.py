@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     PROVIDERS_ENABLED: str = "market"  # Comma-separated: market,sentiment,news
     MARKET_PROVIDER: Literal["yahoo", "polygon"] = "yahoo"
     POLYGON_API_KEY: str | None = None
+    NEWS_PROVIDER: Literal["polygon", "mock"] = "mock"
+    NEWS_BATCH_SIZE: int = 20
 
     # ===== Feature Engineering =====
     DEFAULT_FEATURE_GROUPS: str = "ta_basic,volatility"  # Comma-separated
