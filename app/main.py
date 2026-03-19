@@ -25,6 +25,7 @@ from app.api import (
     backtest,
     runs,
     news,
+    trading,
 )
 
 # ===================================
@@ -136,6 +137,7 @@ app.include_router(search.router, tags=["Search"])
 app.include_router(agents.router, tags=["Agents"])
 app.include_router(rag.router, tags=["RAG"])
 app.include_router(news.router, tags=["News Data"])
+app.include_router(trading.router, tags=["Paper Trading"])
 
 
 # ===================================
