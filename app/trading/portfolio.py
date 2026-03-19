@@ -325,6 +325,23 @@ class PortfolioManager:
         with self._lock:
             return self._total_realized_pnl
 
+    def get_position_symbols(self) -> List[str]:
+        """Get list of symbols with open positions."""
+        with self._lock:
+            return [s for s, p in self._positions.items() if p.quantity != 0]
+
+    def get_trades(
+        self,
+        symbol: Optional[str] = None,
+        limit: int = 50,
+    ) -> List[Trade]:
+        """Get trade history with optional filters."""
+        with self._lock:
+            trades = list(self._trades)
+            if symbol:
+                trades = [t for t in trades if t.symbol.upper() == symbol.upper()]
+            return trades[-limit:]
+
 
 # Global singleton instance
 _portfolio_manager: Optional[PortfolioManager] = None
