@@ -1,4 +1,6 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
+
+import pandas as pd
 from sqlalchemy import text
 from app.db.engine import engine
 
@@ -45,3 +47,30 @@ def get_prices(
         rows = result.mappings().all()
 
     return list(rows)
+
+
+def get_prices_df(
+    ticker: str,
+    limit: int = 500,
+) -> Optional[pd.DataFrame]:
+    """
+    Fetch OHLCV data as a DataFrame for strategy calculations.
+    
+    Args:
+        ticker: Stock ticker symbol
+        limit: Maximum rows to return
+        
+    Returns:
+        DataFrame with columns: date, open, high, low, close, volume
+        Returns None if no data found
+    """
+    rows = get_prices(ticker, limit)
+    
+    if not rows:
+        return None
+    
+    df = pd.DataFrame(rows)
+    # Sort by date ascending for time-series analysis
+    df = df.sort_values("date").reset_index(drop=True)
+    
+    return df

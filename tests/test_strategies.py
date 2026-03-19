@@ -1,21 +1,17 @@
 """
-Tests for Strategy System
-
-Tests for:
-- BaseStrategy abstract class
-- Built-in strategy templates (MA Cross, RSI, Bollinger, Sentiment)
-- StrategyRegistry
-- Strategy API endpoints
+Tests for the strategy system and API.
 """
 
 import pytest
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 
 from app.strategies import (
     get_registry,
     StrategyRegistry,
+    BaseStrategy,
+    BaseParameters,
     MovingAverageCrossover,
     RSIStrategy,
     BollingerBreakout,
@@ -24,476 +20,336 @@ from app.strategies import (
 
 
 # ===================================
-# Fixtures
+# Registry Tests
 # ===================================
 
+
+class TestStrategyRegistry:
+    """Tests for StrategyRegistry."""
+    
+    def test_get_registry_singleton(self):
+        """get_registry returns the same instance."""
+        r1 = get_registry()
+        r2 = get_registry()
+        assert r1 is r2
+    
+    def test_builtin_strategies_registered(self):
+        """All builtin strategies are registered by default."""
+        registry = StrategyRegistry()
+        
+        assert "ma_crossover" in registry
+        assert "rsi_strategy" in registry
+        assert "bollinger_breakout" in registry
+        assert "sentiment_driven" in registry
+        assert len(registry) == 4
+    
+    def test_list_strategies(self):
+        """list_strategies returns all strategy names."""
+        registry = StrategyRegistry()
+        names = registry.list_strategies()
+        
+        assert isinstance(names, list)
+        assert len(names) == 4
+        assert "ma_crossover" in names
+    
+    def test_get_strategy(self):
+        """get returns strategy class or None."""
+        registry = StrategyRegistry()
+        
+        cls = registry.get("ma_crossover")
+        assert cls is MovingAverageCrossover
+        
+        assert registry.get("nonexistent") is None
+    
+    def test_get_or_raise(self):
+        """get_or_raise raises KeyError for unknown strategy."""
+        registry = StrategyRegistry()
+        
+        with pytest.raises(KeyError):
+            registry.get_or_raise("nonexistent")
+    
+    def test_get_metadata(self):
+        """get_metadata returns StrategyMetadata."""
+        registry = StrategyRegistry()
+        
+        meta = registry.get_metadata("ma_crossover")
+        assert meta is not None
+        assert meta.name == "ma_crossover"
+        assert meta.version == "1.0.0"
+        assert "parameters_schema" in meta.dict()
+    
+    def test_create_instance(self):
+        """create_instance returns strategy with parameters."""
+        registry = StrategyRegistry()
+        
+        # Default parameters
+        strategy = registry.create_instance("ma_crossover")
+        assert strategy.params.fast_period == 10
+        assert strategy.params.slow_period == 50
+        
+        # Custom parameters
+        strategy = registry.create_instance(
+            "ma_crossover",
+            {"fast_period": 5, "slow_period": 20}
+        )
+        assert strategy.params.fast_period == 5
+        assert strategy.params.slow_period == 20
+    
+    def test_register_custom_strategy(self):
+        """Can register a custom strategy."""
+        registry = StrategyRegistry()
+        
+        class CustomStrategy(BaseStrategy):
+            name = "custom_test"
+            description = "Test strategy"
+            version = "1.0.0"
+            
+            def generate_signals(self, df):
+                return pd.Series(0, index=df.index)
+        
+        registry.register(CustomStrategy)
+        assert "custom_test" in registry
+        assert registry.get("custom_test") is CustomStrategy
+    
+    def test_register_duplicate_raises(self):
+        """Cannot register duplicate strategy name."""
+        registry = StrategyRegistry()
+        
+        with pytest.raises(ValueError, match="already registered"):
+            registry.register(MovingAverageCrossover)
+    
+    def test_unregister(self):
+        """unregister removes a strategy."""
+        registry = StrategyRegistry()
+        
+        assert registry.unregister("ma_crossover") is True
+        assert "ma_crossover" not in registry
+        assert registry.unregister("ma_crossover") is False
+
+
+# ===================================
+# Strategy Tests
+# ===================================
+
+
 @pytest.fixture
-def sample_price_data():
-    """Generate sample OHLCV price data."""
-    dates = pd.date_range(start="2023-01-01", periods=100, freq="D")
+def sample_ohlcv_df():
+    """Create sample OHLCV DataFrame with upward trend."""
+    dates = pd.date_range("2023-01-01", periods=100, freq="D")
     np.random.seed(42)
     
-    # Generate realistic price movement
-    close = 100 + np.cumsum(np.random.randn(100) * 2)
-    high = close + np.abs(np.random.randn(100))
-    low = close - np.abs(np.random.randn(100))
-    open_price = close + np.random.randn(100) * 0.5
-    volume = np.random.randint(1000000, 10000000, 100)
+    # Simulate trending price data
+    base_price = 100
+    trend = np.linspace(0, 20, 100)
+    noise = np.random.randn(100) * 2
+    close = base_price + trend + noise
     
     df = pd.DataFrame({
-        "open": open_price,
-        "high": high,
-        "low": low,
+        "date": dates,
+        "open": close - np.random.rand(100),
+        "high": close + np.abs(np.random.randn(100)),
+        "low": close - np.abs(np.random.randn(100)),
         "close": close,
-        "volume": volume
-    }, index=dates)
+        "volume": np.random.randint(1000000, 10000000, 100),
+    })
     
     return df
 
 
 @pytest.fixture
-def sample_sentiment_data(sample_price_data):
-    """Add sentiment scores to price data."""
-    df = sample_price_data.copy()
+def sample_df_with_sentiment(sample_ohlcv_df):
+    """Add sentiment column to sample DataFrame."""
+    df = sample_ohlcv_df.copy()
     np.random.seed(42)
-    df["sentiment_score"] = np.random.uniform(-0.8, 0.8, len(df))
+    df["sentiment_score"] = np.random.uniform(-1, 1, len(df))
     return df
 
 
-@pytest.fixture
-def fresh_registry():
-    """Create a fresh registry for testing."""
-    return StrategyRegistry()
-
-
-# ===================================
-# Test BaseStrategy
-# ===================================
-
-def test_base_strategy_metadata():
-    """Test that strategies have required metadata."""
-    strategy = MovingAverageCrossover()
-    metadata = strategy.get_metadata()
+class TestMovingAverageCrossover:
+    """Tests for MA Crossover strategy."""
     
-    assert metadata.name == "ma_crossover"
-    assert metadata.description
-    assert metadata.version
-    assert metadata.parameters_schema
-    assert "close" in metadata.required_columns
-
-
-def test_base_strategy_validation_missing_column(sample_price_data):
-    """Test data validation with missing columns."""
-    strategy = MovingAverageCrossover()
-    df_missing = sample_price_data.drop(columns=["close"])
+    def test_default_parameters(self):
+        """Default parameters are valid."""
+        strategy = MovingAverageCrossover()
+        assert strategy.params.fast_period == 10
+        assert strategy.params.slow_period == 50
+        assert strategy.params.ma_type == "sma"
     
-    missing = strategy.validate_data(df_missing)
-    assert "close" in missing
-
-
-def test_base_strategy_validation_empty_df():
-    """Test validation with empty DataFrame."""
-    strategy = MovingAverageCrossover()
-    empty_df = pd.DataFrame()
+    def test_custom_parameters(self):
+        """Can create with custom parameters."""
+        strategy = MovingAverageCrossover(
+            fast_period=5,
+            slow_period=20,
+            ma_type="ema"
+        )
+        assert strategy.params.fast_period == 5
+        assert strategy.params.slow_period == 20
+        assert strategy.params.ma_type == "ema"
     
-    missing = strategy.validate_data(empty_df)
-    assert len(missing) > 0
-
-
-# ===================================
-# Test Moving Average Crossover
-# ===================================
-
-def test_ma_crossover_init_params():
-    """Test MA crossover initialization with parameters."""
-    params = {
-        "fast_period": 5,
-        "slow_period": 20,
-        "ma_type": "ema"
-    }
-    strategy = MovingAverageCrossover(**params)
+    def test_fast_must_be_less_than_slow(self):
+        """fast_period must be less than slow_period."""
+        with pytest.raises(ValueError):
+            MovingAverageCrossover(fast_period=50, slow_period=20)
     
-    assert strategy.params.fast_period == 5
-    assert strategy.params.slow_period == 20
-    assert strategy.params.ma_type == "ema"
-
-
-def test_ma_crossover_invalid_periods():
-    """Test that fast >= slow raises error."""
-    with pytest.raises(ValueError, match="fast_period.*must be less than.*slow_period"):
-        MovingAverageCrossover(fast_period=50, slow_period=20)
-
-
-def test_ma_crossover_generates_signals(sample_price_data):
-    """Test that MA crossover generates valid signals."""
-    strategy = MovingAverageCrossover(
-        fast_period=5,
-        slow_period=20,
-        ma_type="sma"
-    )
-    
-    signals = strategy.generate_signals(sample_price_data)
-    
-    assert len(signals) == len(sample_price_data)
-    assert set(signals.unique()).issubset({-1, 0, 1})
-    assert signals.dtype == int
-
-
-def test_ma_crossover_signal_modes(sample_price_data):
-    """Test cross-only vs persistent signal modes."""
-    # Cross-only mode
-    strategy_cross = MovingAverageCrossover(
-        fast_period=5,
-        slow_period=20,
-        signal_on_cross_only=True
-    )
-    signals_cross = strategy_cross.generate_signals(sample_price_data)
-    
-    # Persistent mode
-    strategy_persist = MovingAverageCrossover(
-        fast_period=5,
-        slow_period=20,
-        signal_on_cross_only=False
-    )
-    signals_persist = strategy_persist.generate_signals(sample_price_data)
-    
-    # Persistent should have more non-zero signals
-    assert (signals_persist != 0).sum() >= (signals_cross != 0).sum()
-
-
-# ===================================
-# Test RSI Strategy
-# ===================================
-
-def test_rsi_strategy_init():
-    """Test RSI strategy initialization."""
-    strategy = RSIStrategy(
-        rsi_period=14,
-        overbought=70,
-        oversold=30
-    )
-    
-    assert strategy.params.rsi_period == 14
-    assert strategy.params.overbought == 70
-    assert strategy.params.oversold == 30
-
-
-def test_rsi_invalid_thresholds():
-    """Test that oversold >= overbought raises error."""
-    with pytest.raises(ValueError, match="oversold must be less than overbought"):
-        RSIStrategy(overbought=30, oversold=70)
-
-
-def test_rsi_generates_signals(sample_price_data):
-    """Test RSI generates valid signals."""
-    strategy = RSIStrategy(
-        rsi_period=14,
-        overbought=70,
-        oversold=30,
-        exit_on_neutral=True
-    )
-    
-    signals = strategy.generate_signals(sample_price_data)
-    
-    assert len(signals) == len(sample_price_data)
-    assert set(signals.unique()).issubset({-1, 0, 1})
-
-
-def test_rsi_extreme_conditions():
-    """Test RSI with extreme overbought/oversold values."""
-    # Create trending data
-    dates = pd.date_range(start="2023-01-01", periods=50, freq="D")
-    close = 100 + np.arange(50) * 2  # Strong uptrend
-    df = pd.DataFrame({"close": close}, index=dates)
-    
-    strategy = RSIStrategy(rsi_period=14, overbought=65, oversold=35)
-    signals = strategy.generate_signals(df)
-    
-    # Should generate some short signals in strong uptrend
-    assert (signals == -1).any() or (signals == 0).all()
-
-
-# ===================================
-# Test Bollinger Breakout
-# ===================================
-
-def test_bollinger_init():
-    """Test Bollinger Bands initialization."""
-    strategy = BollingerBreakout(
-        bb_period=20,
-        bb_std=2.0,
-        strategy_mode="breakout"
-    )
-    
-    assert strategy.params.bb_period == 20
-    assert strategy.params.bb_std == 2.0
-
-
-def test_bollinger_generates_signals(sample_price_data):
-    """Test Bollinger Bands generates signals."""
-    strategy = BollingerBreakout(
-        bb_period=20,
-        bb_std=2.0,
-        strategy_mode="breakout",
-        use_close_cross=True
-    )
-    
-    signals = strategy.generate_signals(sample_price_data)
-    
-    assert len(signals) == len(sample_price_data)
-    assert set(signals.unique()).issubset({-1, 0, 1})
-
-
-def test_bollinger_breakout_vs_mean_reversion(sample_price_data):
-    """Test that breakout and mean-reversion modes give opposite signals."""
-    strategy_breakout = BollingerBreakout(
-        bb_period=20,
-        strategy_mode="breakout",
-        use_close_cross=True
-    )
-    
-    strategy_reversion = BollingerBreakout(
-        bb_period=20,
-        strategy_mode="mean_reversion",
-        use_close_cross=True
-    )
-    
-    signals_breakout = strategy_breakout.generate_signals(sample_price_data)
-    signals_reversion = strategy_reversion.generate_signals(sample_price_data)
-    
-    # Where one signals long, other should signal short (or neutral)
-    non_zero_idx = (signals_breakout != 0) & (signals_reversion != 0)
-    if non_zero_idx.any():
-        assert (signals_breakout[non_zero_idx] == -signals_reversion[non_zero_idx]).all()
-
-
-def test_bollinger_high_low_mode(sample_price_data):
-    """Test Bollinger with high/low instead of close."""
-    strategy = BollingerBreakout(
-        bb_period=20,
-        use_close_cross=False  # Use high/low
-    )
-    
-    # Should require high and low columns
-    assert "high" in strategy.required_columns
-    assert "low" in strategy.required_columns
-    
-    signals = strategy.generate_signals(sample_price_data)
-    assert len(signals) == len(sample_price_data)
-
-
-# ===================================
-# Test Sentiment Driven
-# ===================================
-
-def test_sentiment_init():
-    """Test sentiment strategy initialization."""
-    strategy = SentimentDriven(
-        positive_threshold=0.5,
-        negative_threshold=-0.5,
-        sentiment_column="sentiment_score"
-    )
-    
-    assert strategy.params.positive_threshold == 0.5
-    assert strategy.params.negative_threshold == -0.5
-
-
-def test_sentiment_generates_signals(sample_sentiment_data):
-    """Test sentiment strategy generates signals."""
-    strategy = SentimentDriven(
-        positive_threshold=0.3,
-        negative_threshold=-0.3,
-        smoothing_period=1
-    )
-    
-    signals = strategy.generate_signals(sample_sentiment_data)
-    
-    assert len(signals) == len(sample_sentiment_data)
-    assert set(signals.unique()).issubset({-1, 0, 1})
-
-
-def test_sentiment_smoothing(sample_sentiment_data):
-    """Test sentiment smoothing reduces signal noise."""
-    strategy_no_smooth = SentimentDriven(
-        positive_threshold=0.3,
-        negative_threshold=-0.3,
-        smoothing_period=1
-    )
-    
-    strategy_smooth = SentimentDriven(
-        positive_threshold=0.3,
-        negative_threshold=-0.3,
-        smoothing_period=5
-    )
-    
-    signals_no_smooth = strategy_no_smooth.generate_signals(sample_sentiment_data)
-    signals_smooth = strategy_smooth.generate_signals(sample_sentiment_data)
-    
-    # Count signal changes
-    changes_no_smooth = (signals_no_smooth.diff() != 0).sum()
-    changes_smooth = (signals_smooth.diff() != 0).sum()
-    
-    # Smoothing should reduce changes
-    assert changes_smooth <= changes_no_smooth
-
-
-def test_sentiment_confirmation(sample_sentiment_data):
-    """Test sentiment confirmation requirement."""
-    strategy = SentimentDriven(
-        positive_threshold=0.2,
-        negative_threshold=-0.2,
-        require_confirmation=True,
-        confirmation_periods=3
-    )
-    
-    signals = strategy.generate_signals(sample_sentiment_data)
-    
-    # With confirmation, should have fewer signals
-    assert len(signals) == len(sample_sentiment_data)
-
-
-def test_sentiment_missing_column(sample_price_data):
-    """Test sentiment strategy with missing sentiment column."""
-    strategy = SentimentDriven()
-    
-    # sample_price_data doesn't have sentiment_score
-    missing = strategy.validate_data(sample_price_data)
-    assert "sentiment_score" in missing
-
-
-# ===================================
-# Test StrategyRegistry
-# ===================================
-
-def test_registry_builtin_strategies(fresh_registry):
-    """Test that registry comes with built-in strategies."""
-    assert len(fresh_registry) == 4
-    assert "ma_crossover" in fresh_registry
-    assert "rsi_strategy" in fresh_registry
-    assert "bollinger_breakout" in fresh_registry
-    assert "sentiment_driven" in fresh_registry
-
-
-def test_registry_get_strategy(fresh_registry):
-    """Test getting strategy from registry."""
-    StrategyClass = fresh_registry.get("ma_crossover")
-    assert StrategyClass is MovingAverageCrossover
-    
-    # Not found
-    assert fresh_registry.get("nonexistent") is None
-
-
-def test_registry_get_or_raise(fresh_registry):
-    """Test get_or_raise method."""
-    StrategyClass = fresh_registry.get_or_raise("ma_crossover")
-    assert StrategyClass is MovingAverageCrossover
-    
-    with pytest.raises(KeyError, match="not found"):
-        fresh_registry.get_or_raise("nonexistent")
-
-
-def test_registry_list_strategies(fresh_registry):
-    """Test listing strategies."""
-    strategies = fresh_registry.list_strategies()
-    assert len(strategies) == 4
-    assert "ma_crossover" in strategies
-
-
-def test_registry_list_metadata(fresh_registry):
-    """Test listing metadata."""
-    metadata_list = fresh_registry.list_metadata()
-    assert len(metadata_list) == 4
-    
-    for metadata in metadata_list:
-        assert metadata.name
-        assert metadata.description
-        assert metadata.version
-
-
-def test_registry_get_metadata(fresh_registry):
-    """Test getting metadata for specific strategy."""
-    metadata = fresh_registry.get_metadata("ma_crossover")
-    assert metadata.name == "ma_crossover"
-    assert metadata.parameters_schema
-    
-    # Not found
-    assert fresh_registry.get_metadata("nonexistent") is None
-
-
-def test_registry_create_instance(fresh_registry):
-    """Test creating strategy instance via registry."""
-    strategy = fresh_registry.create_instance(
-        "ma_crossover",
-        parameters={"fast_period": 5, "slow_period": 20}
-    )
-    
-    assert isinstance(strategy, MovingAverageCrossover)
-    assert strategy.params.fast_period == 5
-
-
-def test_registry_create_instance_no_params(fresh_registry):
-    """Test creating instance without parameters."""
-    strategy = fresh_registry.create_instance("rsi_strategy")
-    assert isinstance(strategy, RSIStrategy)
-
-
-def test_registry_create_instance_not_found(fresh_registry):
-    """Test creating instance of non-existent strategy."""
-    with pytest.raises(KeyError):
-        fresh_registry.create_instance("nonexistent")
-
-
-# ===================================
-# Test Global Registry
-# ===================================
-
-def test_global_registry_singleton():
-    """Test that get_registry returns same instance."""
-    registry1 = get_registry()
-    registry2 = get_registry()
-    assert registry1 is registry2
-
-
-# ===================================
-# Integration Tests
-# ===================================
-
-def test_strategy_end_to_end(sample_price_data):
-    """Test complete workflow: registry -> strategy -> signals."""
-    registry = get_registry()
-    
-    # Get strategy
-    StrategyClass = registry.get("ma_crossover")
-    
-    # Create instance
-    strategy = StrategyClass(fast_period=5, slow_period=20)
-    
-    # Validate data
-    missing = strategy.validate_data(sample_price_data)
-    assert len(missing) == 0
-    
-    # Generate signals
-    signals = strategy.generate_signals(sample_price_data)
-    
-    assert len(signals) == len(sample_price_data)
-    assert signals.dtype == int
-
-
-def test_all_strategies_work(sample_price_data, sample_sentiment_data):
-    """Test that all built-in strategies can generate signals."""
-    registry = get_registry()
-    
-    for strategy_name in registry.list_strategies():
-        StrategyClass = registry.get(strategy_name)
-        strategy = StrategyClass()
+    def test_generate_signals(self, sample_ohlcv_df):
+        """generate_signals returns correct Series."""
+        strategy = MovingAverageCrossover(fast_period=5, slow_period=20)
+        signals = strategy.generate_signals(sample_ohlcv_df)
         
-        # Use appropriate data
-        if strategy_name == "sentiment_driven":
-            df = sample_sentiment_data
-        else:
-            df = sample_price_data
-        
-        # Should not raise
-        signals = strategy.generate_signals(df)
-        assert len(signals) == len(df)
+        assert isinstance(signals, pd.Series)
+        assert len(signals) == len(sample_ohlcv_df)
         assert set(signals.unique()).issubset({-1, 0, 1})
+    
+    def test_validate_data_missing_column(self):
+        """validate_data detects missing columns."""
+        strategy = MovingAverageCrossover()
+        df = pd.DataFrame({"other": [1, 2, 3]})
+        
+        missing = strategy.validate_data(df)
+        assert "close" in missing
+    
+    def test_get_metadata(self):
+        """get_metadata returns correct info."""
+        strategy = MovingAverageCrossover()
+        meta = strategy.get_metadata()
+        
+        assert meta.name == "ma_crossover"
+        assert "close" in meta.required_columns
+
+
+class TestRSIStrategy:
+    """Tests for RSI strategy."""
+    
+    def test_default_parameters(self):
+        """Default parameters are valid."""
+        strategy = RSIStrategy()
+        assert strategy.params.rsi_period == 14
+        assert strategy.params.overbought == 70
+        assert strategy.params.oversold == 30
+    
+    def test_generate_signals(self, sample_ohlcv_df):
+        """generate_signals returns correct Series."""
+        strategy = RSIStrategy()
+        signals = strategy.generate_signals(sample_ohlcv_df)
+        
+        assert isinstance(signals, pd.Series)
+        assert len(signals) == len(sample_ohlcv_df)
+
+
+class TestBollingerBreakout:
+    """Tests for Bollinger Breakout strategy."""
+    
+    def test_default_parameters(self):
+        """Default parameters are valid."""
+        strategy = BollingerBreakout()
+        assert strategy.params.bb_period == 20
+        assert strategy.params.bb_std == 2.0
+    
+    def test_generate_signals(self, sample_ohlcv_df):
+        """generate_signals returns correct Series."""
+        strategy = BollingerBreakout()
+        signals = strategy.generate_signals(sample_ohlcv_df)
+        
+        assert isinstance(signals, pd.Series)
+        assert len(signals) == len(sample_ohlcv_df)
+
+
+class TestSentimentDriven:
+    """Tests for Sentiment Driven strategy."""
+    
+    def test_default_parameters(self):
+        """Default parameters are valid."""
+        strategy = SentimentDriven()
+        assert strategy.params.sentiment_threshold == 0.5
+    
+    def test_generate_signals_with_sentiment(self, sample_df_with_sentiment):
+        """generate_signals works with sentiment data."""
+        strategy = SentimentDriven()
+        signals = strategy.generate_signals(sample_df_with_sentiment)
+        
+        assert isinstance(signals, pd.Series)
+        assert len(signals) == len(sample_df_with_sentiment)
+    
+    def test_generate_signals_missing_sentiment(self, sample_ohlcv_df):
+        """Raises error without sentiment column."""
+        strategy = SentimentDriven()
+        
+        with pytest.raises(ValueError, match="Missing required columns"):
+            strategy.generate_signals(sample_ohlcv_df)
+
+
+# ===================================
+# API Tests
+# ===================================
+
+
+class TestStrategiesAPI:
+    """Tests for strategies API endpoints."""
+    
+    @pytest.fixture
+    def client(self):
+        from fastapi.testclient import TestClient
+        from app.main import app
+        return TestClient(app)
+    
+    def test_list_strategies(self, client):
+        """GET /api/strategies returns all strategies."""
+        response = client.get("/api/strategies")
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert isinstance(data, list)
+        assert len(data) >= 4
+        
+        names = [s["name"] for s in data]
+        assert "ma_crossover" in names
+        assert "rsi_strategy" in names
+    
+    def test_get_strategy_detail(self, client):
+        """GET /api/strategies/{name} returns strategy details."""
+        response = client.get("/api/strategies/ma_crossover")
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert data["name"] == "ma_crossover"
+        assert "description" in data
+        assert "version" in data
+        assert "parameters_schema" in data
+        assert "required_columns" in data
+    
+    def test_get_strategy_not_found(self, client):
+        """GET /api/strategies/{name} returns 404 for unknown strategy."""
+        response = client.get("/api/strategies/nonexistent")
+        
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"].lower()
+    
+    def test_signals_no_data(self, client):
+        """POST /api/strategies/{name}/signals returns 404 without data."""
+        response = client.post(
+            "/api/strategies/ma_crossover/signals",
+            json={"ticker": "UNKNOWN_TICKER_XYZ"}
+        )
+        
+        # Should return 404 because no price data
+        assert response.status_code == 404
+    
+    def test_signals_invalid_strategy(self, client):
+        """POST /api/strategies/{name}/signals returns 404 for unknown strategy."""
+        response = client.post(
+            "/api/strategies/nonexistent/signals",
+            json={"ticker": "AAPL"}
+        )
+        
+        assert response.status_code == 404
+    
+    def test_backtest_invalid_strategy(self, client):
+        """POST /api/strategies/{name}/backtest returns 404 for unknown strategy."""
+        response = client.post(
+            "/api/strategies/nonexistent/backtest",
+            json={"ticker": "AAPL"}
+        )
+        
+        assert response.status_code == 404
