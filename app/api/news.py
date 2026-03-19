@@ -5,8 +5,6 @@ Provides endpoints for news articles, sentiment analysis,
 and related features.
 """
 
-from datetime import date
-
 from fastapi import APIRouter, Query, HTTPException
 
 from app.services.news_service import (
