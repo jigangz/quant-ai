@@ -260,7 +260,7 @@ class TestSentimentDriven:
     def test_default_parameters(self):
         """Default parameters are valid."""
         strategy = SentimentDriven()
-        assert strategy.params.sentiment_threshold == 0.5
+        assert strategy.params.positive_threshold == 0.3
     
     def test_generate_signals_with_sentiment(self, sample_df_with_sentiment):
         """generate_signals works with sentiment data."""
