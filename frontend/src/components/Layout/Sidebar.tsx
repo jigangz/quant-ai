@@ -8,12 +8,16 @@ import {
   ChevronLeft,
   ChevronRight,
   Activity,
+  Sparkles,
+  Wallet,
 } from 'lucide-react';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/prediction', label: 'Prediction', icon: TrendingUp },
   { path: '/backtest', label: 'Backtest', icon: FlaskConical },
+  { path: '/strategy', label: 'Strategy', icon: Sparkles },
+  { path: '/trading', label: 'Trading', icon: Wallet },
   { path: '/models', label: 'Models', icon: Cpu },
 ];
 

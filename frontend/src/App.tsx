@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard';
 import Prediction from './pages/Prediction';
 import Backtest from './pages/Backtest';
 import Models from './pages/Models';
+import Strategy from './pages/Strategy';
+import Trading from './pages/Trading';
 
 export default function App() {
   const [ticker, setTicker] = useState('AAPL');
@@ -31,6 +33,8 @@ export default function App() {
             <Route path="/prediction" element={<Prediction ticker={ticker} />} />
             <Route path="/backtest" element={<Backtest ticker={ticker} />} />
             <Route path="/models" element={<Models />} />
+            <Route path="/strategy" element={<Strategy ticker={ticker} />} />
+            <Route path="/trading" element={<Trading ticker={ticker} />} />
           </Routes>
         </main>
       </div>
