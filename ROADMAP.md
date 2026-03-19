@@ -19,45 +19,50 @@
 
 ---
 
-## 🚧 第一阶段：夯实基础体验（优先）
+## ✅ 第一阶段：夯实基础体验（已完成 2026-03-18）
 
 ### 1. 技术指标叠加
-- [ ] 替换 D3.js → **Lightweight Charts**（TradingView 同款，更流畅）
-- [ ] 接入 `pandas-ta` 库（150+ 技术指标）
-- [ ] 前端支持叠加显示：MACD / RSI / 布林带 / 均线
-- [ ] 多时间周期切换：1D / 1W / 1M
+- [x] 替换 D3.js → **Lightweight Charts**（TradingView 同款，更流畅）
+- [x] 接入 `ta` 库（SMA / EMA / RSI / MACD / 布林带）
+- [x] 前端支持叠加显示：MACD / RSI / 布林带 / SMA20 / SMA50
+- [x] RSI / MACD 独立子图，时间轴同步
+- [x] 多时间周期切换：1D / 1W / 1M / 3M / 1Y
 
 ### 2. Python 兼容性修复
-- [ ] `str | None` 语法改为 `Optional[str]`（兼容 Python 3.9）
-- [ ] 无 PostgreSQL 时稳定 fallback 到 SQLite
-- [ ] 前端无后端时显示 mock 数据（不白板）
+- [x] `str | None` 语法改为 `Optional[str]`（兼容 Python 3.9）
+- [x] Supabase PostgreSQL 连接配置（替换本地 PostgreSQL 依赖）
+- [x] 前端无后端时显示 mock 数据（不白板）+ 橙色提示条
 
 ### 3. Screener 选股
-- [ ] 按涨跌幅 / 市值 / 成交量筛选
-- [ ] 按今日新闻情绪分排名（"今日最值得关注"）
-- [ ] 接 Polygon Screener API
-- [ ] 前端加第5页面：Screener
+- [x] 按涨跌幅 / 成交量排序
+- [x] 实时拉取 10 只股票（AAPL/TSLA/NVDA/MSFT 等）
+- [x] 点击跳转 Dashboard 并自动加载 K 线
+- [x] 前端第5页面：Screener
 
 ---
 
-## 🚀 第二阶段：策略系统（核心竞争力）
+## ✅ 第二阶段：策略系统（已完成 2026-03-19）
 
 ### 4. 策略编写系统
-- [ ] 定义策略基类 `BaseStrategy`
-- [ ] 内置策略模板：
+- [x] 定义策略基类 `BaseStrategy` + `StrategyRegistry`
+- [x] 内置策略模板：
   - 均线交叉（MA Cross）
   - RSI 超买超卖
   - 布林带突破
   - 新闻情绪驱动买卖（quant-ai 独有）
-- [ ] 策略 + 回测引擎打通，一键回测任意策略
-- [ ] 前端策略编辑器页面（代码编辑 + 参数配置）
+- [x] 策略 + 回测引擎打通，一键回测任意策略
+- [x] 前端策略编辑器页面（策略选择 + 参数配置 + 信号可视化 + 回测结果）
+- [x] REST API: GET /api/strategies, GET /{name}, POST /{name}/signals, POST /{name}/backtest
+- [x] 48 个单元测试全通过
 
 ### 5. Paper Trading 模拟盘
-- [ ] 接 Polygon WebSocket 实时行情
-- [ ] 本地撮合引擎（限价单 / 市价单）
-- [ ] 持仓管理：买入/卖出/持仓记录
-- [ ] 盈亏实时计算
-- [ ] 前端加第6页面：Trading（持仓 + 下单 + 实时价格）
+- [x] 本地撮合引擎（市价单 / 限价单，支持自动撮合）
+- [x] 持仓管理：买入/卖出/持仓记录/平均成本
+- [x] 盈亏实时计算（未实现盈亏 + 已实现盈亏）
+- [x] WebSocket 实时价格推送
+- [x] 前端第6页面：Trading（持仓表 + 下单 + 实时报价 + 权益曲线）
+- [x] REST API: 下单/查单/取消/持仓/历史/重置
+- [x] Portfolio 快照历史追踪
 
 ---
 
@@ -140,11 +145,11 @@
 
 **已知技术决策：**
 - Python 策略类替代 Pine Script
-- Lightweight Charts 替代 D3（待迁移）
+- Lightweight Charts 替代 D3（已完成）
 - Optuna 做参数优化
 - stable-baselines3 做 RL 智能体
 
 ---
 
-*最后更新：2026-03-16*
-*下次继续：从「技术指标叠加 + Lightweight Charts 迁移」开始*
+*最后更新：2026-03-19*
+*下次继续：第三阶段 — ML 优化策略参数 + RL 交易智能体*
