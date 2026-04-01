@@ -63,6 +63,26 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_MINUTE: int = 60
     REQUEST_TIMEOUT_SECONDS: int = 300
 
+    # ===== Redis =====
+    REDIS_URL: str = "redis://localhost:6379/0"
+
+    # ===== Infrastructure Backends =====
+    BROKER_BACKEND: Literal["kafka", "redis", "memory"] = "redis"
+    QUEUE_BACKEND: Literal["sqs", "redis", "memory"] = "redis"
+    NOTIFY_BACKEND: Literal["sns", "redis", "memory"] = "redis"
+    FUNCTIONS_BACKEND: Literal["lambda", "local"] = "local"
+
+    # ===== Kafka (when BROKER_BACKEND=kafka) =====
+    KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
+    KAFKA_SASL_USERNAME: str | None = None  # For Upstash / Confluent Cloud / MSK
+    KAFKA_SASL_PASSWORD: str | None = None
+
+    # ===== AWS (when using SQS/SNS/Lambda) =====
+    AWS_REGION: str = "us-east-1"
+    SQS_ENDPOINT_URL: str | None = None  # http://localhost:4566 for LocalStack
+    SNS_ENDPOINT_URL: str | None = None  # http://localhost:4566 for LocalStack
+    LAMBDA_ENDPOINT_URL: str | None = None  # http://localhost:3001 for SAM CLI
+
     # ===== Logging =====
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     LOG_FORMAT: Literal["json", "text"] = "text"
@@ -123,6 +143,10 @@ class Settings(BaseSettings):
             "llm_provider": self.LLM_PROVIDER,
             "supabase_configured": self.is_supabase_configured,
             "s3_configured": self.is_s3_configured,
+            "broker_backend": self.BROKER_BACKEND,
+            "queue_backend": self.QUEUE_BACKEND,
+            "notify_backend": self.NOTIFY_BACKEND,
+            "functions_backend": self.FUNCTIONS_BACKEND,
         }
 
 
