@@ -68,8 +68,36 @@
 
 ## ☁️ 第 2.5 阶段：云原生基础设施
 
-> 将单体架构升级为 AWS 云原生架构，引入消息队列、事件驱动和容器编排。
-> 开发阶段全部本地 Docker 运行，零云端费用。
+> 引入消息队列、事件驱动计算，提升系统可靠性和可扩展性。
+> 所有服务通过抽象接口访问，env var 切换后端，业务代码零改动。
+
+### 部署架构
+
+```
+┌─────────────────────────┐    ┌──────────────────────────────┐
+│      Render (免费)       │    │     外接服务 (免费层)          │
+│                         │    │                              │
+│  ├── API Service        │───→│  ├── Upstash Kafka           │
+│  │   (FastAPI)          │    │  │   (10,000 msg/天免费)      │
+│  │                      │    │  │                            │
+│  ├── Worker Service     │───→│  ├── AWS SQS                 │
+│  │   (训练/回测)         │    │  │   (100万请求/月免费)        │
+│  │                      │    │  │                            │
+│  ├── Redis (25MB)       │    │  ├── AWS SNS                 │
+│  │   (缓存/限流)         │    │  │   (100万推送/月免费)        │
+│  │                      │    │  │                            │
+│  └── Frontend           │    │  └── AWS Lambda              │
+│      (React 静态站)      │    │      (100万次/月免费)         │
+└─────────────────────────┘    └──────────────────────────────┘
+```
+
+> **成本：$0/月** — Render 免费 plan + AWS Free Tier + Upstash 免费层
+
+### 已完成
+
+- [x] 基础设施抽象层 `app/infra/`（broker / queue / notify / functions）
+- [x] 每个接口 3 种后端实现（云服务 / Redis / In-Memory）
+- [x] Settings 配置 + `.env.example` 文档
 
 ### 6. Redis 升级 — 从任务队列到全功能缓存层
 - [ ] 行情缓存：热门股票最新价格 Redis Hash（TTL 5s），减少 Polygon API 调用
@@ -77,6 +105,7 @@
 - [ ] 分布式限流：`rate_limit.py` 改用 Redis 滑动窗口计数（替代内存计数）
 - [ ] Pub/Sub 价格推送：WebSocket 服务订阅 Redis channel，支持多实例广播
 - [ ] 模型 Artifact 缓存：预测时缓存已加载模型，避免重复从磁盘/S3 读取
+- **部署：** Render 内置 Redis（25MB，免费）
 
 ### 7. SQS + SNS — 可靠消息队列 + 通知扇出
 - [ ] **SQS 替代 RQ：** 训练任务 → SQS 队列 → Worker 消费
@@ -86,14 +115,16 @@
   - Alert topic：价格/指标/情绪预警 → 同时推送 Email + Discord + WebSocket
   - Training topic：训练完成 → 通知用户 + 触发模型评估
   - Signal topic：策略信号 → Paper Trading 引擎 + 日志记录
-- [ ] **本地开发：** 使用 LocalStack 或 ElasticMQ 模拟 SQS/SNS
+- **部署：** AWS Free Tier（SQS 100万/月 + SNS 100万/月）
+- **本地开发：** LocalStack 模拟
 
 ### 8. Lambda — 无服务器事件处理
 - [ ] 新闻情绪分析：每条新闻触发 Lambda 调用 Claude Haiku 打分（天然并行）
 - [ ] Alert 触发器：价格/指标阈值突破 → Lambda 计算 → 发布到 SNS
 - [ ] 定时数据拉取：EventBridge 定时调度 → Lambda 拉取 Polygon 行情/新闻
 - [ ] SHAP 解释按需生成：API 请求 → Lambda 计算 SHAP 值 → 返回结果
-- [ ] **本地开发：** SAM CLI (`sam local invoke`) 本地测试
+- **部署：** AWS Free Tier（100万次/月 + 40万 GB-秒/月）
+- **本地开发：** SAM CLI (`sam local invoke`)
 
 ### 9. Kafka — 实时数据管道
 - [ ] **行情流：** Polygon WebSocket → Kafka topic `market.prices` → 多消费者
@@ -101,19 +132,18 @@
 - [ ] **策略信号流：** 策略引擎订阅 prices → 产生信号写入 `signals.generated`
 - [ ] **回测回放：** Kafka 支持 offset 重置，可回放历史数据做回测验证
 - [ ] Schema Registry（Avro/Protobuf）保证消息格式一致性
-- [ ] **本地开发：** Docker Compose 运行 Kafka + Zookeeper（或 KRaft 模式）
+- **部署：** Upstash Kafka Serverless（免费层 10,000 条/天）
+- **本地开发：** Docker Compose 运行 Kafka（KRaft 模式，无 Zookeeper）
 
-### 10. EKS — 容器编排 + 微服务部署
-- [ ] **服务拆分：**
-  - `api-service` — FastAPI 主 API（HPA 自动扩缩）
-  - `worker-service` — 训练/回测 Worker（CPU 密集，独立扩缩）
-  - `streaming-service` — Kafka 消费者 + WebSocket 推送
-  - `frontend` — React 静态资源（Nginx）
+### 10. EKS / K8s（搁置，按需启用）
+> 当前 Render 满足部署需求，EKS 作为未来扩展方案保留。
+> 代码层已通过 Docker 容器化支持，随时可迁移到 K8s。
 - [ ] Kubernetes manifests（Deployment / Service / ConfigMap / Secret）
-- [ ] Helm Chart 一键部署整个技术栈
-- [ ] HPA 自动扩缩：根据 CPU/内存/队列深度弹性伸缩 Worker
-- [ ] Ingress Controller（ALB Ingress）统一入口 + TLS
-- [ ] **本地开发：** minikube 或 kind 运行本地 K8s 集群
+- [ ] Helm Chart 一键部署
+- [ ] HPA 自动扩缩
+- [ ] Ingress Controller + TLS
+- **备选方案：** Oracle Cloud OKE（永久免费 K8s）、GKE Autopilot
+- **状态：** 🔒 搁置 — Render 够用时不启动，需要时再迁移
 
 ---
 
@@ -152,7 +182,7 @@
 - [ ] 美股期权（基础支持）
 
 ### 16. Alert 预警系统
-- [ ] 价格突破提醒（通过 SNS 分发）
+- [ ] 价格突破提醒（通过 SNS 分发，第 2.5 阶段基础设施）
 - [ ] 技术指标触发提醒（RSI 超买/超卖）
 - [ ] 情绪异常预警（单日新闻情绪突变）
 - [ ] 多渠道推送：Discord / Email / 前端通知
@@ -173,12 +203,12 @@
 ## 🔧 技术债务 & 工程优化
 
 - [ ] 完整单元测试（pytest，覆盖率 > 80%）
-- [ ] Docker Compose 一键启动文档（含全套基础设施）
+- [ ] Docker Compose 一键启动文档（含 Kafka + LocalStack）
 - [ ] CI/CD GitHub Actions（push 自动测试 + lint）
 - [ ] API 文档完善（OpenAPI examples）
 - [ ] 前端 E2E 测试（Playwright）
 - [ ] 性能优化：大量历史数据的查询缓存
-- [ ] Terraform / CDK 基础设施即代码（IaC）
+- [ ] Terraform / CDK 基础设施即代码（AWS 资源管理）
 - [ ] 监控 & 可观测性（Prometheus + Grafana / CloudWatch）
 - [ ] 日志聚合（ELK / CloudWatch Logs）
 
@@ -187,48 +217,49 @@
 ## 🏗️ 架构演进
 
 ```
-当前 (v2):
-  Client → FastAPI → PostgreSQL
-                   → Redis (RQ)
-                   → WebSocket (mock prices)
+Phase 1-2 (当前):
+  Client → Render (FastAPI) → SQLite/Supabase
+                             → Redis (RQ 任务队列)
+                             → WebSocket (mock 价格)
 
-目标 (v2.5+):
-  Client → ALB/Ingress
-              ↓
-         ┌─────────┐     ┌─────────┐
-         │ API Pod │────→│  Redis  │ (缓存/限流/Pub-Sub)
-         └────┬────┘     └─────────┘
+Phase 2.5 (目标):
+  Client → Render
               │
          ┌────┴────┐
-         │  Kafka  │ (实时行情/新闻/信号流)
+         │ API Pod │────→ Render Redis (缓存/限流/Pub-Sub)
          └────┬────┘
+              │
+         ┌────┴────────┐
+         │ Upstash     │ (实时行情/新闻/信号流)
+         │ Kafka       │
+         └────┬────────┘
               │
     ┌─────────┼─────────┐
     ↓         ↓         ↓
 ┌───────┐ ┌───────┐ ┌────────┐
+│Render │ │AWS    │ │Render  │
 │Worker │ │Lambda │ │Stream  │
 │(SQS)  │ │(事件) │ │Service │
 └───────┘ └───┬───┘ └────────┘
               ↓
          ┌────────┐
-         │  SNS   │ → Email / Discord / WebSocket
+         │AWS SNS │ → Email / Discord / WebSocket
          └────────┘
 ```
 
 ---
 
-## 💰 开发成本
+## 💰 月度成本
 
-| 服务 | 本地开发 | AWS 免费层 | 超出后 |
-|------|---------|-----------|--------|
-| Redis | Docker ✅ 免费 | — | ElastiCache ~$13/月 |
-| SQS | LocalStack ✅ 免费 | 100万请求/月 | 几乎用不完 |
-| SNS | LocalStack ✅ 免费 | 100万推送/月 | 几乎用不完 |
-| Lambda | SAM CLI ✅ 免费 | 100万次/月 | 个人项目够用 |
-| Kafka | Docker ✅ 免费 | — | MSK ~$150/月 |
-| EKS | minikube ✅ 免费 | — | 控制面 $73/月 + EC2 |
-
-> **策略：本地 Docker 全套开发，Portfolio 展示架构设计和代码实现。生产部署方案作为文档存在即可。**
+| 服务 | 提供商 | 免费额度 | 预估费用 |
+|------|--------|---------|---------|
+| API + Worker + Frontend | Render | Free plan | $0 |
+| Redis (25MB) | Render | 内置免费 | $0 |
+| Kafka | Upstash | 10,000 msg/天 | $0 |
+| SQS | AWS | 100万请求/月 | $0 |
+| SNS | AWS | 100万推送/月 | $0 |
+| Lambda | AWS | 100万次/月 | $0 |
+| **总计** | | | **$0/月** |
 
 ---
 
@@ -236,17 +267,20 @@
 
 **项目地址：** https://github.com/jigangz/quant-ai
 **主分支：** main
-**技术栈：** Python (FastAPI) + React + PostgreSQL + Redis + Kafka + AWS (Lambda/SQS/SNS/EKS)
+**部署：** Render (API/Worker/Frontend/Redis) + Upstash Kafka + AWS Free Tier (SQS/SNS/Lambda)
+**技术栈：** Python (FastAPI) + React + PostgreSQL/SQLite + Redis + Kafka + AWS
 
 **已知技术决策：**
 - Python 策略类替代 Pine Script
 - Lightweight Charts 替代 D3（已完成）
 - Optuna 做参数优化
 - stable-baselines3 做 RL 智能体
+- Render 做主要部署平台（免费）
+- Upstash Kafka 替代 AWS MSK（免费 Serverless）
 - LocalStack 模拟 AWS 服务（本地开发）
-- minikube 模拟 EKS（本地开发）
+- EKS 搁置，Render 够用时不迁移
 
 ---
 
 *最后更新：2026-04-01*
-*下次继续：第 2.5 阶段 — Redis 升级 → SQS+SNS → Lambda → Kafka → EKS*
+*下次继续：第 2.5 阶段 — Redis 升级 → SQS+SNS → Lambda → Kafka*
