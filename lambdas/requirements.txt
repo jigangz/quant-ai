@@ -1,0 +1,12 @@
+# Shared dependencies for quant-ai Lambda functions
+anthropic>=0.40.0
+httpx>=0.27.0
+yfinance>=0.2.30
+numpy>=1.26.0
+pandas>=2.1.0
+joblib>=1.3.0
+shap>=0.44.0
+scikit-learn>=1.3.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+redis>=5.0.0

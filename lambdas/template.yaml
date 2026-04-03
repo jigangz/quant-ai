@@ -1,0 +1,135 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Quant AI — Serverless Functions (Phase 2.5 Step 8)
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 60
+    MemorySize: 256
+    Environment:
+      Variables:
+        ENV: prod
+        FUNCTIONS_BACKEND: local
+        NOTIFY_BACKEND: sns
+        REDIS_URL: !Ref RedisUrl
+
+Parameters:
+  RedisUrl:
+    Type: String
+    Default: redis://localhost:6379/0
+    Description: Redis connection URL
+  AnthropicApiKey:
+    Type: String
+    Default: ""
+    Description: Anthropic API key for Claude Haiku sentiment analysis
+    NoEcho: true
+  PolygonApiKey:
+    Type: String
+    Default: ""
+    Description: Polygon.io API key for market data
+    NoEcho: true
+
+Resources:
+  # ====================================
+  # Shared Lambda Layer
+  # ====================================
+  SharedDependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: quant-ai-shared-deps
+      Description: Shared Python dependencies for quant-ai functions
+      ContentUri: .
+      CompatibleRuntimes:
+        - python3.12
+
+  # ====================================
+  # Sentiment Analyzer
+  # ====================================
+  SentimentAnalyzerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: quant-ai-sentiment-analyzer
+      Handler: sentiment/handler.lambda_handler
+      CodeUri: .
+      Description: Analyze news text sentiment using Claude Haiku or keyword fallback
+      MemorySize: 256
+      Timeout: 30
+      Environment:
+        Variables:
+          ANTHROPIC_API_KEY: !Ref AnthropicApiKey
+      Layers:
+        - !Ref SharedDependenciesLayer
+
+  # ====================================
+  # Alert Trigger
+  # ====================================
+  AlertTriggerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: quant-ai-alert-trigger
+      Handler: alerts/handler.lambda_handler
+      CodeUri: .
+      Description: Evaluate price data against alert rules and publish notifications
+      MemorySize: 256
+      Timeout: 30
+      Environment:
+        Variables:
+          SNS_ENDPOINT_URL: ""
+      Layers:
+        - !Ref SharedDependenciesLayer
+
+  # ====================================
+  # Data Fetcher (Scheduled)
+  # ====================================
+  DataFetcherFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: quant-ai-data-fetcher
+      Handler: data-fetcher/handler.lambda_handler
+      CodeUri: .
+      Description: Fetch latest market data and cache prices
+      MemorySize: 512
+      Timeout: 120
+      Environment:
+        Variables:
+          POLYGON_API_KEY: !Ref PolygonApiKey
+      Layers:
+        - !Ref SharedDependenciesLayer
+      Events:
+        MarketHoursSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(30 minutes)
+            Description: Fetch market data every 30 min during market hours
+            Enabled: true
+            Input: '{"symbols": ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]}'
+
+  # ====================================
+  # SHAP Explainer
+  # ====================================
+  ShapGeneratorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: quant-ai-shap-generator
+      Handler: shap/handler.lambda_handler
+      CodeUri: .
+      Description: Generate SHAP model explanations
+      MemorySize: 1024
+      Timeout: 120
+      Layers:
+        - !Ref SharedDependenciesLayer
+
+Outputs:
+  SentimentAnalyzerArn:
+    Description: Sentiment Analyzer Lambda ARN
+    Value: !GetAtt SentimentAnalyzerFunction.Arn
+  AlertTriggerArn:
+    Description: Alert Trigger Lambda ARN
+    Value: !GetAtt AlertTriggerFunction.Arn
+  DataFetcherArn:
+    Description: Data Fetcher Lambda ARN
+    Value: !GetAtt DataFetcherFunction.Arn
+  ShapGeneratorArn:
+    Description: SHAP Generator Lambda ARN
+    Value: !GetAtt ShapGeneratorFunction.Arn

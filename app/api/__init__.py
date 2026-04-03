@@ -13,6 +13,7 @@ from app.api import (
     runs,
     news,
     trading,
+    functions,
 )
 
 __all__ = [
@@ -30,4 +31,5 @@ __all__ = [
     "runs",
     "news",
     "trading",
+    "functions",
 ]

@@ -27,6 +27,7 @@ from app.api import (
     news,
     strategies,
     trading,
+    functions,
 )
 
 # ===================================
@@ -53,6 +54,9 @@ async def lifespan(app: FastAPI):
             }
         },
     )
+    # Register serverless functions
+    from app.functions import register_all_functions
+    register_all_functions()
     yield
     # Shutdown
     logger.info("Shutting down Quant AI Backend")
@@ -140,6 +144,7 @@ app.include_router(agents.router, tags=["Agents"])
 app.include_router(rag.router, tags=["RAG"])
 app.include_router(news.router, tags=["News Data"])
 app.include_router(trading.router, tags=["Paper Trading"])
+app.include_router(functions.router, tags=["Functions"])
 
 
 # ===================================
