@@ -42,57 +42,32 @@ sys.modules.setdefault("app.core.settings", _mock_settings_module)
 class TestQueueFactory:
     """Test get_queue() returns the correct backend."""
 
-    def test_memory_backend(self):
-        from app.infra.queue import InMemoryQueue, _queue_instance
+    def _reset_and_get(self, backend: str):
         import app.infra.queue as queue_mod
-
-        # Reset singleton
         queue_mod._queue_instance = None
-        _mock_settings.QUEUE_BACKEND = "memory"
+        with patch.object(queue_mod, "settings") as mock_s:
+            mock_s.QUEUE_BACKEND = backend
+            return queue_mod.get_queue()
 
-        queue = queue_mod.get_queue()
-        assert isinstance(queue, InMemoryQueue)
-
-        # Cleanup
-        queue_mod._queue_instance = None
+    def test_memory_backend(self):
+        from app.infra.queue import InMemoryQueue
+        assert isinstance(self._reset_and_get("memory"), InMemoryQueue)
 
     def test_sqs_backend(self):
         from app.infra.queue import SQSQueue
-        import app.infra.queue as queue_mod
-
-        queue_mod._queue_instance = None
-        _mock_settings.QUEUE_BACKEND = "sqs"
-
-        queue = queue_mod.get_queue()
-        assert isinstance(queue, SQSQueue)
-
-        queue_mod._queue_instance = None
-        _mock_settings.QUEUE_BACKEND = "memory"
+        assert isinstance(self._reset_and_get("sqs"), SQSQueue)
 
     def test_redis_backend(self):
         from app.infra.queue import RedisQueue
-        import app.infra.queue as queue_mod
-
-        queue_mod._queue_instance = None
-        _mock_settings.QUEUE_BACKEND = "redis"
-
-        queue = queue_mod.get_queue()
-        assert isinstance(queue, RedisQueue)
-
-        queue_mod._queue_instance = None
-        _mock_settings.QUEUE_BACKEND = "memory"
+        assert isinstance(self._reset_and_get("redis"), RedisQueue)
 
     def test_unknown_backend_raises(self):
         import app.infra.queue as queue_mod
-
         queue_mod._queue_instance = None
-        _mock_settings.QUEUE_BACKEND = "unknown"
-
-        with pytest.raises(ValueError, match="Unknown queue backend"):
-            queue_mod.get_queue()
-
-        queue_mod._queue_instance = None
-        _mock_settings.QUEUE_BACKEND = "memory"
+        with patch.object(queue_mod, "settings") as mock_s:
+            mock_s.QUEUE_BACKEND = "unknown"
+            with pytest.raises(ValueError, match="Unknown queue backend"):
+                queue_mod.get_queue()
 
 
 # ---------------------------------------------------------------------------

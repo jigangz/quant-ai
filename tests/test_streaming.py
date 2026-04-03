@@ -545,16 +545,17 @@ class TestStreamingService:
         import app.infra.broker as broker_mod
 
         broker_mod._broker_instance = None
-        _mock_settings.BROKER_BACKEND = "memory"
 
-        from app.streaming.service import StreamingService
+        with patch.object(broker_mod, "settings") as mock_s:
+            mock_s.BROKER_BACKEND = "memory"
+            from app.streaming.service import StreamingService
 
-        service = StreamingService()
-        await service.start()
-        assert service._running is True
-        assert len(service._components) == 5
+            service = StreamingService()
+            await service.start()
+            assert service._running is True
+            assert len(service._components) == 5
 
-        await service.stop()
-        assert service._running is False
+            await service.stop()
+            assert service._running is False
 
         broker_mod._broker_instance = None
