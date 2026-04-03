@@ -34,3 +34,6 @@ redis[hiredis]>=5.0
 
 # Optional: Job Queue (for async training)
 # rq>=1.15
+
+# AWS (SQS/SNS via LocalStack or real AWS)
+aioboto3>=12.0

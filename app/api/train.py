@@ -6,8 +6,14 @@ Supports two modes:
 2. Sync: Set async=false → wait for result → return model
 
 Use async=false for quick tests, async=true for production.
+
+Queue backend is configurable via QUEUE_BACKEND env var:
+- "sqs"    → AWS SQS (or LocalStack)
+- "redis"  → existing RQ setup (default)
+- "memory" → in-memory (tests only)
 """
 
+import asyncio
 import logging
 from datetime import datetime
 from typing import Literal
@@ -15,6 +21,7 @@ from typing import Literal
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from app.core.settings import settings
 from app.db.model_registry import (
     ModelRecord,
     TrainingRunRecord,
@@ -86,47 +93,80 @@ def train_model(
     # Note: Query param is "async" but Python uses "sync" (inverted)
     # FastAPI maps async=true → sync=True, async=false → sync=False
     run_async = not sync
-    
-    # Check if Redis is available for async mode
-    redis_available = _check_redis()
-    
-    if run_async and not redis_available:
-        logger.warning("Redis not available, falling back to sync mode")
+
+    # Check if a queue backend is available for async mode
+    queue_available = _check_queue_backend()
+
+    if run_async and not queue_available:
+        logger.warning("No queue backend available, falling back to sync mode")
         run_async = False
-    
+
     if run_async:
         return _train_async(request)
     else:
         return _train_sync(request)
 
 
-def _check_redis() -> bool:
-    """Check if Redis is available."""
-    try:
-        from app.jobs.queue import is_redis_available
-        return is_redis_available()
-    except Exception as e:
-        logger.debug(f"Redis not available: {e}")
-        return False
+def _check_queue_backend() -> bool:
+    """Check if a queue backend is available."""
+    backend = settings.QUEUE_BACKEND
+    if backend == "sqs":
+        # SQS is always "available" — failures are handled at enqueue time
+        return True
+    elif backend == "memory":
+        return True
+    else:
+        # Redis/RQ backend
+        try:
+            from app.jobs.queue import is_redis_available
+            return is_redis_available()
+        except Exception as e:
+            logger.debug(f"Redis not available: {e}")
+            return False
 
 
 def _train_async(request: TrainRequest) -> TrainAsyncResponse:
-    """Enqueue training job and return immediately."""
-    from app.jobs.queue import enqueue_training_job
-    
-    # Convert request to dict for serialization
+    """Enqueue training job via the configured queue backend."""
     request_dict = request.model_dump()
-    
-    # Enqueue job
-    job = enqueue_training_job(request_dict)
-    
-    logger.info(f"Training job enqueued: {job.id}")
-    
-    return TrainAsyncResponse(
-        run_id=job.id,
-        status="queued",
-        message=f"Training job queued. Poll GET /runs/{job.id} for status.",
-    )
+    backend = settings.QUEUE_BACKEND
+
+    if backend in ("sqs", "memory"):
+        # Use the infra queue abstraction
+        from app.infra.queue import get_queue as get_infra_queue
+        queue = get_infra_queue()
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    job_id = pool.submit(
+                        asyncio.run,
+                        queue.enqueue("training", request_dict),
+                    ).result(timeout=10)
+            else:
+                job_id = loop.run_until_complete(
+                    queue.enqueue("training", request_dict)
+                )
+        except Exception as e:
+            logger.error(f"Failed to enqueue via {backend}: {e}", exc_info=True)
+            raise HTTPException(status_code=503, detail=f"Queue unavailable: {e}")
+
+        logger.info(f"Training job enqueued via {backend}: {job_id}")
+        return TrainAsyncResponse(
+            run_id=job_id,
+            status="queued",
+            message=f"Training job queued. Poll GET /runs/{job_id} for status.",
+        )
+    else:
+        # Legacy Redis/RQ path
+        from app.jobs.queue import enqueue_training_job
+        job = enqueue_training_job(request_dict)
+        logger.info(f"Training job enqueued via RQ: {job.id}")
+        return TrainAsyncResponse(
+            run_id=job.id,
+            status="queued",
+            message=f"Training job queued. Poll GET /runs/{job.id} for status.",
+        )
 
 
 def _train_sync(request: TrainRequest) -> TrainSyncResponse:

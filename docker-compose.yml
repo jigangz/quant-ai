@@ -95,6 +95,59 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # ===================================
+  # LocalStack (SQS + SNS for local dev)
+  # ===================================
+  localstack:
+    image: localstack/localstack:3
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs,sns
+      - DEFAULT_REGION=us-east-1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - ./scripts/init-localstack.sh:/etc/localstack/init/ready.d/init-localstack.sh:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    profiles:
+      - sqs
+
+  # ===================================
+  # SQS Worker (when using QUEUE_BACKEND=sqs)
+  # ===================================
+  sqs-worker:
+    build:
+      context: .
+      target: development
+    command: python -m app.workers.sqs_worker
+    env_file:
+      - .env
+    environment:
+      - ENV=dev
+      - DATABASE_URL=postgresql+psycopg://quant:quant@postgres:5432/quantdb
+      - REDIS_URL=redis://redis:6379/0
+      - QUEUE_BACKEND=sqs
+      - SQS_ENDPOINT_URL=http://localstack:4566
+      - SNS_ENDPOINT_URL=http://localstack:4566
+    volumes:
+      - ./app:/app/app:ro
+      - ./artifacts:/app/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - sqs
+
 volumes:
   postgres_data:
   redis_data:
+  localstack_data:
