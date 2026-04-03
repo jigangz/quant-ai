@@ -42,7 +42,7 @@ jobs:
       BROKER_BACKEND: "memory"
       QUEUE_BACKEND: "memory"
       NOTIFY_BACKEND: "memory"
-      FUNCTIONS_BACKEND: "memory"
+      FUNCTIONS_BACKEND: "local"
 
     steps:
       - uses: actions/checkout@v4

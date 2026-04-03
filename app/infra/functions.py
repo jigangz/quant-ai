@@ -172,7 +172,7 @@ def get_function_runner() -> BaseFunctionRunner:
         backend = getattr(settings, "FUNCTIONS_BACKEND", "local")
         if backend == "lambda":
             _runner_instance = LambdaRunner()
-        elif backend == "local":
+        elif backend in ("local", "memory"):
             _runner_instance = LocalRunner()
         else:
             raise ValueError(f"Unknown functions backend: {backend}")

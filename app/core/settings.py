@@ -72,7 +72,7 @@ class Settings(BaseSettings):
     BROKER_BACKEND: Literal["kafka", "redis", "memory"] = "redis"
     QUEUE_BACKEND: Literal["sqs", "redis", "memory"] = "redis"
     NOTIFY_BACKEND: Literal["sns", "redis", "memory"] = "redis"
-    FUNCTIONS_BACKEND: Literal["lambda", "local"] = "local"
+    FUNCTIONS_BACKEND: Literal["lambda", "local", "memory"] = "local"
 
     # ===== Kafka (when BROKER_BACKEND=kafka) =====
     KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
