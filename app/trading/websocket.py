@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 WebSocket Price Streaming with Redis Pub/Sub
 

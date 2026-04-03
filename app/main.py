@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Quant AI Backend - FastAPI Application
 """

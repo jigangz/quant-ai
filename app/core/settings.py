@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Quant-AI Settings - Pydantic Settings with .env support
 

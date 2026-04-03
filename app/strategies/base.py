@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Base Strategy Module
 
@@ -9,14 +11,13 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Type
 
 import pandas as pd
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BaseParameters(BaseModel):
     """Base class for strategy parameters. All strategies should define their own Parameters class."""
     
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class StrategyMetadata(BaseModel):
@@ -121,7 +122,7 @@ class BaseStrategy(ABC):
             description=self.description,
             version=self.version,
             author=self.author,
-            parameters_schema=self.Parameters.schema(),
+            parameters_schema=self.Parameters.model_json_schema(),
             required_columns=self.required_columns,
         )
     

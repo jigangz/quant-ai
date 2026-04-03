@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install ruff
         run: pip install ruff
@@ -24,9 +24,13 @@ jobs:
         run: ruff check app/ scripts/ --ignore F401,F841,E501,F541,E402
 
   test:
-    name: Test
+    name: Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     needs: lint
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+
     env:
       PYTHONPATH: .
       ENV: test
@@ -34,13 +38,18 @@ jobs:
       STORAGE_BACKEND: local
       STORAGE_LOCAL_PATH: ./test_artifacts
       REDIS_URL: ""
+      CACHE_BACKEND: "memory"
+      BROKER_BACKEND: "memory"
+      QUEUE_BACKEND: "memory"
+      NOTIFY_BACKEND: "memory"
+      FUNCTIONS_BACKEND: "memory"
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
           cache: pip
 
       - name: Install dependencies
@@ -52,15 +61,20 @@ jobs:
       - name: Create directories
         run: mkdir -p test_artifacts/registry
 
+      - name: Syntax check all app/ files
+        run: |
+          find app/ -name '*.py' ! -path '*__pycache__*' -exec python -m py_compile {} +
+
       - name: Test imports
         run: |
           python -c "from app.main import app; print('Import OK')"
 
-      - name: Run health test
-        run: pytest tests/test_health.py -v --tb=short
+      - name: Run unit tests
+        run: pytest tests/ -v --tb=short --ignore=tests/contract -p no:cacheprovider
 
-      - name: Run contract tests (non-slow)
-        run: pytest tests/contract/ -v --tb=short -k "not slow" --ignore=tests/contract/test_backtest_flow.py || true
+      - name: Run contract tests (DB required)
+        if: false  # Enable when DB migrations are set up in CI
+        run: pytest tests/contract/ -v --tb=short
 
   build:
     name: Docker Build

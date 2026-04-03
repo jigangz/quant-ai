@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Trading Models
 
@@ -10,7 +12,7 @@ from enum import Enum
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class OrderSide(str, Enum):
@@ -44,16 +46,15 @@ class OrderCreate(BaseModel):
         None, gt=0, description="Limit price (required for limit orders)"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "symbol": "AAPL",
-                "side": "buy",
-                "order_type": "market",
-                "quantity": 10,
-                "limit_price": None,
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "symbol": "AAPL",
+            "side": "buy",
+            "order_type": "market",
+            "quantity": 10,
+            "limit_price": None,
         }
+    })
 
 
 class Order(BaseModel):
@@ -72,23 +73,22 @@ class Order(BaseModel):
     filled_at: Optional[datetime] = Field(None, description="When order was filled")
     reject_reason: Optional[str] = Field(None, description="Reason for rejection")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": "123e4567-e89b-12d3-a456-426614174000",
-                "symbol": "AAPL",
-                "side": "buy",
-                "order_type": "market",
-                "quantity": 10,
-                "filled_quantity": 10,
-                "limit_price": None,
-                "fill_price": 175.50,
-                "status": "filled",
-                "created_at": "2024-01-15T10:30:00Z",
-                "updated_at": "2024-01-15T10:30:01Z",
-                "filled_at": "2024-01-15T10:30:01Z",
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "symbol": "AAPL",
+            "side": "buy",
+            "order_type": "market",
+            "quantity": 10,
+            "filled_quantity": 10,
+            "limit_price": None,
+            "fill_price": 175.50,
+            "status": "filled",
+            "created_at": "2024-01-15T10:30:00Z",
+            "updated_at": "2024-01-15T10:30:01Z",
+            "filled_at": "2024-01-15T10:30:01Z",
         }
+    })
 
 
 class Trade(BaseModel):
@@ -102,19 +102,18 @@ class Trade(BaseModel):
     total_value: float = Field(..., description="Total trade value")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": "456e7890-e89b-12d3-a456-426614174001",
-                "order_id": "123e4567-e89b-12d3-a456-426614174000",
-                "symbol": "AAPL",
-                "side": "buy",
-                "quantity": 10,
-                "price": 175.50,
-                "total_value": 1755.00,
-                "timestamp": "2024-01-15T10:30:01Z",
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "id": "456e7890-e89b-12d3-a456-426614174001",
+            "order_id": "123e4567-e89b-12d3-a456-426614174000",
+            "symbol": "AAPL",
+            "side": "buy",
+            "quantity": 10,
+            "price": 175.50,
+            "total_value": 1755.00,
+            "timestamp": "2024-01-15T10:30:01Z",
         }
+    })
 
 
 class Position(BaseModel):
@@ -158,28 +157,27 @@ class Portfolio(BaseModel):
     total_unrealized_pnl_pct: float = Field(..., description="Total unrealized P&L percentage")
     buying_power: float = Field(..., description="Available buying power")
     
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "cash": 95000.00,
-                "positions": [
-                    {
-                        "symbol": "AAPL",
-                        "quantity": 28,
-                        "avg_cost": 175.50,
-                        "current_price": 180.25,
-                        "market_value": 5047.00,
-                        "unrealized_pnl": 133.00,
-                        "unrealized_pnl_pct": 2.71,
-                    }
-                ],
-                "total_market_value": 5047.00,
-                "total_equity": 100047.00,
-                "total_unrealized_pnl": 133.00,
-                "total_unrealized_pnl_pct": 2.71,
-                "buying_power": 95000.00,
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "cash": 95000.00,
+            "positions": [
+                {
+                    "symbol": "AAPL",
+                    "quantity": 28,
+                    "avg_cost": 175.50,
+                    "current_price": 180.25,
+                    "market_value": 5047.00,
+                    "unrealized_pnl": 133.00,
+                    "unrealized_pnl_pct": 2.71,
+                }
+            ],
+            "total_market_value": 5047.00,
+            "total_equity": 100047.00,
+            "total_unrealized_pnl": 133.00,
+            "total_unrealized_pnl_pct": 2.71,
+            "buying_power": 95000.00,
         }
+    })
 
 
 class PortfolioSnapshot(BaseModel):
@@ -191,17 +189,16 @@ class PortfolioSnapshot(BaseModel):
     realized_pnl: float = Field(..., description="Cumulative realized P&L")
     unrealized_pnl: float = Field(..., description="Unrealized P&L at snapshot")
     
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "timestamp": "2024-01-15T16:00:00Z",
-                "cash": 95000.00,
-                "market_value": 5047.00,
-                "total_equity": 100047.00,
-                "realized_pnl": 0.00,
-                "unrealized_pnl": 133.00,
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "timestamp": "2024-01-15T16:00:00Z",
+            "cash": 95000.00,
+            "market_value": 5047.00,
+            "total_equity": 100047.00,
+            "realized_pnl": 0.00,
+            "unrealized_pnl": 133.00,
         }
+    })
 
 
 class PriceUpdate(BaseModel):
@@ -213,17 +210,16 @@ class PriceUpdate(BaseModel):
     volume: int = Field(default=0, ge=0, description="Volume")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "symbol": "AAPL",
-                "price": 180.25,
-                "change": 1.50,
-                "change_pct": 0.84,
-                "volume": 1250000,
-                "timestamp": "2024-01-15T10:30:00Z",
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "symbol": "AAPL",
+            "price": 180.25,
+            "change": 1.50,
+            "change_pct": 0.84,
+            "volume": 1250000,
+            "timestamp": "2024-01-15T10:30:00Z",
         }
+    })
 
 
 class OrderResponse(BaseModel):

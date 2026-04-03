@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Dataset building module."""
 
 from .builder import DatasetBuilder

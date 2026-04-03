@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Base Provider Interface
 
@@ -10,7 +12,7 @@ from datetime import date
 from typing import Literal
 
 import pandas as pd
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ===================================
@@ -29,8 +31,7 @@ class OHLCVRecord(BaseModel):
     close: float
     volume: int
 
-    class Config:
-        json_encoders = {date: lambda v: v.isoformat()}
+    model_config = ConfigDict(json_encoders={date: lambda v: v.isoformat()})
 
 
 class SentimentRecord(BaseModel):
@@ -45,8 +46,7 @@ class SentimentRecord(BaseModel):
     bearish_count: int = 0
     neutral_count: int = 0
 
-    class Config:
-        json_encoders = {date: lambda v: v.isoformat()}
+    model_config = ConfigDict(json_encoders={date: lambda v: v.isoformat()})
 
 
 class NewsRecord(BaseModel):
@@ -61,8 +61,7 @@ class NewsRecord(BaseModel):
     sentiment_score: float | None = Field(default=None, ge=-1.0, le=1.0)
     relevance_score: float | None = Field(default=None, ge=0.0, le=1.0)
 
-    class Config:
-        json_encoders = {date: lambda v: v.isoformat()}
+    model_config = ConfigDict(json_encoders={date: lambda v: v.isoformat()})
 
 
 # ===================================

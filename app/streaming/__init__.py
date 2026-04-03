@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Kafka Real-time Data Pipeline (Phase 2.5 Step 9)
 

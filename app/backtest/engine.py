@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Backtest Engine
 
@@ -24,7 +26,7 @@ from typing import Any, Literal
 import joblib
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.backtest.metrics import (
     calculate_classification_metrics,
@@ -72,8 +74,7 @@ class BacktestRequest(BaseModel):
     portfolio_weighting: Literal["equal", "market_cap", "inverse_vol"] = "equal"
     rebalance_frequency: Literal["daily", "weekly", "monthly"] = "daily"
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class TickerResult(BaseModel):
@@ -127,8 +128,7 @@ class BacktestResult(BaseModel):
     max_drawdown: float = 0.0
     drawdown_curve: list[float] = []
 
-    class Config:
-        extra = "ignore"
+    model_config = ConfigDict(extra="ignore")
 
 
 # ===================================

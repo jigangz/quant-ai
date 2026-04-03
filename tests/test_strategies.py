@@ -76,7 +76,7 @@ class TestStrategyRegistry:
         assert meta is not None
         assert meta.name == "ma_crossover"
         assert meta.version == "1.0.0"
-        assert "parameters_schema" in meta.dict()
+        assert "parameters_schema" in meta.model_dump()
     
     def test_create_instance(self):
         """create_instance returns strategy with parameters."""

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # app/middleware/__init__.py
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.request_context import RequestContextMiddleware

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # app/backtest/__init__.py
 from app.backtest.engine import BacktestEngine
 from app.backtest.metrics import (

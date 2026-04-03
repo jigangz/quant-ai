@@ -37,3 +37,7 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+artifacts/models/
+artifacts/registry/
+artifacts/
+!artifacts/.gitkeep

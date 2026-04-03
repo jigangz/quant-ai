@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Hyperparameter Search Engine
 
@@ -12,7 +14,7 @@ import time
 from typing import Any, Literal
 
 import pandas as pd
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sklearn.metrics import roc_auc_score
 
 from app.ml.models import ModelFactory
@@ -30,8 +32,7 @@ class SearchConfig(BaseModel):
     metric: str = "val_auc"
     direction: Literal["maximize", "minimize"] = "maximize"
     
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class TrialResult(BaseModel):

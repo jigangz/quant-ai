@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Training Service
 
@@ -16,7 +18,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -64,8 +66,7 @@ class TrainRequest(BaseModel):
     save_model: bool = True
     model_name: str | None = None
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class TrainResult(BaseModel):
@@ -107,8 +108,7 @@ class TrainResult(BaseModel):
     training_time_seconds: float = 0.0
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class TrainingService:

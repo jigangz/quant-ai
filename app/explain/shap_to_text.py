@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 def shap_summary_to_text(summary: dict) -> str:
     ticker = summary["ticker"]
     features = summary["top_features"]

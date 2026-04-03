@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Yahoo Finance Market Data Provider
 

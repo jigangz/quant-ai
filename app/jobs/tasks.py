@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Training Task - Actual training logic run by worker
 

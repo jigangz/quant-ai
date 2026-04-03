@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Services module."""
 
 from .training_service import TrainingService, TrainRequest, TrainResult

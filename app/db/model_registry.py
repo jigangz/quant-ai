@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Model Registry - Supabase operations for model versioning
 
@@ -11,7 +13,7 @@ from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.settings import settings
 
@@ -55,8 +57,7 @@ class ModelRecord(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        extra = "ignore"
+    model_config = ConfigDict(extra="ignore")
 
 
 class TrainingRunRecord(BaseModel):
@@ -106,8 +107,7 @@ class TrainingRunRecord(BaseModel):
     started_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: datetime | None = None
 
-    class Config:
-        extra = "ignore"
+    model_config = ConfigDict(extra="ignore")
 
 
 # ===================================

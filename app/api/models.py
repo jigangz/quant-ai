@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Models API - Model Registry endpoints
 

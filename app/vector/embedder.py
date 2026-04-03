@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Text Embedder - Sentence Transformers (optional)
 

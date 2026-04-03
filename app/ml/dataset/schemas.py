@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Dataset Schemas
 
@@ -8,7 +10,7 @@ from datetime import date
 from typing import Literal
 
 import pandas as pd
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class LabelConfig(BaseModel):
@@ -18,8 +20,7 @@ class LabelConfig(BaseModel):
     horizon_days: int = Field(default=5, ge=1, le=60)
     threshold: float = Field(default=0.0, description="Threshold for direction labels")
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class SplitConfig(BaseModel):
@@ -32,8 +33,7 @@ class SplitConfig(BaseModel):
     def test_ratio(self) -> float:
         return 1.0 - self.train_ratio - self.val_ratio
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class DatasetConfig(BaseModel):
@@ -59,8 +59,7 @@ class DatasetConfig(BaseModel):
     drop_na_features: bool = False  # If True, drop rows with NaN features
     min_samples_per_ticker: int = Field(default=100, ge=10)
 
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class TickerDataset(BaseModel):
@@ -72,8 +71,7 @@ class TickerDataset(BaseModel):
     date_range: tuple[str, str]  # (start, end)
     label_distribution: dict[str, int]  # {0: count, 1: count}
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class DatasetResult(BaseModel):
@@ -98,8 +96,7 @@ class DatasetResult(BaseModel):
     val_date_range: tuple[str, str]
     test_date_range: tuple[str, str]
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class DatasetOutput:

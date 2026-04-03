@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 RAG Index - FAISS vector index for document retrieval
 

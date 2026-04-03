@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # app/db/engine.py
 
 from sqlalchemy import create_engine

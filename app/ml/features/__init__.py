@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Feature engineering module."""
 
 from .technical import add_technical_features, FEATURE_GROUPS, ALL_FEATURES

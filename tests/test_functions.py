@@ -578,6 +578,10 @@ def _build_functions_test_client():
         result = await runner.invoke(name, body.payload, async_invoke=body.async_invoke)
         return {"function": name, "result": result, "async_invoke": body.async_invoke}
 
+    # Fix: from __future__ import annotations stringifies the annotation,
+    # and FastAPI can't resolve _InvokeRequest from function-local scope.
+    invoke_function.__annotations__["body"] = _InvokeRequest
+
     test_app = FastAPI()
     test_app.include_router(router)
     return TestClient(test_app)

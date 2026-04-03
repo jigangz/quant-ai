@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 """
 SQS Worker — Standalone async worker that polls SQS and runs training tasks.
 

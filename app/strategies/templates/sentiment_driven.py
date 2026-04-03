@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 News Sentiment Driven Strategy
 
@@ -14,7 +16,7 @@ Signals:
 from typing import List, Optional
 
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field, ValidationInfo, field_validator
 
 from app.strategies.base import BaseStrategy, BaseParameters
 
@@ -55,9 +57,9 @@ class SentimentDrivenParameters(BaseParameters):
         description="Number of consecutive periods required for confirmation (if enabled)"
     )
     
-    @validator("negative_threshold")
-    def thresholds_valid(cls, v, values):
-        if "positive_threshold" in values and v >= values["positive_threshold"]:
+    @field_validator("negative_threshold")
+    def thresholds_valid(cls, v: float, info: ValidationInfo) -> float:
+        if "positive_threshold" in info.data and v >= info.data["positive_threshold"]:
             raise ValueError("negative_threshold must be less than positive_threshold")
         return v
 

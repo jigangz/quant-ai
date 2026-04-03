@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Base Model Interface
 
@@ -13,7 +15,7 @@ import json
 import numpy as np
 import pandas as pd
 import joblib
-from pydantic import BaseModel as PydanticModel, Field
+from pydantic import BaseModel as PydanticModel, ConfigDict, Field
 
 
 class ModelMetadata(PydanticModel):
@@ -41,8 +43,7 @@ class ModelMetadata(PydanticModel):
     # Metrics
     metrics: dict[str, float] = {}
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class BaseModel(ABC):

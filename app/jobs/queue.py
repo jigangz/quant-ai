@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Job Queue - Redis + RQ setup (optional)
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Jobs Module - Async task queue for training and other long-running tasks.
 

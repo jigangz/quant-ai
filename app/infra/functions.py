@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Serverless Function Abstraction (Lambda / Local)
 

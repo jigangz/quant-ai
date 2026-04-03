@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 RSI (Relative Strength Index) Strategy
 
@@ -13,7 +15,7 @@ Signals:
 from typing import List, Optional
 
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field, ValidationInfo, field_validator
 
 from app.strategies.base import BaseStrategy, BaseParameters
 
@@ -44,9 +46,9 @@ class RSIParameters(BaseParameters):
         description="If True, exit position when RSI returns to neutral zone (between overbought and oversold)"
     )
     
-    @validator("oversold")
-    def oversold_less_than_overbought(cls, v, values):
-        if "overbought" in values and v >= values["overbought"]:
+    @field_validator("oversold")
+    def oversold_less_than_overbought(cls, v: float, info: ValidationInfo) -> float:
+        if "overbought" in info.data and v >= info.data["overbought"]:
             raise ValueError("oversold must be less than overbought")
         return v
 

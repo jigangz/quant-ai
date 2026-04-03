@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Notification Abstraction (SNS / Redis Pub-Sub / Webhook)
 
