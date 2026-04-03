@@ -41,6 +41,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # Development stage (with full deps)
+# Use explicitly: docker build --target development .
+# NOT used by Render (Render builds last stage = production below)
 FROM production as development
 
 USER root
@@ -49,3 +51,8 @@ RUN pip install --no-cache-dir -r requirements-full.txt || true
 USER appuser
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# ============================================================
+# Default stage = production (Render builds the LAST stage)
+# ============================================================
+FROM production
