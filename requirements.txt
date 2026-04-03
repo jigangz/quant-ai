@@ -29,6 +29,8 @@ psycopg[binary]>=3.1
 # Optional: Supabase client (for model registry)
 # supabase>=2.0
 
+# Redis (cache layer + job queue)
+redis[hiredis]>=5.0
+
 # Optional: Job Queue (for async training)
-# redis>=4.0
 # rq>=1.15

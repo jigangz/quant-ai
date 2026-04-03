@@ -1,31 +1,39 @@
 """
-Simple Rate Limiting Middleware
+Distributed Rate Limiting Middleware
 
 Features:
-- In-memory rate limiting (per-IP)
+- Redis-based sliding window counter (supports horizontal scaling)
+- Fallback to in-memory rate limiting when Redis is unavailable
 - Configurable limits
 - Returns 429 when exceeded
 - Includes rate limit headers
-
-Note: For production with multiple instances, use Redis-based rate limiting.
 """
 
+import asyncio
 import time
 from collections import defaultdict
-from typing import Callable
+from typing import Callable, Optional
 
+import redis.asyncio as aioredis
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
+from app.core.logging import get_logger
 from app.core.settings import settings
+
+logger = get_logger(__name__)
+
+# Redis key prefix for rate limit counters
+RATE_LIMIT_PREFIX = "ratelimit:"
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
-    Simple in-memory rate limiter.
+    Distributed rate limiter with Redis sliding window.
 
-    Limits requests per IP address using a sliding window.
+    Uses Redis sorted sets for a sliding window counter.
+    Falls back to in-memory rate limiting if Redis is unavailable.
     """
 
     def __init__(
@@ -39,8 +47,35 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.burst_size = burst_size
         self.window_size = 60  # seconds
 
-        # In-memory storage: {ip: [(timestamp, count), ...]}
+        # In-memory fallback storage: {ip: [timestamps]}
         self._requests: dict[str, list[float]] = defaultdict(list)
+
+        # Async Redis client (lazy initialized)
+        self._redis: Optional[aioredis.Redis] = None
+        self._redis_available: Optional[bool] = None
+
+    async def _get_redis(self) -> Optional[aioredis.Redis]:
+        """Get Redis connection, caching availability status."""
+        if self._redis_available is False:
+            return None
+
+        if self._redis is None:
+            try:
+                self._redis = aioredis.from_url(
+                    settings.REDIS_URL,
+                    decode_responses=False,
+                    socket_connect_timeout=1,
+                )
+                await self._redis.ping()
+                self._redis_available = True
+                logger.info("Rate limiter using Redis backend")
+            except Exception as e:
+                logger.warning(f"Rate limiter falling back to in-memory: {e}")
+                self._redis_available = False
+                self._redis = None
+                return None
+
+        return self._redis
 
     def _get_client_ip(self, request: Request) -> str:
         """Extract client IP from request."""
@@ -57,15 +92,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return request.client.host if request.client else "unknown"
 
     def _clean_old_requests(self, ip: str, now: float):
-        """Remove requests outside the window."""
+        """Remove requests outside the window (in-memory fallback)."""
         cutoff = now - self.window_size
         self._requests[ip] = [
             ts for ts in self._requests[ip] if ts > cutoff
         ]
 
-    def _is_rate_limited(self, ip: str) -> tuple[bool, int, int]:
+    def _is_rate_limited_memory(self, ip: str) -> tuple[bool, int, int]:
         """
-        Check if IP is rate limited.
+        In-memory rate limit check (fallback).
 
         Returns:
             (is_limited, remaining, reset_seconds)
@@ -88,6 +123,49 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         return False, remaining, reset_seconds
 
+    async def _is_rate_limited_redis(
+        self, ip: str, redis_client: aioredis.Redis
+    ) -> tuple[bool, int, int]:
+        """
+        Redis sliding window rate limit check.
+
+        Uses a sorted set where members are unique request IDs (timestamps)
+        and scores are the request timestamps. Old entries are pruned each check.
+
+        Returns:
+            (is_limited, remaining, reset_seconds)
+        """
+        now = time.time()
+        key = f"{RATE_LIMIT_PREFIX}{ip}"
+        cutoff = now - self.window_size
+
+        pipe = redis_client.pipeline()
+        # Remove entries outside the window
+        pipe.zremrangebyscore(key, 0, cutoff)
+        # Count current entries
+        pipe.zcard(key)
+        # Add current request (unique member via timestamp)
+        pipe.zadd(key, {str(now).encode(): now})
+        # Set expiry on the key
+        pipe.expire(key, self.window_size + 1)
+        results = await pipe.execute()
+
+        request_count = results[1]  # zcard result
+        remaining = max(0, self.requests_per_minute - request_count)
+
+        # Get oldest entry for reset calculation
+        oldest_entries = await redis_client.zrange(key, 0, 0, withscores=True)
+        if oldest_entries:
+            oldest_ts = oldest_entries[0][1]
+            reset_seconds = max(1, int(self.window_size - (now - oldest_ts)))
+        else:
+            reset_seconds = self.window_size
+
+        if request_count >= self.requests_per_minute:
+            return True, remaining, reset_seconds
+
+        return False, remaining, reset_seconds
+
     async def dispatch(
         self, request: Request, call_next: Callable
     ) -> Response:
@@ -100,7 +178,26 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         ip = self._get_client_ip(request)
-        is_limited, remaining, reset_seconds = self._is_rate_limited(ip)
+
+        # Try Redis first, fall back to in-memory
+        redis_client = await self._get_redis()
+        if redis_client is not None:
+            try:
+                is_limited, remaining, reset_seconds = (
+                    await self._is_rate_limited_redis(ip, redis_client)
+                )
+            except Exception as e:
+                logger.warning(f"Redis rate limit error, using in-memory: {e}")
+                is_limited, remaining, reset_seconds = (
+                    self._is_rate_limited_memory(ip)
+                )
+                # Record in memory since Redis failed
+                self._requests[ip].append(time.time())
+        else:
+            is_limited, remaining, reset_seconds = self._is_rate_limited_memory(ip)
+            # Record this request in memory
+            if not is_limited:
+                self._requests[ip].append(time.time())
 
         if is_limited:
             return JSONResponse(
@@ -117,9 +214,6 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "X-RateLimit-Reset": str(reset_seconds),
                 },
             )
-
-        # Record this request
-        self._requests[ip].append(time.time())
 
         # Process request
         response = await call_next(request)
