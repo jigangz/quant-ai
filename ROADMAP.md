@@ -66,7 +66,7 @@
 
 ---
 
-## ☁️ 第 2.5 阶段：云原生基础设施
+## ✅ 第 2.5 阶段：云原生基础设施（已完成 2026-04-02）
 
 > 引入消息队列、事件驱动计算，提升系统可靠性和可扩展性。
 > 所有服务通过抽象接口访问，env var 切换后端，业务代码零改动。
@@ -100,18 +100,18 @@
 - [x] Settings 配置 + `.env.example` 文档
 
 ### 6. Redis 升级 — 从任务队列到全功能缓存层
-- [ ] 行情缓存：热门股票最新价格 Redis Hash（TTL 5s），减少 Polygon API 调用
-- [ ] Session 缓存：Paper Trading 持仓/订单状态存入 Redis
-- [ ] 分布式限流：`rate_limit.py` 改用 Redis 滑动窗口计数（替代内存计数）
-- [ ] Pub/Sub 价格推送：WebSocket 服务订阅 Redis channel，支持多实例广播
-- [ ] 模型 Artifact 缓存：预测时缓存已加载模型，避免重复从磁盘/S3 读取
+- [x] 行情缓存：热门股票最新价格 Redis Hash（TTL 5s），减少 Polygon API 调用
+- [x] Session 缓存：Paper Trading 持仓/订单状态存入 Redis
+- [x] 分布式限流：`rate_limit.py` 改用 Redis 滑动窗口计数（替代内存计数）
+- [x] Pub/Sub 价格推送：WebSocket 服务订阅 Redis channel，支持多实例广播
+- [x] 模型 Artifact 缓存：预测时缓存已加载模型，避免重复从磁盘/S3 读取
 - **部署：** Render 内置 Redis（25MB，免费）
 
 ### 7. SQS + SNS — 可靠消息队列 + 通知扇出
-- [ ] **SQS 替代 RQ：** 训练任务 → SQS 队列 → Worker 消费
+- [x] **SQS 替代 RQ：** 训练任务 → SQS 队列 → Worker 消费
   - 支持自动重试 + DLQ 死信队列（失败任务不丢失）
   - 可见性超时防止重复消费
-- [ ] **SNS 通知扇出：**
+- [x] **SNS 通知扇出：**
   - Alert topic：价格/指标/情绪预警 → 同时推送 Email + Discord + WebSocket
   - Training topic：训练完成 → 通知用户 + 触发模型评估
   - Signal topic：策略信号 → Paper Trading 引擎 + 日志记录
@@ -119,19 +119,19 @@
 - **本地开发：** LocalStack 模拟
 
 ### 8. Lambda — 无服务器事件处理
-- [ ] 新闻情绪分析：每条新闻触发 Lambda 调用 Claude Haiku 打分（天然并行）
-- [ ] Alert 触发器：价格/指标阈值突破 → Lambda 计算 → 发布到 SNS
-- [ ] 定时数据拉取：EventBridge 定时调度 → Lambda 拉取 Polygon 行情/新闻
-- [ ] SHAP 解释按需生成：API 请求 → Lambda 计算 SHAP 值 → 返回结果
+- [x] 新闻情绪分析：每条新闻触发 Lambda 调用 Claude Haiku 打分（天然并行）
+- [x] Alert 触发器：价格/指标阈值突破 → Lambda 计算 → 发布到 SNS
+- [x] 定时数据拉取：EventBridge 定时调度 → Lambda 拉取 Polygon 行情/新闻
+- [x] SHAP 解释按需生成：API 请求 → Lambda 计算 SHAP 值 → 返回结果
 - **部署：** AWS Free Tier（100万次/月 + 40万 GB-秒/月）
 - **本地开发：** SAM CLI (`sam local invoke`)
 
 ### 9. Kafka — 实时数据管道
-- [ ] **行情流：** Polygon WebSocket → Kafka topic `market.prices` → 多消费者
-- [ ] **新闻流：** `news.raw` → 情绪分析消费者 → `news.scored`
-- [ ] **策略信号流：** 策略引擎订阅 prices → 产生信号写入 `signals.generated`
-- [ ] **回测回放：** Kafka 支持 offset 重置，可回放历史数据做回测验证
-- [ ] Schema Registry（Avro/Protobuf）保证消息格式一致性
+- [x] **行情流：** Polygon WebSocket → Kafka topic `market.prices` → 多消费者
+- [x] **新闻流：** `news.raw` → 情绪分析消费者 → `news.scored`
+- [x] **策略信号流：** 策略引擎订阅 prices → 产生信号写入 `signals.generated`
+- [x] **回测回放：** Kafka 支持 offset 重置，可回放历史数据做回测验证
+- [x] Schema Registry（Avro/Protobuf）保证消息格式一致性
 - **部署：** Upstash Kafka Serverless（免费层 10,000 条/天）
 - **本地开发：** Docker Compose 运行 Kafka（KRaft 模式，无 Zookeeper）
 
@@ -282,5 +282,5 @@ Phase 2.5 (目标):
 
 ---
 
-*最后更新：2026-04-01*
-*下次继续：第 2.5 阶段 — Redis 升级 → SQS+SNS → Lambda → Kafka*
+*最后更新：2026-04-02*
+*下次继续：第三阶段 — ML 优化策略参数 + RL 交易智能体*
