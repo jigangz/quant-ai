@@ -107,6 +107,48 @@ jobs:
         if: false  # Enable when DB migrations are set up in CI
         run: pytest tests/contract/ -v --tb=short
 
+  supabase-check:
+    name: Supabase Connection Check
+    runs-on: ubuntu-latest
+    needs: lint
+    # Only run on main branch pushes (not PRs, to avoid exposing secrets)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install httpx
+
+      - name: Check Supabase connectivity
+        run: |
+          python -c "
+          import httpx, os, sys
+          url = os.environ.get('SUPABASE_URL', '')
+          key = os.environ.get('SUPABASE_KEY', '')
+          if not url or not key:
+              print('⚠️  Supabase secrets not configured, skipping')
+              sys.exit(0)
+          try:
+              r = httpx.get(f'{url}/rest/v1/', headers={
+                  'apikey': key,
+                  'Authorization': f'Bearer {key}'
+              }, timeout=10)
+              print(f'✅ Supabase reachable: {r.status_code}')
+              if r.status_code >= 500:
+                  print('::error::Supabase returned server error')
+                  sys.exit(1)
+          except Exception as e:
+              print(f'::error::Supabase unreachable: {e}')
+              sys.exit(1)
+          "
+
   build:
     name: Docker Build
     runs-on: ubuntu-latest
@@ -116,3 +158,28 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t quant-ai:test --target production .
+
+  deploy-check:
+    name: Post-Deploy Health Check
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    # Only after push to main (when Render actually deploys)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Wait for Render deploy
+        run: sleep 120  # Render free tier takes ~2min to deploy
+
+      - name: Health check on production
+        run: |
+          for i in 1 2 3 4 5; do
+            STATUS=$(curl -sf https://quant-ai-qzrg.onrender.com/health 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "fail")
+            echo "Attempt $i: $STATUS"
+            if [ "$STATUS" = "ok" ]; then
+              echo "✅ Production is healthy!"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::warning::Production health check failed after 5 attempts (Render free tier may be sleeping)"
+          # Don't fail the job — free tier spins down after inactivity
+          exit 0
