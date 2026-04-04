@@ -140,7 +140,8 @@ jobs:
                   'apikey': key,
                   'Authorization': f'Bearer {key}'
               }, timeout=10)
-              print(f'✅ Supabase reachable: {r.status_code}')
+              print(f'✅ Supabase reachable: HTTP {r.status_code}')
+              # 2xx/3xx/4xx all mean server is up (403 = auth issue, not downtime)
               if r.status_code >= 500:
                   print('::error::Supabase returned server error')
                   sys.exit(1)
