@@ -198,6 +198,45 @@
 - [ ] 接 Interactive Brokers
 - [ ] 风控模块（最大亏损止损、仓位限制）
 
+### 19. 交互式图表工具（Chart Drawing Tools）
+
+让用户像 TradingView 一样在 K 线图上手动画线分析，所有标注持久化存储。
+
+基于 Lightweight Charts 已有基础，扩展交互绘图层：
+
+**核心绘图工具：**
+- [ ] 趋势线（Trendline）— 两点连线，自动延伸，吸附到 K 线 OHLC
+- [ ] 水平线（Horizontal Line）— 标注关键价位，拖拽可调
+- [ ] 支撑位 / 阻力位（Support / Resistance）— 水平区域高亮（半透明色带）
+- [ ] 斐波那契回撤（Fibonacci Retracement）— 选起止点自动画 0% / 23.6% / 38.2% / 50% / 61.8% / 100% 水平线
+- [ ] 垂直线 / 射线 / 平行通道（Vertical Line / Ray / Parallel Channel）
+- [ ] 矩形区域标注（Rectangle）— 框选价格+时间区间，标注整理区 / 突破区
+
+**图表交互体验：**
+- [ ] 工具栏 UI：左侧浮动工具栏，图标切换绘图模式（类 TradingView 布局）
+- [ ] 选中 / 编辑 / 删除已有标注（点击选中，拖拽调整，Delete 键删除）
+- [ ] 标注颜色 / 线宽 / 样式自定义（实线 / 虚线 / 点线）
+- [ ] 标注文字备注（可选：在线上附加文字标签，如 "突破位 $185"）
+- [ ] Undo / Redo 支持（Ctrl+Z / Ctrl+Shift+Z）
+- [ ] 十字准星 + 磁吸模式（绘图时自动吸附到最近 K 线的 OHLC 价格）
+
+**数据持久化：**
+- [ ] 前端 localStorage 缓存（即时保存，刷新不丢失）
+- [ ] 后端 REST API 同步：`POST /api/drawings/{ticker}`, `GET /api/drawings/{ticker}`, `DELETE /api/drawings/{id}`
+- [ ] 数据模型：`Drawing(id, ticker, type, points[], style, label, created_at, updated_at)`
+- [ ] 切换股票时自动加载该 ticker 的所有标注
+
+**与现有系统集成：**
+- [ ] 策略信号叠加显示：买卖点标注（三角形箭头）+ 用户手绘线共存不冲突
+- [ ] Screener 页跳转 Dashboard 时保留已有标注
+- [ ] 回测结果可视化时，标注进出场点位 + 用户画线同屏
+- [ ] 导出图表截图（含标注）功能（PNG / SVG）
+
+**技术选型：**
+- [ ] 基于 Lightweight Charts Drawing Primitives API
+- [ ] 备选：自建 Canvas overlay 层（如 Drawing Primitives 不满足需求）
+- [ ] React 组件封装：`<ChartWithDrawings ticker={ticker} />`
+
 ---
 
 ## 🔧 技术债务 & 工程优化
