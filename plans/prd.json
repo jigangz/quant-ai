@@ -261,8 +261,9 @@
         "git commit"
       ],
       "priority": "medium",
-      "passes": false,
-      "notes": "See plan Task 16"
+      "passes": true,
+      "completed_at": "2026-04-14",
+      "notes": "README.md fully rewritten: 6 pages table (Screener/Dashboard/Training/Strategy/Trading/Explain), complete API endpoints (core/training/strategies/trading/intelligence), quick start (Docker+backend+frontend), tech stack table, architecture diagram, testing section, configuration table."
     },
     {
       "id": "P3-GATE",
