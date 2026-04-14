@@ -246,8 +246,9 @@
         "Docker build succeeds in CI"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 15"
+      "passes": true,
+      "completed_at": "2026-04-14",
+      "notes": "All P1-P3 commits pushed to origin/main. Fixed prices_repo.py to handle OperationalError (sqlite:memory: CI env — each connection gets fresh DB). CI run 24380586850: Lint ✓, Test 3.9 ✓, Test 3.12 ✓, Docker Build ✓, Post-Deploy Health Check ✓. All jobs pass, no continue-on-error."
     },
     {
       "id": "P3-3",
