@@ -1,0 +1,7 @@
+All three tasks completed:
+
+- **P2-4**: Screener.jsx — fetches 10 tickers, sortable table, click-to-navigate
+- **P2-5**: Strategy.jsx — selector, dynamic params, signals + backtest
+- **P2-6**: Trading.jsx — order form, portfolio, orders/cancel, trades, WebSocket feed
+
+Backend: 213 tests pass. Frontend: npm run build succeeds. Remaining tasks (P2-7, P2-GATE, P3-*) are unassigned — exiting now.

@@ -1,12 +1,142 @@
 # Quant AI
 
-ML-powered stock direction prediction platform with backtesting and explainability.
+ML-powered stock direction prediction platform with backtesting, explainability, and a full React frontend.
 
 **TL;DR:**
-- Predicts stock price direction using ML models
+- Predicts stock price direction using ML models (Logistic, XGBoost, LightGBM, CatBoost)
 - Handles time-series data properly (no look-ahead bias)
 - Full backtesting with transaction costs and position sizing
 - Model versioning and experiment tracking
+- React 19 + Tailwind CSS dark-theme frontend with 6 pages
+
+---
+
+## Frontend Pages
+
+| Page | Route | Description |
+|------|-------|-------------|
+| Screener | `/` | Hot-ticker table with sort by change% or volume; click to open Dashboard |
+| Dashboard | `/dashboard?ticker=AAPL` | Market data, live prediction, SHAP explain |
+| Training | `/training` | Submit training jobs, poll status, promote models |
+| Strategy | `/strategy` | Select strategy, set params, generate signals, run backtest |
+| Trading | `/trading` | Paper-trade: place orders, view portfolio P&L, live WebSocket prices |
+| Explain | `/explain` | SHAP feature importance for any ticker |
+
+---
+
+## API Endpoints
+
+### Core
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Service status |
+| `/data/market?ticker=X` | GET | Latest market prices for ticker |
+| `/features/groups` | GET | Available feature groups |
+| `/predict` | POST | Run prediction with promoted model |
+| `/explain?ticker=X` | GET | SHAP feature importances |
+| `/search?q=X` | GET | Search news / documents |
+
+### Training & Models
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/train` | POST | Start async training job |
+| `/runs/{id}` | GET | Training run status |
+| `/runs` | GET | List recent runs |
+| `/models` | GET | List models |
+| `/models/{id}/promote` | POST | Promote model to production |
+| `/models/promoted` | GET | Get promoted model |
+| `/backtest` | POST | Run ML backtest |
+
+### Strategies
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/strategies` | GET | List available strategies |
+| `/api/strategies/{name}` | GET | Strategy schema + params |
+| `/api/strategies/{name}/signals` | POST | Generate trading signals |
+| `/api/strategies/{name}/backtest` | POST | Run strategy backtest |
+
+### Paper Trading
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/trading/orders` | POST | Place order |
+| `/api/trading/orders` | GET | List orders |
+| `/api/trading/orders/{id}` | DELETE | Cancel order |
+| `/api/trading/portfolio` | GET | Portfolio positions + P&L |
+| `/api/trading/portfolio/history` | GET | Portfolio value history |
+| `/api/trading/portfolio/reset` | POST | Reset portfolio |
+| `/api/trading/trades` | GET | Recent trades |
+| `/api/trading/ws/prices` | WS | Live price feed |
+
+### Intelligence
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/agents/technical` | POST | Technical analysis agent |
+| `/rag/answer` | POST | RAG question answering |
+| `/news?ticker=X` | GET | News for ticker |
+
+---
+
+## Quick Start
+
+### Docker
+
+```bash
+git clone https://github.com/jigangz/quant-ai.git
+cd quant-ai
+cp .env.example .env
+# Edit .env with your DATABASE_URL (Supabase or local Postgres)
+docker-compose up
+```
+
+### Local (Backend)
+
+```bash
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+# Set ENV=dev, DATABASE_URL, etc. in .env
+uvicorn app.main:app --reload
+```
+
+### Local (Frontend)
+
+```bash
+cd quant-ai-ui
+npm install
+npm run dev
+# Opens at http://localhost:5173 — proxies API to http://localhost:8000
+```
+
+### Verify
+
+```bash
+curl http://localhost:8000/health
+# {"status": "ok", ...}
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend API | FastAPI (Python 3.9+) |
+| ML Models | Scikit-learn, XGBoost, LightGBM, CatBoost |
+| Database | PostgreSQL (Supabase) / SQLite (test) |
+| Model Storage | Local filesystem / S3 |
+| Cache / Queue | Redis (or in-memory for dev) |
+| Explainability | SHAP |
+| RAG | FAISS + sentence-transformers |
+| Frontend | React 19, Vite |
+| UI Framework | Tailwind CSS v3 (dark theme) |
+| Routing | React Router v7 |
+| CI | GitHub Actions |
+| Deploy | Render (backend) |
 
 ---
 
@@ -14,35 +144,23 @@ ML-powered stock direction prediction platform with backtesting and explainabili
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                           API Layer                                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │
-│  │ /health  │ │  /train  │ │ /predict │ │/backtest │ │ /explain │  │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘  │
-└───────┼────────────┼────────────┼────────────┼────────────┼─────────┘
-        │            │            │            │            │
-┌───────┼────────────┼────────────┼────────────┼────────────┼─────────┐
-│       │     Service Layer       │            │            │         │
-│       │    ┌────────────────────┴───┐  ┌─────┴─────┐  ┌───┴────┐   │
-│       │    │   TrainingService      │  │ Backtest  │  │  SHAP  │   │
-│       │    │ - DatasetBuilder       │  │  Engine   │  │Explainer│  │
-│       │    │ - ModelFactory         │  └───────────┘  └────────┘   │
-│       │    └────────────────────────┘                              │
-└───────┼─────────────────────────────────────────────────────────────┘
-        │
-┌───────┼─────────────────────────────────────────────────────────────┐
-│       │    ML Layer                                                 │
-│  ┌────┴────┐  ┌───────────┐  ┌────────────┐  ┌─────────────────┐   │
-│  │ Feature │  │   Model   │  │   Label    │  │   Time-Series   │   │
-│  │Registry │  │  Factory  │  │  Generator │  │     Splitter    │   │
-│  └─────────┘  └───────────┘  └────────────┘  └─────────────────┘   │
-└─────────────────────────────────────────────────────────────────────┘
-        │
-┌───────┼─────────────────────────────────────────────────────────────┐
-│       │         Data Layer                                          │
-│  ┌────┴────────┐  ┌────────────────┐  ┌─────────────────────────┐  │
-│  │   Market    │  │     Model      │  │      Artifacts          │  │
-│  │  Provider   │  │   Registry     │  │    (local/S3)           │  │
-│  └─────────────┘  └────────────────┘  └─────────────────────────┘  │
+│                       React Frontend (Vite)                          │
+│  Screener | Dashboard | Training | Strategy | Trading | Explain      │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │ HTTP / WebSocket
+┌───────────────────────────▼─────────────────────────────────────────┐
+│                           FastAPI Backend                            │
+│  /health  /data  /train  /predict  /backtest  /explain  /api/*      │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────────────┐
+│                         Service Layer                                │
+│  TrainingService | PredictionService | BacktestEngine | ShapExplainer│
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │
+┌───────────────────────────▼─────────────────────────────────────────┐
+│                           Data Layer                                 │
+│  MarketProvider | ModelRegistry | PricesRepo | ArtifactStore         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -56,26 +174,15 @@ Time-series data requires special handling. Random shuffling leaks future data i
 # Wrong: random split leaks future data
 X_train, X_test = train_test_split(X, shuffle=True)
 
-# Correct: split by date
+# Correct: split by date (70% train / 15% val / 15% test)
 # 2020-01 to 2023-06 → train
 # 2023-07 to 2023-09 → validation
 # 2023-10 to 2024-01 → test
 ```
 
-Implementation in `DatasetBuilder._time_series_split()`:
-```python
-def _time_series_split(self, df):
-    unique_dates = df["date"].unique()
-    train_end = unique_dates[int(len(unique_dates) * 0.7)]
-    train_df = df[df["date"] <= train_end]
-    # val and test follow sequentially
-```
-
 ---
 
 ## Model Versioning
-
-Each trained model is tracked with full metadata.
 
 ```
 artifacts/
@@ -85,135 +192,19 @@ artifacts/
 │   └── metrics.json
 ```
 
-Registry schema:
-```python
-class ModelRecord:
-    id: str
-    name: str
-    version: int
-    model_type: str        # logistic, xgboost, lightgbm, catboost
-    tickers: list[str]
-    feature_groups: list[str]
-    metrics: dict          # {val_auc: 0.62, val_f1: 0.58}
-    artifact_path: str
-    created_at: datetime
-```
-
 ---
 
-## Backtest Metrics
-
-**Classification:**
-| Metric | Target |
-|--------|--------|
-| AUC | > 0.55 |
-| F1 | > 0.50 |
-
-**Strategy:**
-| Metric | Target |
-|--------|--------|
-| Sharpe | > 1.0 |
-| Max Drawdown | < 20% |
-| Win Rate | > 50% |
-
----
-
-## Version History
-
-| Version | Features | Status |
-|---------|----------|--------|
-| V1 | Data pipeline, baseline model, SHAP | ✅ |
-| V2 | Multi-ticker, model registry, backtesting | ✅ |
-| V3 | Async training, 5 models, RAG, agents | ✅ |
-| V4 | Real-time, alerts, multi-user | Planned |
-
----
-
-## Quick Start
-
-### Docker
+## Testing
 
 ```bash
-git clone https://github.com/jigangz/quant-ai.git
-cd quant-ai
-cp .env.example .env
-docker-compose up
-```
+# Unit + integration tests (213 tests)
+pytest tests/ -v --ignore=tests/contract
 
-### Local
+# Contract tests (39 tests)
+pytest tests/contract/ -v
 
-```bash
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-### Verify
-
-```bash
-curl http://localhost:8000/health
-```
-
----
-
-## Demo
-
-```bash
-# Quick check
-python scripts/demo_30s.py
-
-# Full demo
-python scripts/demo_2min.py
-
-# V3 showcase (recommended)
-python scripts/demo_v3.py
-python scripts/demo_v3.py --quick  # skip training
-```
-
-The V3 demo shows:
-- Training 3 models (Logistic, XGBoost, LightGBM)
-- Backtest comparison (Sharpe, returns, drawdown)
-- Model promotion to production
-- Predictions with promoted model
-- Technical analysis with SHAP
-- RAG-based explanations
-
----
-
-## API
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Service status |
-| `/train` | POST | Train model (async by default) |
-| `/runs/{id}` | GET | Training run status |
-| `/models` | GET | List models |
-| `/models/{id}/promote` | POST | Promote to production |
-| `/predict` | POST | Get prediction |
-| `/backtest` | POST | Run backtest |
-| `/agents/technical` | POST | Technical analysis |
-| `/rag/answer` | POST | Question answering |
-
----
-
-## Project Structure
-
-```
-app/
-├── api/           # FastAPI routes
-├── backtest/      # Backtest engine + metrics
-├── db/            # Model registry
-├── explain/       # SHAP explainer
-├── jobs/          # Async job queue (Redis/RQ)
-├── ml/
-│   ├── dataset/   # DatasetBuilder
-│   ├── features/  # Feature registry
-│   ├── hyperparam/# Optuna search
-│   └── models/    # Model factory (5 types)
-├── providers/     # Data providers (Yahoo)
-├── rag/           # FAISS + RAG
-└── services/      # Business logic
+# Frontend build check
+cd quant-ai-ui && npm run build
 ```
 
 ---
@@ -222,12 +213,14 @@ app/
 
 Key environment variables (see `.env.example`):
 
-| Variable | Default |
-|----------|---------|
-| `ENV` | dev |
-| `REDIS_URL` | redis://localhost:6379 |
-| `DEFAULT_MODEL_TYPE` | logistic |
-| `STORAGE_BACKEND` | local |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENV` | `dev` | Environment (dev/test/prod) |
+| `DATABASE_URL` | — | PostgreSQL or SQLite URL |
+| `REDIS_URL` | — | Redis (leave empty for in-memory) |
+| `DEFAULT_MODEL_TYPE` | `logistic` | Default ML model |
+| `STORAGE_BACKEND` | `local` | `local` or `s3` |
+| `CACHE_BACKEND` | `memory` | `memory` or `redis` |
 
 ---
 

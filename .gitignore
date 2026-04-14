@@ -33,6 +33,10 @@ Thumbs.db
 .env.*.local
 !.env.example
 
+# ===== SQLite test databases =====
+*.db
+!.gitkeep
+
 # ===== Build =====
 dist/
 build/
