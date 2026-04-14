@@ -54,3 +54,28 @@
 - CI yml clean: no continue-on-error on test steps, no --ignore workarounds for test files, contract tests run as separate step
 - Dockerfile valid with `--target production` stage, Docker Desktop not available locally (will verify in CI)
 - Gate passed, Phase 2 (frontend) can proceed
+
+### Batch 4 (P2-1, P2-2, P2-3) — completed 2026-04-14
+
+**P2-1: Install Tailwind CSS + React Router**
+- Installed react-router-dom@7.14.1, tailwindcss@3.4.19 (v3, not v4), postcss, autoprefixer
+- Plan listed `@tailwindcss/vite` but used standard v3 postcss approach (config format in plan is v3-style)
+- Created tailwind.config.js with dark theme + custom colors (surface, accent, up, down)
+- Created postcss.config.js with tailwindcss + autoprefixer plugins
+- Replaced index.css with @tailwind directives + bg-surface body style
+- Wrapped App with BrowserRouter in main.jsx
+- npm run build: 0 errors
+
+**P2-2: Rewrite App.jsx with React Router**
+- Replaced page-state pattern with React Router Routes/Route/NavLink
+- 6-page nav: Screener, Dashboard, Training, Strategy, Trading, Explain
+- Active nav link uses bg-accent styling, inactive uses text-gray-400
+- Deleted empty stubs: PriceChart.jsx, PredictionCard.jsx, ShapList.jsx
+- Created placeholder pages for Screener/Strategy/Trading
+- npm run build: 0 errors
+
+**P2-3: Add API client functions**
+- Appended to client.js: listStrategies, getStrategy, generateSignals, runStrategyBacktest
+- Appended: placeOrder, listOrders, cancelOrder, getPortfolio, getPortfolioHistory, resetPortfolio, getTrades
+- Appended: getMarketMulti (uses Promise.all over getMarket)
+- npm run build: 0 errors

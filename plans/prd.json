@@ -95,8 +95,9 @@
         "git commit"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 6. Run commands from quant-ai-ui/ directory"
+      "passes": true,
+      "completed_at": "2026-04-14",
+      "notes": "react-router-dom@7.14.1, tailwindcss@3.4.19, postcss, autoprefixer installed. tailwind.config.js with dark theme + custom colors. postcss.config.js. index.css with @tailwind directives. main.jsx with BrowserRouter. npm run build succeeds."
     },
     {
       "id": "P2-2",
@@ -111,8 +112,9 @@
         "git commit"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 7"
+      "passes": true,
+      "completed_at": "2026-04-14",
+      "notes": "App.jsx rewritten with Routes/Route/NavLink for 6 pages. Active nav with accent color. Deleted PriceChart.jsx, PredictionCard.jsx, ShapList.jsx stubs. Placeholder Screener/Strategy/Trading pages created. npm run build succeeds."
     },
     {
       "id": "P2-3",
@@ -125,8 +127,9 @@
         "git commit"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 8"
+      "passes": true,
+      "completed_at": "2026-04-14",
+      "notes": "client.js now exports listStrategies, getStrategy, generateSignals, runStrategyBacktest, placeOrder, listOrders, cancelOrder, getPortfolio, getPortfolioHistory, resetPortfolio, getTrades, getMarketMulti. npm run build succeeds."
     },
     {
       "id": "P2-4",
