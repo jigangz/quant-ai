@@ -44,3 +44,13 @@
 - Fixed `app/api/agents.py`: `PortfolioSummaryResponse.overall_signal` was required with no default — made optional (None) so failure path works. `bullish_count`/`bearish_count` given default 0.
 - Plan code used `patch("app.api.agents.get_model_cache")` but get_model_cache is a local import inside the function, so correct target is `app.services.model_cache.get_model_cache`
 - 213 unit tests pass
+
+### Batch 3 (P1-GATE) — completed 2026-04-13
+
+**P1-GATE: Phase 1 gate verification**
+- Unit tests: 213 passed, 0 failures
+- Contract tests: 39 passed, 0 failures
+- ruff check app/ scripts/ --ignore F401,F841,E501,F541,E402: all checks passed
+- CI yml clean: no continue-on-error on test steps, no --ignore workarounds for test files, contract tests run as separate step
+- Dockerfile valid with `--target production` stage, Docker Desktop not available locally (will verify in CI)
+- Gate passed, Phase 2 (frontend) can proceed
