@@ -79,3 +79,24 @@
 - Appended: placeOrder, listOrders, cancelOrder, getPortfolio, getPortfolioHistory, resetPortfolio, getTrades
 - Appended: getMarketMulti (uses Promise.all over getMarket)
 - npm run build: 0 errors
+
+### Batch 5 (P2-4, P2-5, P2-6) — completed 2026-04-13
+
+**P2-4: Build Screener page**
+- Implemented Screener.jsx: fetches 10 tickers via getMarketMulti, shows table with ticker/last price/change%/volume
+- Sort by change% or volume buttons, click row navigates to /dashboard?ticker=TICKER
+- Tailwind dark theme styling (bg-surface-card, text-up/text-down, bg-accent)
+- npm run build: 0 errors
+
+**P2-5: Build Strategy Editor page**
+- Implemented Strategy.jsx: loads strategies from listStrategies(), selector dropdown, dynamic param form
+- Generate Signals button → generateSignals(), Run Backtest button → runStrategyBacktest()
+- Signals list and backtest metrics displayed with Tailwind styling
+- npm run build: 0 errors
+
+**P2-6: Build Trading page**
+- Implemented Trading.jsx: order form (ticker/side/type/qty/price), portfolio display with positions+P&L
+- Orders list with cancel button, recent trades list
+- WebSocket price feed via /api/trading/ws/prices (silent error handling for offline dev)
+- Reset portfolio button with confirm dialog
+- npm run build: 0 errors

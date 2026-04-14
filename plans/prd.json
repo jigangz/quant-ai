@@ -144,8 +144,9 @@
         "git commit"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 9"
+      "passes": true,
+      "completed_at": "2026-04-13",
+      "notes": "Screener.jsx fetches 10 tickers via getMarketMulti, table with ticker/price/change%/volume, sort by change% or volume, click row navigates to /dashboard?ticker=. npm run build succeeds."
     },
     {
       "id": "P2-5",
@@ -161,8 +162,9 @@
         "git commit"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 10"
+      "passes": true,
+      "completed_at": "2026-04-13",
+      "notes": "Strategy.jsx with selector dropdown, dynamic param form, Generate Signals + Run Backtest buttons, results displayed with Tailwind. npm run build succeeds."
     },
     {
       "id": "P2-6",
@@ -179,8 +181,9 @@
         "git commit"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 11"
+      "passes": true,
+      "completed_at": "2026-04-13",
+      "notes": "Trading.jsx with order form (ticker/side/type/qty/price), portfolio display with positions+P&L, orders list with cancel, recent trades, WebSocket price feed, reset portfolio button. npm run build succeeds."
     },
     {
       "id": "P2-7",
