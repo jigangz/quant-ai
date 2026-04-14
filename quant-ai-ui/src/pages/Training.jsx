@@ -38,7 +38,6 @@ export default function Training() {
       const data = await listModelTypes();
       setModelTypes(data.types || []);
     } catch (e) {
-      console.error("Failed to load model types:", e);
       // Fallback
       setModelTypes([
         { type: "logistic", class_name: "LogisticModel" },
@@ -53,7 +52,6 @@ export default function Training() {
       const data = await listFeatureGroups();
       setFeatureGroups(data.groups || []);
     } catch (e) {
-      console.error("Failed to load feature groups:", e);
       // Fallback
       setFeatureGroups([
         { name: "ta_basic", description: "Basic technical indicators" },
@@ -68,7 +66,7 @@ export default function Training() {
       const data = await listRuns(20);
       setRuns(data.runs || []);
     } catch (e) {
-      console.error("Failed to load runs:", e);
+      // silent
     }
   }
 
@@ -77,7 +75,7 @@ export default function Training() {
       const data = await listModels("active", 50);
       setModels(data.models || []);
     } catch (e) {
-      console.error("Failed to load models:", e);
+      // silent
     }
   }
 
@@ -86,7 +84,7 @@ export default function Training() {
       const data = await getPromotedModel();
       setPromotedId(data.promoted_id);
     } catch (e) {
-      console.error("Failed to load promoted:", e);
+      // silent
     }
   }
 
@@ -97,16 +95,15 @@ export default function Training() {
 
     try {
       const result = await train(formData);
-      
+
       // If async, poll for status
       if (result.run_id) {
         pollRunStatus(result.run_id);
       }
-      
+
       // Refresh lists
       setTimeout(loadRuns, 1000);
       setTimeout(loadModels, 5000);
-      
     } catch (e) {
       setError(e.message);
     } finally {
@@ -119,7 +116,7 @@ export default function Training() {
     const poll = async () => {
       try {
         const status = await getRunStatus(runId);
-        
+
         // Update runs list
         setRuns((prev) => {
           const existing = prev.find((r) => r.job_id === runId);
@@ -139,7 +136,7 @@ export default function Training() {
           loadModels();
         }
       } catch (e) {
-        console.error("Poll failed:", e);
+        // silent
       }
     };
 
@@ -157,38 +154,37 @@ export default function Training() {
     }
   }
 
+  const tabClass = (tab) =>
+    activeTab === tab
+      ? "px-4 py-2 bg-accent text-white rounded text-sm font-medium"
+      : "px-4 py-2 text-gray-400 hover:text-white text-sm";
+
   return (
-    <div>
-      <h1>🎯 Training Panel</h1>
+    <div className="p-6">
+      <h1 className="text-xl font-bold text-white mb-4">Training Panel</h1>
 
       {/* Tabs */}
-      <div style={styles.tabs}>
-        <button
-          onClick={() => setActiveTab("train")}
-          style={activeTab === "train" ? styles.activeTab : styles.tab}
-        >
+      <div className="flex gap-2 mb-6 border-b border-gray-700 pb-2">
+        <button onClick={() => setActiveTab("train")} className={tabClass("train")}>
           Train New Model
         </button>
-        <button
-          onClick={() => setActiveTab("runs")}
-          style={activeTab === "runs" ? styles.activeTab : styles.tab}
-        >
+        <button onClick={() => setActiveTab("runs")} className={tabClass("runs")}>
           Training Runs ({runs.length})
         </button>
-        <button
-          onClick={() => setActiveTab("models")}
-          style={activeTab === "models" ? styles.activeTab : styles.tab}
-        >
+        <button onClick={() => setActiveTab("models")} className={tabClass("models")}>
           Models ({models.length})
         </button>
       </div>
 
       {/* Error display */}
       {error && (
-        <div style={styles.error}>
-          ❌ {error}
-          <button onClick={() => setError(null)} style={styles.closeBtn}>
-            ×
+        <div className="bg-red-900/30 border border-red-700 text-red-300 px-4 py-3 rounded mb-4 flex justify-between items-center">
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-300 hover:text-white text-xl leading-none ml-4"
+          >
+            &times;
           </button>
         </div>
       )}
@@ -218,45 +214,3 @@ export default function Training() {
     </div>
   );
 }
-
-const styles = {
-  tabs: {
-    display: "flex",
-    gap: 8,
-    marginBottom: 24,
-    borderBottom: "1px solid #ddd",
-    paddingBottom: 8,
-  },
-  tab: {
-    padding: "8px 16px",
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    fontSize: 14,
-  },
-  activeTab: {
-    padding: "8px 16px",
-    background: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: 4,
-    cursor: "pointer",
-    fontSize: 14,
-  },
-  error: {
-    background: "#fee",
-    border: "1px solid #fcc",
-    padding: 12,
-    borderRadius: 4,
-    marginBottom: 16,
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  closeBtn: {
-    background: "none",
-    border: "none",
-    fontSize: 20,
-    cursor: "pointer",
-  },
-};

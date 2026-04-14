@@ -6,64 +6,63 @@ export default function RunsList({ runs = [], onRefresh }) {
     failed: "❌",
   };
 
-  const statusColor = {
-    pending: "#ffc107",
-    running: "#17a2b8",
-    completed: "#28a745",
-    failed: "#dc3545",
+  const statusBadgeClass = {
+    pending: "bg-yellow-600 text-white",
+    running: "bg-blue-600 text-white",
+    completed: "bg-green-700 text-white",
+    failed: "bg-red-700 text-white",
   };
 
   return (
     <div>
-      <div style={styles.header}>
-        <h3>Training Runs</h3>
-        <button onClick={onRefresh} style={styles.refreshBtn}>
-          🔄 Refresh
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-white font-medium">Training Runs</h3>
+        <button
+          onClick={onRefresh}
+          className="border border-gray-600 text-gray-300 hover:text-white px-3 py-1 rounded text-sm"
+        >
+          Refresh
         </button>
       </div>
 
       {runs.length === 0 ? (
-        <p style={styles.empty}>No training runs yet. Start a new training!</p>
+        <p className="text-gray-500 italic text-sm">No training runs yet. Start a new training!</p>
       ) : (
-        <div style={styles.list}>
+        <div className="flex flex-col gap-3">
           {runs.map((run) => (
-            <div key={run.job_id} style={styles.run}>
+            <div
+              key={run.job_id}
+              className="bg-surface-card border border-gray-700 rounded-lg p-4 flex flex-wrap gap-4 items-start"
+            >
               {/* Status Badge */}
-              <div
-                style={{
-                  ...styles.status,
-                  background: statusColor[run.status] || "#ccc",
-                }}
-              >
+              <span className={`px-2 py-1 rounded text-xs font-bold ${statusBadgeClass[run.status] || "bg-gray-600 text-white"}`}>
                 {statusEmoji[run.status] || "?"} {run.status}
-              </div>
+              </span>
 
               {/* Details */}
-              <div style={styles.details}>
-                <div style={styles.id}>
+              <div className="flex-1 min-w-[200px]">
+                <div className="text-gray-500 text-xs font-mono">
                   ID: {run.job_id?.substring(0, 8)}...
                 </div>
-                <div>
+                <div className="text-white text-sm mt-1">
                   <strong>{run.model_type}</strong> on{" "}
                   {run.tickers?.join(", ") || "?"}
                 </div>
-                <div style={styles.meta}>
+                <div className="text-gray-400 text-xs mt-1">
                   Features: {run.feature_groups?.join(", ") || "?"}
                 </div>
               </div>
 
               {/* Metrics */}
               {run.status === "completed" && run.metrics && (
-                <div style={styles.metrics}>
+                <div className="flex gap-3">
                   {Object.entries(run.metrics)
                     .filter(([k]) => k.includes("val"))
                     .slice(0, 3)
                     .map(([k, v]) => (
-                      <div key={k} style={styles.metric}>
-                        <span style={styles.metricLabel}>
-                          {k.replace("val_", "")}
-                        </span>
-                        <span style={styles.metricValue}>
+                      <div key={k} className="bg-blue-900/30 px-2 py-1 rounded text-xs">
+                        <span className="text-gray-400 mr-1">{k.replace("val_", "")}</span>
+                        <span className="font-bold text-accent">
                           {typeof v === "number" ? v.toFixed(4) : v}
                         </span>
                       </div>
@@ -73,13 +72,15 @@ export default function RunsList({ runs = [], onRefresh }) {
 
               {/* Error */}
               {run.status === "failed" && run.error && (
-                <div style={styles.error}>{run.error}</div>
+                <div className="bg-red-900/30 text-red-300 px-3 py-2 rounded text-xs w-full">
+                  {run.error}
+                </div>
               )}
 
               {/* Timing */}
               {run.training_time_seconds > 0 && (
-                <div style={styles.time}>
-                  ⏱️ {run.training_time_seconds.toFixed(1)}s
+                <div className="text-gray-500 text-xs">
+                  ⏱ {run.training_time_seconds.toFixed(1)}s
                 </div>
               )}
             </div>
@@ -89,89 +90,3 @@ export default function RunsList({ runs = [], onRefresh }) {
     </div>
   );
 }
-
-const styles = {
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  refreshBtn: {
-    background: "none",
-    border: "1px solid #ddd",
-    padding: "4px 8px",
-    borderRadius: 4,
-    cursor: "pointer",
-  },
-  empty: {
-    color: "#666",
-    fontStyle: "italic",
-  },
-  list: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-  },
-  run: {
-    background: "#fff",
-    border: "1px solid #eee",
-    borderRadius: 8,
-    padding: 16,
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 16,
-    alignItems: "flex-start",
-  },
-  status: {
-    padding: "4px 8px",
-    borderRadius: 4,
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  details: {
-    flex: 1,
-    minWidth: 200,
-  },
-  id: {
-    fontSize: 11,
-    color: "#999",
-    fontFamily: "monospace",
-  },
-  meta: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 4,
-  },
-  metrics: {
-    display: "flex",
-    gap: 12,
-  },
-  metric: {
-    background: "#f0f8ff",
-    padding: "4px 8px",
-    borderRadius: 4,
-    fontSize: 12,
-  },
-  metricLabel: {
-    color: "#666",
-    marginRight: 4,
-  },
-  metricValue: {
-    fontWeight: "bold",
-    color: "#007bff",
-  },
-  error: {
-    background: "#fee",
-    color: "#c00",
-    padding: 8,
-    borderRadius: 4,
-    fontSize: 12,
-    width: "100%",
-  },
-  time: {
-    fontSize: 12,
-    color: "#666",
-  },
-};

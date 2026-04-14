@@ -1,17 +1,8 @@
 export default function DisabledPanel({ title, description }) {
   return (
-    <div
-      style={{
-        marginTop: 20,
-        padding: 16,
-        border: "1px dashed #bbb",
-        borderRadius: 6,
-        background: "#fafafa",
-        opacity: 0.7,
-      }}
-    >
-      <h4 style={{ marginBottom: 8 }}>{title}</h4>
-      <p style={{ margin: 0, fontSize: 14 }}>
+    <div className="mt-5 p-4 border border-dashed border-gray-600 rounded-lg opacity-70">
+      <h4 className="text-gray-300 font-medium mb-2">{title}</h4>
+      <p className="text-gray-500 text-sm m-0">
         {description || "Coming soon"}
       </p>
     </div>

@@ -6,32 +6,35 @@ export default function ModelsList({
 }) {
   return (
     <div>
-      <div style={styles.header}>
-        <h3>Registered Models</h3>
-        <button onClick={onRefresh} style={styles.refreshBtn}>
-          🔄 Refresh
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-white font-medium">Registered Models</h3>
+        <button
+          onClick={onRefresh}
+          className="border border-gray-600 text-gray-300 hover:text-white px-3 py-1 rounded text-sm"
+        >
+          Refresh
         </button>
       </div>
 
       {/* Promoted Badge */}
       {promotedId && (
-        <div style={styles.promoted}>
+        <div className="bg-yellow-900/30 border border-yellow-600 text-yellow-300 px-4 py-3 rounded mb-4 text-sm">
           🏆 <strong>Production Model:</strong> {promotedId.substring(0, 8)}...
         </div>
       )}
 
       {models.length === 0 ? (
-        <p style={styles.empty}>No models registered. Train one first!</p>
+        <p className="text-gray-500 italic text-sm">No models registered. Train one first!</p>
       ) : (
-        <table style={styles.table}>
+        <table className="w-full text-sm border-collapse">
           <thead>
-            <tr>
-              <th>Status</th>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Tickers</th>
-              <th>Metrics</th>
-              <th>Actions</th>
+            <tr className="border-b border-gray-700 text-left">
+              <th className="text-gray-400 font-medium pb-2 pr-4">Status</th>
+              <th className="text-gray-400 font-medium pb-2 pr-4">Name</th>
+              <th className="text-gray-400 font-medium pb-2 pr-4">Type</th>
+              <th className="text-gray-400 font-medium pb-2 pr-4">Tickers</th>
+              <th className="text-gray-400 font-medium pb-2 pr-4">Metrics</th>
+              <th className="text-gray-400 font-medium pb-2">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -40,43 +43,49 @@ export default function ModelsList({
               return (
                 <tr
                   key={model.id}
-                  style={isPromoted ? styles.promotedRow : {}}
+                  className={`border-b border-gray-800 ${isPromoted ? "bg-yellow-900/10" : ""}`}
                 >
                   {/* Status */}
-                  <td>
+                  <td className="py-2 pr-4">
                     {isPromoted ? (
-                      <span style={styles.badge}>🏆 PROD</span>
+                      <span className="bg-yellow-600 text-black px-2 py-0.5 rounded text-xs font-bold">
+                        🏆 PROD
+                      </span>
                     ) : (
-                      <span style={styles.activeBadge}>Active</span>
+                      <span className="bg-green-900/50 text-green-300 px-2 py-0.5 rounded text-xs">
+                        Active
+                      </span>
                     )}
                   </td>
 
                   {/* Name */}
-                  <td>
-                    <div style={styles.name}>{model.name}</div>
-                    <div style={styles.id}>{model.id?.substring(0, 8)}...</div>
+                  <td className="py-2 pr-4">
+                    <div className="text-white font-medium">{model.name}</div>
+                    <div className="text-gray-500 text-xs font-mono">{model.id?.substring(0, 8)}...</div>
                   </td>
 
                   {/* Type */}
-                  <td>
-                    <span style={styles.modelType}>{model.model_type}</span>
+                  <td className="py-2 pr-4">
+                    <span className="bg-blue-900/40 text-blue-300 px-2 py-0.5 rounded text-xs">
+                      {model.model_type}
+                    </span>
                   </td>
 
                   {/* Tickers */}
-                  <td>{model.tickers?.join(", ")}</td>
+                  <td className="py-2 pr-4 text-gray-300">{model.tickers?.join(", ")}</td>
 
                   {/* Metrics */}
-                  <td>
+                  <td className="py-2 pr-4 text-xs">
                     {model.metrics && (
-                      <div style={styles.metrics}>
+                      <div className="space-y-0.5">
                         {model.metrics.val_auc && (
-                          <div>
-                            AUC: <strong>{model.metrics.val_auc}</strong>
+                          <div className="text-gray-400">
+                            AUC: <strong className="text-white">{model.metrics.val_auc}</strong>
                           </div>
                         )}
                         {model.metrics.val_f1 && (
-                          <div>
-                            F1: <strong>{model.metrics.val_f1}</strong>
+                          <div className="text-gray-400">
+                            F1: <strong className="text-white">{model.metrics.val_f1}</strong>
                           </div>
                         )}
                       </div>
@@ -84,17 +93,17 @@ export default function ModelsList({
                   </td>
 
                   {/* Actions */}
-                  <td>
+                  <td className="py-2">
                     {!isPromoted && (
                       <button
                         onClick={() => onPromote(model.id)}
-                        style={styles.promoteBtn}
+                        className="bg-green-700 hover:bg-green-600 text-white px-2 py-1 rounded text-xs"
                       >
-                        ⬆️ Promote
+                        Promote
                       </button>
                     )}
                     {isPromoted && (
-                      <span style={styles.prodLabel}>In Production</span>
+                      <span className="text-gray-500 text-xs">In Production</span>
                     )}
                   </td>
                 </tr>
@@ -106,83 +115,3 @@ export default function ModelsList({
     </div>
   );
 }
-
-const styles = {
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  refreshBtn: {
-    background: "none",
-    border: "1px solid #ddd",
-    padding: "4px 8px",
-    borderRadius: 4,
-    cursor: "pointer",
-  },
-  promoted: {
-    background: "#fff3cd",
-    border: "1px solid #ffc107",
-    padding: 12,
-    borderRadius: 4,
-    marginBottom: 16,
-  },
-  empty: {
-    color: "#666",
-    fontStyle: "italic",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    fontSize: 14,
-  },
-  promotedRow: {
-    background: "#fff8e1",
-  },
-  badge: {
-    background: "#ffc107",
-    color: "#000",
-    padding: "2px 6px",
-    borderRadius: 4,
-    fontSize: 11,
-    fontWeight: "bold",
-  },
-  activeBadge: {
-    background: "#e8f5e9",
-    color: "#2e7d32",
-    padding: "2px 6px",
-    borderRadius: 4,
-    fontSize: 11,
-  },
-  name: {
-    fontWeight: 500,
-  },
-  id: {
-    fontSize: 10,
-    color: "#999",
-    fontFamily: "monospace",
-  },
-  modelType: {
-    background: "#e3f2fd",
-    padding: "2px 6px",
-    borderRadius: 4,
-    fontSize: 12,
-  },
-  metrics: {
-    fontSize: 12,
-  },
-  promoteBtn: {
-    background: "#28a745",
-    color: "white",
-    border: "none",
-    padding: "4px 8px",
-    borderRadius: 4,
-    cursor: "pointer",
-    fontSize: 12,
-  },
-  prodLabel: {
-    color: "#666",
-    fontSize: 11,
-  },
-};

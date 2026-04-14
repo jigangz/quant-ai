@@ -21,7 +21,6 @@ export default function TrainingForm({
     const { name, value, type, checked } = e.target;
 
     if (name === "feature_groups") {
-      // Multi-select for feature groups
       const newGroups = checked
         ? [...formData.feature_groups, value]
         : formData.feature_groups.filter((g) => g !== value);
@@ -34,7 +33,6 @@ export default function TrainingForm({
   function handleSubmit(e) {
     e.preventDefault();
 
-    // Parse tickers
     const tickers = formData.tickers
       .split(",")
       .map((t) => t.trim().toUpperCase())
@@ -49,62 +47,63 @@ export default function TrainingForm({
       search_trials: parseInt(formData.search_trials),
     };
 
-    // Add dates if provided
     if (formData.start_date) payload.start_date = formData.start_date;
     if (formData.end_date) payload.end_date = formData.end_date;
 
     onSubmit(payload);
   }
 
+  const inputClass = "block w-full mt-1 px-3 py-2 bg-surface-card border border-gray-700 text-white rounded text-sm focus:outline-none focus:border-accent";
+
   return (
-    <form onSubmit={handleSubmit} style={styles.form}>
-      <h3>Train New Model</h3>
+    <form onSubmit={handleSubmit} className="bg-surface-card rounded-lg p-6 max-w-2xl">
+      <h3 className="text-white font-medium mb-4">Train New Model</h3>
 
       {/* Tickers */}
-      <div style={styles.field}>
-        <label>Tickers (comma-separated)</label>
+      <div className="mb-4">
+        <label className="text-gray-400 text-sm">Tickers (comma-separated)</label>
         <input
           type="text"
           name="tickers"
           value={formData.tickers}
           onChange={handleChange}
           placeholder="AAPL, MSFT, GOOGL"
-          style={styles.input}
+          className={inputClass}
         />
       </div>
 
       {/* Date Range */}
-      <div style={styles.row}>
-        <div style={styles.field}>
-          <label>Start Date (optional)</label>
+      <div className="flex gap-4 mb-4">
+        <div className="flex-1">
+          <label className="text-gray-400 text-sm">Start Date (optional)</label>
           <input
             type="date"
             name="start_date"
             value={formData.start_date}
             onChange={handleChange}
-            style={styles.input}
+            className={inputClass}
           />
         </div>
-        <div style={styles.field}>
-          <label>End Date (optional)</label>
+        <div className="flex-1">
+          <label className="text-gray-400 text-sm">End Date (optional)</label>
           <input
             type="date"
             name="end_date"
             value={formData.end_date}
             onChange={handleChange}
-            style={styles.input}
+            className={inputClass}
           />
         </div>
       </div>
 
       {/* Model Type */}
-      <div style={styles.field}>
-        <label>Model Type</label>
+      <div className="mb-4">
+        <label className="text-gray-400 text-sm">Model Type</label>
         <select
           name="model_type"
           value={formData.model_type}
           onChange={handleChange}
-          style={styles.input}
+          className={inputClass}
         >
           {modelTypes.map((m) => (
             <option key={m.type} value={m.type}>
@@ -115,28 +114,29 @@ export default function TrainingForm({
       </div>
 
       {/* Feature Groups */}
-      <div style={styles.field}>
-        <label>Feature Groups</label>
-        <div style={styles.checkboxGroup}>
+      <div className="mb-4">
+        <label className="text-gray-400 text-sm">Feature Groups</label>
+        <div className="mt-2 space-y-2">
           {featureGroups.map((g) => (
-            <label key={g.name} style={styles.checkbox}>
+            <label key={g.name} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 name="feature_groups"
                 value={g.name}
                 checked={formData.feature_groups.includes(g.name)}
                 onChange={handleChange}
+                className="accent-accent"
               />
-              {g.name}
-              <span style={styles.desc}> - {g.description}</span>
+              <span className="text-white text-sm">{g.name}</span>
+              <span className="text-gray-500 text-xs">— {g.description}</span>
             </label>
           ))}
         </div>
       </div>
 
       {/* Horizon */}
-      <div style={styles.field}>
-        <label>Prediction Horizon (days)</label>
+      <div className="mb-4">
+        <label className="text-gray-400 text-sm">Prediction Horizon (days)</label>
         <input
           type="number"
           name="horizon_days"
@@ -144,19 +144,19 @@ export default function TrainingForm({
           onChange={handleChange}
           min={1}
           max={60}
-          style={{ ...styles.input, width: 100 }}
+          className="mt-1 w-24 px-3 py-2 bg-surface-card border border-gray-700 text-white rounded text-sm focus:outline-none focus:border-accent"
         />
       </div>
 
       {/* Hyperparameter Search */}
-      <div style={styles.field}>
-        <label>Hyperparameter Search</label>
-        <div style={styles.row}>
+      <div className="mb-6">
+        <label className="text-gray-400 text-sm">Hyperparameter Search</label>
+        <div className="flex gap-3 mt-1">
           <select
             name="search_mode"
             value={formData.search_mode}
             onChange={handleChange}
-            style={{ ...styles.input, width: 120 }}
+            className="w-32 px-3 py-2 bg-surface-card border border-gray-700 text-white rounded text-sm focus:outline-none focus:border-accent"
           >
             <option value="none">None</option>
             <option value="grid">Grid Search</option>
@@ -171,63 +171,20 @@ export default function TrainingForm({
               min={5}
               max={100}
               placeholder="Trials"
-              style={{ ...styles.input, width: 80 }}
+              className="w-20 px-3 py-2 bg-surface-card border border-gray-700 text-white rounded text-sm focus:outline-none focus:border-accent"
             />
           )}
         </div>
       </div>
 
       {/* Submit */}
-      <button type="submit" disabled={loading} style={styles.submit}>
-        {loading ? "Training..." : "🚀 Start Training"}
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-accent hover:opacity-90 disabled:opacity-50 text-white px-6 py-3 rounded text-base font-medium w-full"
+      >
+        {loading ? "Training..." : "Start Training"}
       </button>
     </form>
   );
 }
-
-const styles = {
-  form: {
-    background: "#f9f9f9",
-    padding: 24,
-    borderRadius: 8,
-    maxWidth: 600,
-  },
-  field: {
-    marginBottom: 16,
-  },
-  row: {
-    display: "flex",
-    gap: 16,
-  },
-  input: {
-    display: "block",
-    width: "100%",
-    padding: 8,
-    marginTop: 4,
-    border: "1px solid #ddd",
-    borderRadius: 4,
-    fontSize: 14,
-  },
-  checkboxGroup: {
-    marginTop: 8,
-  },
-  checkbox: {
-    display: "block",
-    marginBottom: 4,
-    cursor: "pointer",
-  },
-  desc: {
-    color: "#666",
-    fontSize: 12,
-  },
-  submit: {
-    background: "#007bff",
-    color: "white",
-    border: "none",
-    padding: "12px 24px",
-    borderRadius: 4,
-    fontSize: 16,
-    cursor: "pointer",
-    marginTop: 16,
-  },
-};
