@@ -1,87 +1,56 @@
-import { useState } from "react";
+import { Routes, Route, NavLink, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Explain from "./pages/Explain";
 import Training from "./pages/Training";
+import Screener from "./pages/Screener";
+import Strategy from "./pages/Strategy";
+import Trading from "./pages/Trading";
+
+const NAV = [
+  { to: "/screener", label: "Screener" },
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/training", label: "Training" },
+  { to: "/strategy", label: "Strategy" },
+  { to: "/trading", label: "Trading" },
+  { to: "/explain", label: "Explain" },
+];
 
 function App() {
-  const [page, setPage] = useState("training");
-
-  console.log("API BASE =", import.meta.env.VITE_API_BASE);
-
   return (
-    <div style={{ padding: 24, fontFamily: "sans-serif" }}>
-      {/* Navigation */}
-      <nav style={styles.nav}>
-        <span style={styles.logo}>⚡ Quant AI</span>
-        <div style={styles.links}>
-          <button
-            onClick={() => setPage("dashboard")}
-            style={page === "dashboard" ? styles.activeLink : styles.link}
-          >
-            📊 Dashboard
-          </button>
-          <button
-            onClick={() => setPage("training")}
-            style={page === "training" ? styles.activeLink : styles.link}
-          >
-            🎯 Training
-          </button>
-          <button
-            onClick={() => setPage("explain")}
-            style={page === "explain" ? styles.activeLink : styles.link}
-          >
-            🔍 Explain
-          </button>
+    <div className="min-h-screen bg-surface">
+      <nav className="flex items-center justify-between px-6 py-3 bg-surface-card border-b border-gray-700">
+        <span className="text-lg font-bold text-white">Quant AI</span>
+        <div className="flex gap-1">
+          {NAV.map(({ to, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `px-3 py-1.5 rounded text-sm transition ${
+                  isActive
+                    ? "bg-accent text-white"
+                    : "text-gray-400 hover:text-white hover:bg-surface-hover"
+                }`
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
         </div>
       </nav>
-
-      {/* Page Content */}
-      <main style={styles.main}>
-        {page === "dashboard" && <Dashboard />}
-        {page === "training" && <Training />}
-        {page === "explain" && <Explain />}
+      <main className="max-w-7xl mx-auto px-6 py-6">
+        <Routes>
+          <Route path="/" element={<Navigate to="/screener" replace />} />
+          <Route path="/screener" element={<Screener />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/training" element={<Training />} />
+          <Route path="/strategy" element={<Strategy />} />
+          <Route path="/trading" element={<Trading />} />
+          <Route path="/explain" element={<Explain />} />
+        </Routes>
       </main>
     </div>
   );
 }
-
-const styles = {
-  nav: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 24,
-    paddingBottom: 16,
-    borderBottom: "2px solid #eee",
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  links: {
-    display: "flex",
-    gap: 8,
-  },
-  link: {
-    background: "none",
-    border: "none",
-    padding: "8px 16px",
-    cursor: "pointer",
-    fontSize: 14,
-    color: "#666",
-  },
-  activeLink: {
-    background: "#007bff",
-    color: "white",
-    border: "none",
-    padding: "8px 16px",
-    borderRadius: 4,
-    cursor: "pointer",
-    fontSize: 14,
-  },
-  main: {
-    minHeight: "calc(100vh - 100px)",
-  },
-};
 
 export default App;
