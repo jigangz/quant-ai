@@ -106,9 +106,9 @@ class PortfolioSummaryResponse(BaseModel):
     error: str | None = None
     
     # Summary
-    overall_signal: Literal["bullish", "bearish", "mixed"]
-    bullish_count: int
-    bearish_count: int
+    overall_signal: Literal["bullish", "bearish", "mixed"] | None = None
+    bullish_count: int = 0
+    bearish_count: int = 0
     
     # Per-ticker
     analyses: list[TickerAnalysis] = []
