@@ -1,0 +1,272 @@
+{
+  "repo": "jigangz/quant-ai",
+  "branchName": "main",
+  "verifyCommand": "cd /c/Users/zjg09/projects/quant-ai && python -m pytest tests/ -v --tb=short --ignore=tests/contract -p no:cacheprovider 2>&1 | tail -5",
+  "features": [
+    {
+      "id": "P1-1",
+      "title": "Fix explain_service.py hardcoded path — lazy-load ShapExplainer",
+      "acceptanceCriteria": [
+        "app/services/explain_service.py does NOT instantiate ShapExplainer at module import time",
+        "_get_explainer() lazily creates ShapExplainer without hardcoded model_path",
+        "tests/test_explain_service.py exists with 3+ tests all passing",
+        "git commit with message starting 'fix(explain):'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-14",
+      "notes": "See docs/superpowers/plans/2026-04-13-phase1-2.5-verification.md Task 1 for exact code"
+    },
+    {
+      "id": "P1-2",
+      "title": "Fix CI test infrastructure — remove all skips, enable contract tests",
+      "acceptanceCriteria": [
+        "pyproject.toml has asyncio_mode = auto",
+        "tests/contract/conftest.py has _ensure_tables fixture creating prices table",
+        ".github/workflows/ci.yml has NO --ignore=tests/test_health.py",
+        ".github/workflows/ci.yml has NO --ignore=tests/test_cache.py",
+        ".github/workflows/ci.yml has NO -k 'not TestStrategiesAPI'",
+        ".github/workflows/ci.yml has NO continue-on-error: true on test steps",
+        "contract tests run as separate step (not if: false)",
+        "git commit with message starting 'fix(ci):'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-14",
+      "notes": "See plan Task 2 for exact CI yaml changes"
+    },
+    {
+      "id": "P1-3",
+      "title": "Add API tests for market, features, models endpoints",
+      "acceptanceCriteria": [
+        "tests/test_api_market.py exists with 3+ tests",
+        "tests/test_api_features.py exists with 4+ tests",
+        "tests/test_api_models.py exists with 3+ tests",
+        "All new tests pass: pytest tests/test_api_market.py tests/test_api_features.py tests/test_api_models.py -v",
+        "git commit with message starting 'test:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-14",
+      "notes": "See plan Task 3 for exact test code"
+    },
+    {
+      "id": "P1-4",
+      "title": "Add API tests for explain, search, agents, news endpoints",
+      "acceptanceCriteria": [
+        "tests/test_api_explain.py exists with 2+ tests",
+        "tests/test_api_search.py exists with 2+ tests",
+        "tests/test_api_agents.py exists with 3+ tests",
+        "tests/test_api_news.py exists with 3+ tests",
+        "All new tests pass",
+        "git commit with message starting 'test:'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "See plan Task 4 for exact test code"
+    },
+    {
+      "id": "P1-GATE",
+      "title": "Phase 1 Gate: Full backend verification",
+      "acceptanceCriteria": [
+        "pytest tests/ -v --ignore=tests/contract — 0 failures",
+        "pytest tests/contract/ -v — 0 failures",
+        "ruff check app/ scripts/ --ignore F401,F841,E501,F541,E402 — 0 errors",
+        "docker build -t quant-ai:test --target production — succeeds",
+        ".github/workflows/ci.yml has no continue-on-error or --ignore workarounds"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "PHASE GATE — run solo, verify everything before proceeding to P2"
+    },
+    {
+      "id": "P2-1",
+      "title": "Install Tailwind CSS + React Router in frontend",
+      "acceptanceCriteria": [
+        "react-router-dom in package.json dependencies",
+        "tailwindcss in package.json devDependencies",
+        "tailwind.config.js exists with dark theme + custom colors (surface, accent, up, down)",
+        "postcss.config.js exists",
+        "src/index.css has @tailwind directives",
+        "src/main.jsx wraps App with BrowserRouter",
+        "npm run build succeeds",
+        "git commit"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "See plan Task 6. Run commands from quant-ai-ui/ directory"
+    },
+    {
+      "id": "P2-2",
+      "title": "Rewrite App.jsx with React Router + nav layout",
+      "acceptanceCriteria": [
+        "App.jsx uses Routes/Route from react-router-dom",
+        "NavLink for 6 pages: Screener, Dashboard, Training, Strategy, Trading, Explain",
+        "Active nav link highlighted with accent color",
+        "Empty stubs PriceChart.jsx, PredictionCard.jsx, ShapList.jsx deleted",
+        "Placeholder pages created for Screener, Strategy, Trading",
+        "npm run build succeeds",
+        "git commit"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "See plan Task 7"
+    },
+    {
+      "id": "P2-3",
+      "title": "Add API client functions for strategy + trading",
+      "acceptanceCriteria": [
+        "client.js exports: listStrategies, getStrategy, generateSignals, runStrategyBacktest",
+        "client.js exports: placeOrder, listOrders, cancelOrder, getPortfolio, getPortfolioHistory, resetPortfolio, getTrades",
+        "client.js exports: getMarketMulti",
+        "npm run build succeeds",
+        "git commit"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "See plan Task 8"
+    },
+    {
+      "id": "P2-4",
+      "title": "Build Screener page",
+      "acceptanceCriteria": [
+        "src/pages/Screener.jsx fetches 10 hot tickers via getMarketMulti",
+        "Table shows ticker, last price, change %, volume",
+        "Sort by change % or volume buttons work",
+        "Click row navigates to /dashboard?ticker={ticker}",
+        "Tailwind dark theme styling",
+        "npm run build succeeds",
+        "git commit"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "See plan Task 9"
+    },
+    {
+      "id": "P2-5",
+      "title": "Build Strategy Editor page",
+      "acceptanceCriteria": [
+        "src/pages/Strategy.jsx loads strategies from GET /api/strategies",
+        "Strategy selector dropdown",
+        "Dynamic parameter form based on strategy schema",
+        "Generate Signals button calls POST /api/strategies/{name}/signals",
+        "Run Backtest button calls POST /api/strategies/{name}/backtest",
+        "Results displayed with Tailwind styling",
+        "npm run build succeeds",
+        "git commit"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "See plan Task 10"
+    },
+    {
+      "id": "P2-6",
+      "title": "Build Trading page",
+      "acceptanceCriteria": [
+        "src/pages/Trading.jsx has order form (ticker, side, type, qty, price)",
+        "POST /api/trading/orders to place orders",
+        "Portfolio display with positions and P&L",
+        "Orders list with cancel button",
+        "Recent trades list",
+        "WebSocket /api/trading/ws/prices for live prices",
+        "Reset portfolio button",
+        "npm run build succeeds",
+        "git commit"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "See plan Task 11"
+    },
+    {
+      "id": "P2-7",
+      "title": "Migrate existing pages to Tailwind dark theme",
+      "acceptanceCriteria": [
+        "Dashboard.jsx: prediction shows formatted card (signal, probability, samples) NOT raw JSON",
+        "Dashboard.jsx: reads ticker from URL search params (useSearchParams)",
+        "All inline style={{}} replaced with Tailwind className",
+        "Dashboard, Explain, Training, DisabledPanel, TrainingForm, RunsList, ModelsList all converted",
+        "console.log statements removed",
+        "npm run build succeeds",
+        "git commit"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "See plan Task 12"
+    },
+    {
+      "id": "P2-GATE",
+      "title": "Phase 2 Gate: Frontend verification",
+      "acceptanceCriteria": [
+        "npm run build — 0 errors",
+        "All 6 pages render without crash (dev server)",
+        "Nav between all pages works",
+        "No console errors in browser",
+        "Screener table shows data",
+        "Dashboard prediction shows formatted card",
+        "Strategy page loads strategy list",
+        "Trading page has order form"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "PHASE GATE — visual verification required, run solo"
+    },
+    {
+      "id": "P3-1",
+      "title": "Local E2E verification — walk through 5 flows",
+      "acceptanceCriteria": [
+        "Backend starts (docker-compose up or uvicorn)",
+        "Screener → Dashboard flow works (click stock, see data, run prediction)",
+        "Training flow works (submit job, poll status, promote model)",
+        "Strategy flow works (select strategy, generate signals, run backtest)",
+        "Trading flow works (place order, see portfolio, WebSocket prices)",
+        "Any integration bugs fixed and committed"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "See plan Task 14. Manual verification with browser"
+    },
+    {
+      "id": "P3-2",
+      "title": "Push to GitHub and verify CI green",
+      "acceptanceCriteria": [
+        "All changes pushed to origin/main",
+        "GitHub Actions CI pipeline passes all jobs",
+        "No continue-on-error or ignored tests",
+        "Docker build succeeds in CI"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "See plan Task 15"
+    },
+    {
+      "id": "P3-3",
+      "title": "Update README to reflect Phase 1-2.5 completion",
+      "acceptanceCriteria": [
+        "README.md updated with current project state",
+        "All 6 pages mentioned with descriptions",
+        "API endpoints table updated",
+        "Quick start section (Docker + local)",
+        "Tech stack section",
+        "git commit"
+      ],
+      "priority": "medium",
+      "passes": false,
+      "notes": "See plan Task 16"
+    },
+    {
+      "id": "P3-GATE",
+      "title": "Phase 3 Gate: Final verification",
+      "acceptanceCriteria": [
+        "Full test suite passes locally",
+        "Frontend builds clean",
+        "CI green on GitHub",
+        "Render health check returns 200 OK",
+        "All 6 pages functional in browser",
+        "README reflects actual state"
+      ],
+      "priority": "high",
+      "passes": false,
+      "notes": "PHASE GATE — final verification, run solo"
+    }
+  ]
+}
