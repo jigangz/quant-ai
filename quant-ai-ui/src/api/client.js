@@ -115,3 +115,69 @@ export function ragAnswer(query, topK = 5) {
     body: JSON.stringify({ query, top_k: topK }),
   });
 }
+
+// ===================================
+// Strategies
+// ===================================
+export function listStrategies() {
+  return request(`/api/strategies`);
+}
+
+export function getStrategy(name) {
+  return request(`/api/strategies/${name}`);
+}
+
+export function generateSignals(name, payload) {
+  return request(`/api/strategies/${name}/signals`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function runStrategyBacktest(name, payload) {
+  return request(`/api/strategies/${name}/backtest`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+// ===================================
+// Paper Trading
+// ===================================
+export function placeOrder(payload) {
+  return request(`/api/trading/orders`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listOrders(status = "all", limit = 50) {
+  return request(`/api/trading/orders?status=${status}&limit=${limit}`);
+}
+
+export function cancelOrder(orderId) {
+  return request(`/api/trading/orders/${orderId}`, { method: "DELETE" });
+}
+
+export function getPortfolio() {
+  return request(`/api/trading/portfolio`);
+}
+
+export function getPortfolioHistory() {
+  return request(`/api/trading/portfolio/history`);
+}
+
+export function resetPortfolio() {
+  return request(`/api/trading/portfolio/reset`, { method: "POST" });
+}
+
+export function getTrades(limit = 50) {
+  return request(`/api/trading/trades?limit=${limit}`);
+}
+
+// ===================================
+// Screener (uses market data)
+// ===================================
+export function getMarketMulti(tickers) {
+  return Promise.all(tickers.map((t) => getMarket(t).catch(() => null)));
+}
