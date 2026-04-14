@@ -33,3 +33,14 @@
 - Created `tests/test_api_models.py` (3 tests)
 - Fixed `app/api/models.py` route ordering: moved `/models/cache` and `/models/promoted` routes BEFORE `/{model_id}` to prevent parameterized route shadowing
 - All 203 unit tests + 39 contract tests pass
+
+### Batch 2 (P1-4) — completed 2026-04-13
+
+**P1-4: API tests for explain, search, agents, news**
+- Created `tests/test_api_explain.py` (2 tests)
+- Created `tests/test_api_search.py` (2 tests)
+- Created `tests/test_api_agents.py` (3 tests)
+- Created `tests/test_api_news.py` (3 tests)
+- Fixed `app/api/agents.py`: `PortfolioSummaryResponse.overall_signal` was required with no default — made optional (None) so failure path works. `bullish_count`/`bearish_count` given default 0.
+- Plan code used `patch("app.api.agents.get_model_cache")` but get_model_cache is a local import inside the function, so correct target is `app.services.model_cache.get_model_cache`
+- 213 unit tests pass
