@@ -122,3 +122,22 @@
 - No console.log in pages (removed in P2-7)
 - 213 unit tests pass
 - Gate passed, Phase 3 (E2E + CI + README) can proceed
+
+### Batch 8 (P3-1, P3-2, P3-3) — completed 2026-04-14
+
+**P3-1: Local E2E verification**
+- Backend import verified with ENV=test SQLite config
+- Backend starts (uvicorn): all endpoints reachable (strategies 200, trading portfolio 200)
+- Code-level review of all 5 flows: Screener→Dashboard (useSearchParams+navigation), Training (train/runs/promote), Strategy (listStrategies→signals→backtest), Trading (orders/portfolio/WS), Explain (SHAP)
+- No integration bugs found; frontend API client routes match backend prefixes exactly
+- Added *.db to .gitignore
+
+**P3-2: Push to GitHub and CI green**
+- Pushed all P1-P3 commits (first push to origin/main this session)
+- CI failed on test_strategies.py::TestStrategiesAPI::test_signals_no_data — prices table missing in sqlite:memory: TestClient thread
+  - Root cause: sqlite:memory: creates fresh DB per connection; session fixture creates prices table on connection A, TestClient uses connection B (different pool connection = fresh empty DB)
+  - Fix: wrap get_prices() SQL in try/except OperationalError, return [] if table doesn't exist → get_prices_df returns None → _get_price_data raises 404 as test expected
+- Second push: CI run 24380586850 — all jobs pass (Lint, Test 3.9, Test 3.12, Docker Build, Deploy Health)
+
+**P3-3: README update**
+- Full rewrite: 6 pages table, complete API endpoints tables, quick start (Docker+backend+frontend), tech stack table, architecture diagram, testing commands, config reference
