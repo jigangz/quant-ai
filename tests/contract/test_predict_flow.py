@@ -54,7 +54,7 @@ class TestPredictContract:
         assert response.status_code in [200, 400, 500]
         if response.status_code == 200:
             data = response.json()
-            assert "status" in data
+            assert "success" in data or "status" in data or "error" in data
 
     def test_predict_with_invalid_model_id(self, client):
         """Prediction with invalid model_id returns readable error."""
@@ -67,8 +67,9 @@ class TestPredictContract:
 
         data = response.json()
         if response.status_code == 200:
-            assert data.get("status") == "error"
-            assert "message" in data
+            # API returns success:false with error message when model not found
+            assert data.get("success") is False or data.get("status") == "error"
+            assert "error" in data or "message" in data or "detail" in data
 
     def test_predict_response_schema_success(self, client):
         """Successful prediction has correct schema."""

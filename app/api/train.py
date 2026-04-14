@@ -92,6 +92,15 @@ def train_model(
     # Returns: full model record
     ```
     """
+    # Validate model_type before queuing to return 400 early
+    from app.ml.models.factory import list_available_models
+    available_types = list_available_models()
+    if request.model_type not in available_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown model_type '{request.model_type}'. Available: {available_types}"
+        )
+
     # Note: Query param is "async" but Python uses "sync" (inverted)
     # FastAPI maps async=true → sync=True, async=false → sync=False
     run_async = not sync
@@ -137,8 +146,13 @@ def _train_async(request: TrainRequest) -> TrainAsyncResponse:
         from app.infra.queue import get_queue as get_infra_queue
         queue = get_infra_queue()
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
+            try:
+                asyncio.get_running_loop()
+                loop_running = True
+            except RuntimeError:
+                loop_running = False
+
+            if loop_running:
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as pool:
                     job_id = pool.submit(
@@ -146,9 +160,7 @@ def _train_async(request: TrainRequest) -> TrainAsyncResponse:
                         queue.enqueue("training", request_dict),
                     ).result(timeout=10)
             else:
-                job_id = loop.run_until_complete(
-                    queue.enqueue("training", request_dict)
-                )
+                job_id = asyncio.run(queue.enqueue("training", request_dict))
         except Exception as e:
             logger.error(f"Failed to enqueue via {backend}: {e}", exc_info=True)
             raise HTTPException(status_code=503, detail=f"Queue unavailable: {e}")

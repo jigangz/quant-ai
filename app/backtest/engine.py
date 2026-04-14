@@ -58,7 +58,7 @@ class BacktestRequest(BaseModel):
     
     # Position sizing
     position_sizing: Literal["fixed", "volatility_scaled", "kelly"] = "fixed"
-    position_size: float = Field(default=1.0, ge=0.1, le=2.0)  # base size or max
+    position_size: float = Field(default=1.0, ge=0.1, le=1.0)  # base size or max
     volatility_lookback: int = Field(default=20, ge=5, le=60)  # for vol scaling
     kelly_fraction: float = Field(default=0.25, ge=0.1, le=0.5)  # kelly fraction
     

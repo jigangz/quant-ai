@@ -6,13 +6,47 @@ import os
 import pytest
 
 # Ensure in-memory backends for all infrastructure during tests
-os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+# ALL env vars must be set BEFORE any app imports
+os.environ.setdefault("DATABASE_URL", "sqlite:///./test_quant.db")
+os.environ.setdefault("STORAGE_BACKEND", "local")
+os.environ.setdefault("STORAGE_LOCAL_PATH", "./test_artifacts")
 os.environ.setdefault("CACHE_BACKEND", "memory")
 os.environ.setdefault("BROKER_BACKEND", "memory")
 os.environ.setdefault("QUEUE_BACKEND", "memory")
 os.environ.setdefault("NOTIFY_BACKEND", "memory")
 os.environ.setdefault("FUNCTIONS_BACKEND", "local")
 os.environ.setdefault("REDIS_URL", "")
+
+# Pre-import modules that test_functions.py would mock via setdefault,
+# ensuring real implementations win over MagicMock replacements.
+import app.db.model_registry  # noqa: E402
+import app.cache  # noqa: E402
+import app.cache.market_cache  # noqa: E402
+import app.db.prices_repo  # noqa: E402
+import app.services.model_cache  # noqa: E402
+import app.middleware  # noqa: E402
+import app.providers.base  # noqa: E402
+import app.explain.shap_explainer  # noqa: E402
+import app.explain.shap_to_text  # noqa: E402
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _create_db_tables():
+    """Ensure SQLite tables exist for all tests."""
+    from sqlalchemy import text
+    from app.db.engine import engine
+    with engine.begin() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS prices (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ticker TEXT NOT NULL,
+                date TEXT NOT NULL,
+                open REAL, high REAL, low REAL, close REAL,
+                volume INTEGER,
+                UNIQUE(ticker, date)
+            )
+        """))
+    yield
 
 
 @pytest.fixture(autouse=True)

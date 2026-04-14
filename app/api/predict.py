@@ -70,6 +70,5 @@ def predict_api_post(request: PredictRequest):
     """
     return predict(
         ticker=request.ticker,
-        lookback=500,
         model_id=request.model_id,
     )
