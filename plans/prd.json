@@ -198,8 +198,9 @@
         "git commit"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 12"
+      "passes": true,
+      "completed_at": "2026-04-13",
+      "notes": "Dashboard.jsx: useSearchParams for ticker URL param, formatted prediction card (signal/probability/samples). All inline styles replaced with Tailwind. Training.jsx: console.log removed. npm run build succeeds."
     },
     {
       "id": "P2-GATE",

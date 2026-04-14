@@ -100,3 +100,15 @@
 - WebSocket price feed via /api/trading/ws/prices (silent error handling for offline dev)
 - Reset portfolio button with confirm dialog
 - npm run build: 0 errors
+
+### Batch 6 (P2-7) — completed 2026-04-13
+
+**P2-7: Migrate existing pages to Tailwind dark theme**
+- Dashboard.jsx: added useSearchParams for ticker URL param (Screener navigation works), replaced raw JSON `<pre>` with formatted prediction card (signal/probability/samples), all inline styles → Tailwind
+- Explain.jsx: all inline styles → Tailwind dark theme
+- Training.jsx: inline style objects → Tailwind, removed console.log/console.error calls
+- DisabledPanel.jsx: border-dashed + opacity-70 with Tailwind
+- TrainingForm.jsx: full Tailwind form styling (inputs, selects, checkboxes, submit button)
+- RunsList.jsx: Tailwind table with color-coded status badges (yellow/blue/green/red)
+- ModelsList.jsx: Tailwind table with promoted/active badges, metrics display
+- npm run build: 0 errors, 213 unit tests pass
