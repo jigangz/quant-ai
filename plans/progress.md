@@ -198,3 +198,25 @@
 - Invalid model_type returns 400; not found returns 404
 - 5 API tests pass
 - Full suite: 234 passed
+
+### Batch 12 (OPT-7, OPT-8, OPT-9) — completed 2026-04-15
+
+**OPT-7: Frontend — API client + Training page Auto-Optimize**
+- Appended optimizeModel, optimizeStrategy, listOptimizationRuns, getOptimizationRun to client.js
+- Training.jsx: added optimizeModel import, optimizeResult/optimizing/selectedModelType state
+- Added model type selector + Auto-Optimize button above TrainingForm
+- Results panel shows n_trials, duration, val_auc, backtest_sharpe, recommended params JSON
+- Tailwind styling: bg-surface-card, text-up, bg-accent
+- npm run build: 0 errors
+
+**OPT-8: Frontend — Strategy page Optimize Parameters**
+- Imported optimizeStrategy into Strategy.jsx
+- Added strategyOptResult/optimizingStrategy state
+- handleOptimizeStrategy calls optimizeStrategy({strategy_name, ticker, n_trials:50}), auto-fills params on success
+- Optimize Parameters button below existing buttons (disabled when no strategy/ticker selected)
+- Results panel shows best metric, n_trials, duration; "Parameters auto-filled above" message
+- npm run build: 0 errors
+
+**OPT-9: Update TrainRequest to support optuna_multi**
+- Changed `pattern="^(none|grid|optuna)$"` to `pattern="^(none|grid|optuna|optuna_multi)$"` in training_service.py
+- All 234 tests still pass

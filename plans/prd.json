@@ -112,7 +112,8 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-15",
       "notes": "See plan Task 7. Read current Training.jsx before modifying"
     },
     {
@@ -127,7 +128,8 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-15",
       "notes": "See plan Task 8. Read current Strategy.jsx before modifying"
     },
     {
@@ -139,7 +141,8 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-15",
       "notes": "See plan Task 9. One-line change in training_service.py"
     },
     {
