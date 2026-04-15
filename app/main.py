@@ -30,6 +30,7 @@ from app.api import (
     strategies,
     trading,
     functions,
+    optimize,
 )
 
 # ===================================
@@ -147,6 +148,7 @@ app.include_router(rag.router, tags=["RAG"])
 app.include_router(news.router, tags=["News Data"])
 app.include_router(trading.router, tags=["Paper Trading"])
 app.include_router(functions.router, tags=["Functions"])
+app.include_router(optimize.router)
 
 
 # ===================================
