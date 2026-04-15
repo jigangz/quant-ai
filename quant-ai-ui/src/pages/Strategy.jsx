@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { listStrategies, getStrategy, generateSignals, runStrategyBacktest } from "../api/client";
+import { listStrategies, getStrategy, generateSignals, runStrategyBacktest, optimizeStrategy } from "../api/client";
 
 export default function Strategy() {
   const [strategies, setStrategies] = useState([]);
@@ -11,6 +11,8 @@ export default function Strategy() {
   const [ticker, setTicker] = useState("AAPL");
   const [loading, setLoading] = useState("");
   const [error, setError] = useState(null);
+  const [strategyOptResult, setStrategyOptResult] = useState(null);
+  const [optimizingStrategy, setOptimizingStrategy] = useState(false);
 
   useEffect(() => {
     listStrategies()
@@ -37,6 +39,21 @@ export default function Strategy() {
       .then(setSignals)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(""));
+  };
+
+  const handleOptimizeStrategy = () => {
+    setOptimizingStrategy(true);
+    setStrategyOptResult(null);
+    setError(null);
+    optimizeStrategy({ strategy_name: selected, ticker, n_trials: 50 })
+      .then((result) => {
+        setStrategyOptResult(result);
+        if (result.best_params) {
+          setParams((prev) => ({ ...prev, ...result.best_params }));
+        }
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setOptimizingStrategy(false));
   };
 
   const handleBacktest = () => {
@@ -103,6 +120,26 @@ export default function Strategy() {
               {loading === "backtest" ? "Running..." : "Run Backtest"}
             </button>
           </div>
+
+          <button
+            onClick={handleOptimizeStrategy}
+            disabled={optimizingStrategy || !selected || !ticker}
+            className="w-full mt-2 px-4 py-2 bg-accent text-white rounded hover:bg-accent/80 disabled:opacity-50 text-sm"
+          >
+            {optimizingStrategy ? "Optimizing..." : "Optimize Parameters"}
+          </button>
+
+          {strategyOptResult && (
+            <div className="mt-4 p-4 bg-surface-card rounded-lg">
+              <h4 className="text-sm font-medium text-gray-300 mb-2">Optimization Results</h4>
+              <p className="text-xs text-gray-400">
+                Best {strategyOptResult.best_metrics && Object.keys(strategyOptResult.best_metrics)[0]}
+                = {strategyOptResult.best_metrics && Object.values(strategyOptResult.best_metrics)[0]?.toFixed(4)}
+                ({strategyOptResult.n_trials} trials, {strategyOptResult.duration_seconds?.toFixed(1)}s)
+              </p>
+              <p className="text-xs text-accent mt-1">Parameters auto-filled above</p>
+            </div>
+          )}
         </div>
 
         {/* Signals */}
