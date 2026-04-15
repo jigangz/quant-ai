@@ -176,3 +176,25 @@
 - Added dispatch to `_run_optuna_multi` in `run()`
 - Added `_run_optuna_multi` method that delegates to `MultiObjectiveSearch` and converts result
 - All 223 existing unit tests still pass
+
+### Batch 11 (OPT-4, OPT-5, OPT-6) — completed 2026-04-15
+
+**OPT-4: Optimization persistence layer**
+- Created `app/db/optimization_repo.py` with `OptimizationRepo` and `OptimizationRun` Pydantic model
+- JSON storage in `STORAGE_LOCAL_PATH/registry/optimization_runs.json`
+- save_run, get_run, list_runs with optional type filter
+- 4 repo tests pass
+
+**OPT-5: Optimization service orchestration**
+- Created `app/services/optimization_service.py` with `OptimizationService`
+- `optimize_model()` mocks DatasetBuilder + MultiObjectiveSearch, persists OptimizationRun
+- `optimize_strategy()` mocks StrategyOptimizer, persists OptimizationRun
+- `get_run()` and `list_runs()` delegate to repo
+- 2 service tests pass (6 total in test_optimization_service.py)
+
+**OPT-6: REST API endpoints**
+- Created `app/api/optimize.py` with router, 4 endpoints: POST /model, POST /strategy, GET /runs, GET /runs/{id}
+- Registered router in `app/main.py`
+- Invalid model_type returns 400; not found returns 404
+- 5 API tests pass
+- Full suite: 234 passed

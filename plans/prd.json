@@ -61,7 +61,8 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-15",
       "notes": "See plan Task 4. Follows LocalModelRegistry pattern"
     },
     {
@@ -76,7 +77,8 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-15",
       "notes": "See plan Task 5. Depends on OPT-1, OPT-2, OPT-4"
     },
     {
@@ -93,7 +95,8 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-15",
       "notes": "See plan Task 6. Register router in main.py"
     },
     {
