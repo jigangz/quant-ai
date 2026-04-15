@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class SearchConfig(BaseModel):
     """Configuration for hyperparameter search."""
     
-    mode: Literal["none", "grid", "optuna"] = "none"
+    mode: Literal["none", "grid", "optuna", "optuna_multi"] = "none"
     n_trials: int = Field(default=20, ge=1, le=200)
     timeout_seconds: int | None = Field(default=300, ge=10, le=3600)
     metric: str = "val_auc"
@@ -80,6 +80,7 @@ class HyperparamSearch:
         X_val: pd.DataFrame,
         y_val: pd.Series,
         base_params: dict[str, Any] | None = None,
+        backtest_data: dict | None = None,
     ):
         self.model_type = model_type
         self.X_train = X_train
@@ -87,7 +88,8 @@ class HyperparamSearch:
         self.X_val = X_val
         self.y_val = y_val
         self.base_params = base_params or {}
-        
+        self.backtest_data = backtest_data
+
         # Get search space
         self.search_space = get_search_space(model_type)
     
@@ -107,6 +109,8 @@ class HyperparamSearch:
             return self._run_grid(config)
         elif config.mode == "optuna":
             return self._run_optuna(config)
+        elif config.mode == "optuna_multi":
+            return self._run_optuna_multi(config)
         else:
             raise ValueError(f"Unknown search mode: {config.mode}")
     
@@ -262,7 +266,7 @@ class HyperparamSearch:
             f"Optuna search complete: {len(study.trials)} trials, "
             f"best {config.metric}={study.best_value:.4f}"
         )
-        
+
         return SearchResult(
             best_params=study.best_params,
             best_score=study.best_value,
@@ -271,4 +275,34 @@ class HyperparamSearch:
             all_trials=trials,
             mode="optuna",
             metric=config.metric,
+        )
+
+    def _run_optuna_multi(self, config: SearchConfig) -> SearchResult:
+        """Dispatch to MultiObjectiveSearch and convert result."""
+        from .multi_objective import MultiObjectiveSearch
+
+        search = MultiObjectiveSearch(
+            model_type=self.model_type,
+            X_train=self.X_train,
+            y_train=self.y_train,
+            X_val=self.X_val,
+            y_val=self.y_val,
+            backtest_data=self.backtest_data,
+            base_params=self.base_params,
+        )
+
+        mo_result = search.run(
+            n_trials=config.n_trials,
+            timeout=config.timeout_seconds,
+        )
+
+        # Convert to SearchResult for compatibility
+        return SearchResult(
+            best_params=mo_result.recommended_params,
+            best_score=mo_result.recommended_val_auc,
+            n_trials_completed=mo_result.n_trials,
+            total_time_seconds=mo_result.total_time_seconds,
+            all_trials=mo_result.all_trials,
+            mode="optuna_multi",
+            metric="val_auc+backtest_sharpe",
         )
