@@ -220,3 +220,13 @@
 **OPT-9: Update TrainRequest to support optuna_multi**
 - Changed `pattern="^(none|grid|optuna)$"` to `pattern="^(none|grid|optuna|optuna_multi)$"` in training_service.py
 - All 234 tests still pass
+
+### Batch 13 (OPT-GATE) — completed 2026-04-15
+
+**OPT-GATE: Phase Gate — Optuna optimization full verification**
+- Unit tests: 234 passed, 0 failures
+- Contract tests: 39 passed, 0 failures
+- ruff check app/ --ignore F401,F841,E501,F541,E402: all checks passed
+- npm run build: 0 errors (52 modules, vite 7.3.0)
+- All 4 optimize API routes registered in app/main.py
+- Gate passed, all Optuna optimization tasks complete
