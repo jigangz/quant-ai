@@ -54,7 +54,7 @@ class TrainRequest(BaseModel):
     model_params: dict[str, Any] = Field(default_factory=dict)
 
     # Hyperparameter search
-    search_mode: str = Field(default="none", pattern="^(none|grid|optuna)$")
+    search_mode: str = Field(default="none", pattern="^(none|grid|optuna|optuna_multi)$")
     search_trials: int = Field(default=20, ge=1, le=200)
     search_timeout: int | None = Field(default=300, ge=10, le=3600)
 
