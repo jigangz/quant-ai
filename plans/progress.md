@@ -151,3 +151,28 @@
 - Render health check: 200 OK ("Production is healthy!")
 - README: fully reflects current state (P3-3 complete)
 - All phases 1-3 complete, all 17 tasks + 3 gates pass
+
+### Batch 10 (OPT-1, OPT-2, OPT-3) — completed 2026-04-15
+
+**OPT-1: Multi-objective model optimization (NSGA-II)**
+- Created `app/ml/hyperparam/multi_objective.py` with `MultiObjectiveSearch`, `ParetoPoint`, `MultiObjectiveResult`
+- Uses Optuna `NSGAIISampler` with directions=["maximize", "maximize"] for val_auc + backtest_sharpe
+- `_select_recommended` picks closest Pareto point to ideal (1.0, 1.0) after min-max normalization
+- `_compute_sharpe` computes Sharpe ratio from model predictions on backtest price data
+- Optuna was not installed — needed `pip install optuna`
+- 5 tests pass
+
+**OPT-2: Strategy parameter optimizer with search space inference**
+- Created `app/ml/hyperparam/strategy_optimizer.py` with `StrategyOptimizer`, `StrategyOptResult`, `infer_search_space`
+- `infer_search_space` handles: integer (ge/le → int range), float (ge/le → float range), Literal/enum → categorical, overrides
+- Pydantic v2 generates `{"enum": [...], "type": "string"}` for `Literal` fields (not `anyOf`)
+- `get_prices_df` is in `app.db.prices_repo`, NOT `app.providers.market` — import at module level for testability
+- Tests mock `app.ml.hyperparam.strategy_optimizer.get_registry` and `get_prices_df` (module-level imports)
+- 5 tests pass (3 TestInferSearchSpace + 2 TestStrategyOptimizer)
+
+**OPT-3: Integrate optuna_multi into HyperparamSearch**
+- Modified `app/ml/hyperparam/search.py`: added `"optuna_multi"` to SearchConfig.mode Literal
+- Added `backtest_data` parameter to `HyperparamSearch.__init__`
+- Added dispatch to `_run_optuna_multi` in `run()`
+- Added `_run_optuna_multi` method that delegates to `MultiObjectiveSearch` and converts result
+- All 223 existing unit tests still pass

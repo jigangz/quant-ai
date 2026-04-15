@@ -14,7 +14,8 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-15",
       "notes": "See plan Task 1. Uses Optuna NSGAIISampler, reuses spaces.py and TrialResult from search.py"
     },
     {
@@ -28,8 +29,9 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 2. Uses TPESampler, infers space from strategy Parameters schema"
+      "passes": true,
+      "completed_at": "2026-04-15",
+      "notes": "See plan Task 2. Uses TPESampler, infers space from strategy Parameters schema. get_prices_df is in app.db.prices_repo not app.providers.market"
     },
     {
       "id": "OPT-3",
@@ -43,7 +45,8 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-15",
       "notes": "See plan Task 3. Modifies search.py only"
     },
     {
