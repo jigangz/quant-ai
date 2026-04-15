@@ -181,3 +181,38 @@ export function getTrades(limit = 50) {
 export function getMarketMulti(tickers) {
   return Promise.all(tickers.map((t) => getMarket(t).catch(() => null)));
 }
+
+// === Optimization ===
+
+export async function optimizeModel(request) {
+  const res = await fetch(`${BASE}/api/optimize/model`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function optimizeStrategy(request) {
+  const res = await fetch(`${BASE}/api/optimize/strategy`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function listOptimizationRuns(type) {
+  const params = type ? `?type=${type}` : "";
+  const res = await fetch(`${BASE}/api/optimize/runs${params}`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function getOptimizationRun(id) {
+  const res = await fetch(`${BASE}/api/optimize/runs/${id}`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

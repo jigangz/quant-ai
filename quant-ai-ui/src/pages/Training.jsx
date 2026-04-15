@@ -8,6 +8,7 @@ import {
   getPromotedModel,
   listModelTypes,
   listFeatureGroups,
+  optimizeModel,
 } from "../api/client";
 import TrainingForm from "../components/TrainingForm";
 import RunsList from "../components/RunsList";
@@ -23,6 +24,9 @@ export default function Training() {
   const [promotedId, setPromotedId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [optimizeResult, setOptimizeResult] = useState(null);
+  const [optimizing, setOptimizing] = useState(false);
+  const [selectedModelType, setSelectedModelType] = useState("");
 
   // Load initial data
   useEffect(() => {
@@ -143,6 +147,25 @@ export default function Training() {
     poll();
   }
 
+  // Handle auto-optimize
+  async function handleOptimize() {
+    setOptimizing(true);
+    setOptimizeResult(null);
+    setError(null);
+    try {
+      const result = await optimizeModel({
+        model_type: selectedModelType || (modelTypes[0]?.type ?? "xgboost"),
+        tickers: ["AAPL"],
+        n_trials: 20,
+      });
+      setOptimizeResult(result);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setOptimizing(false);
+    }
+  }
+
   // Handle promote
   async function handlePromote(modelId) {
     try {
@@ -191,12 +214,55 @@ export default function Training() {
 
       {/* Tab content */}
       {activeTab === "train" && (
-        <TrainingForm
-          modelTypes={modelTypes}
-          featureGroups={featureGroups}
-          onSubmit={handleTrain}
-          loading={loading}
-        />
+        <div>
+          <div className="mb-4 flex items-center gap-3">
+            <select
+              value={selectedModelType}
+              onChange={(e) => setSelectedModelType(e.target.value)}
+              className="bg-surface border border-gray-700 rounded px-3 py-2 text-white text-sm"
+            >
+              <option value="">Model type (for optimize)</option>
+              {modelTypes.map((m) => (
+                <option key={m.type} value={m.type}>{m.type}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleOptimize}
+              disabled={optimizing}
+              className="px-4 py-2 bg-accent text-white rounded hover:bg-accent/80 disabled:opacity-50 text-sm"
+            >
+              {optimizing ? "Optimizing..." : "Auto-Optimize"}
+            </button>
+          </div>
+
+          {optimizeResult && (
+            <div className="mt-4 p-4 bg-surface-card rounded-lg mb-4">
+              <h4 className="text-sm font-medium text-gray-300 mb-2">Optimization Results</h4>
+              <p className="text-xs text-gray-400">
+                Found optimal params in {optimizeResult.n_trials} trials
+                ({optimizeResult.duration_seconds?.toFixed(1)}s)
+              </p>
+              <div className="mt-2 text-sm">
+                <span className="text-up">val_auc: {optimizeResult.best_metrics?.val_auc?.toFixed(4)}</span>
+                {" | "}
+                <span className="text-up">sharpe: {optimizeResult.best_metrics?.backtest_sharpe?.toFixed(4)}</span>
+              </div>
+              <div className="mt-2">
+                <p className="text-xs text-gray-400 mb-1">Recommended params:</p>
+                <pre className="text-xs text-gray-300 bg-surface p-2 rounded overflow-x-auto">
+                  {JSON.stringify(optimizeResult.best_params, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          <TrainingForm
+            modelTypes={modelTypes}
+            featureGroups={featureGroups}
+            onSubmit={handleTrain}
+            loading={loading}
+          />
+        </div>
       )}
 
       {activeTab === "runs" && (
