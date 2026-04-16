@@ -17,6 +17,12 @@ export default function TrainingForm({
     search_trials: 20,
   });
 
+  const [ensembleConfig, setEnsembleConfig] = useState({
+    mode: "voting_soft",
+    base_models: ["logistic", "random_forest"],
+    cv_folds: 5,
+  });
+
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
 
@@ -49,6 +55,7 @@ export default function TrainingForm({
 
     if (formData.start_date) payload.start_date = formData.start_date;
     if (formData.end_date) payload.end_date = formData.end_date;
+    if (formData.model_type === "ensemble") payload.ensemble_config = ensembleConfig;
 
     onSubmit(payload);
   }
@@ -110,8 +117,71 @@ export default function TrainingForm({
               {m.type} ({m.class_name})
             </option>
           ))}
+          <option value="ensemble">ensemble (Ensemble — combine multiple models)</option>
         </select>
       </div>
+
+      {/* Ensemble Config (shown only when ensemble selected) */}
+      {formData.model_type === "ensemble" && (
+        <div className="mb-4 p-4 rounded bg-surface-card border border-gray-700">
+          <h3 className="text-sm font-semibold mb-3 text-accent">Ensemble Configuration</h3>
+
+          {/* Mode */}
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-gray-400 mb-1">Mode</label>
+            <select
+              className={inputClass}
+              value={ensembleConfig.mode}
+              onChange={(e) => setEnsembleConfig({ ...ensembleConfig, mode: e.target.value })}
+            >
+              <option value="voting_soft">Voting — Soft (average probabilities)</option>
+              <option value="voting_hard">Voting — Hard (majority vote)</option>
+              <option value="stacking_logistic">Stacking — Logistic meta-learner</option>
+              <option value="stacking_xgboost">Stacking — XGBoost meta-learner</option>
+            </select>
+          </div>
+
+          {/* Base Models */}
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-gray-400 mb-1">Base Models (≥2)</label>
+            <div className="flex flex-wrap gap-3 mt-1">
+              {["logistic", "random_forest", "xgboost", "lightgbm", "catboost"].map((m) => (
+                <label key={m} className="flex items-center gap-1 text-sm text-white cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="accent-accent"
+                    checked={ensembleConfig.base_models.includes(m)}
+                    onChange={(e) => {
+                      const next = e.target.checked
+                        ? [...ensembleConfig.base_models, m]
+                        : ensembleConfig.base_models.filter((x) => x !== m);
+                      setEnsembleConfig({ ...ensembleConfig, base_models: next });
+                    }}
+                  />
+                  {m}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* CV Folds (stacking only) */}
+          {ensembleConfig.mode.startsWith("stacking") && (
+            <div className="mb-1">
+              <label className="block text-sm font-medium text-gray-400 mb-1">CV Folds</label>
+              <input
+                type="number"
+                min="2"
+                max="10"
+                className="w-24 px-3 py-2 bg-surface border border-gray-700 text-white rounded text-sm focus:outline-none focus:border-accent"
+                value={ensembleConfig.cv_folds}
+                onChange={(e) =>
+                  setEnsembleConfig({ ...ensembleConfig, cv_folds: parseInt(e.target.value, 10) || 5 })
+                }
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Feature Groups */}
       <div className="mb-4">
