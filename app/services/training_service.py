@@ -18,7 +18,8 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -62,11 +63,28 @@ class TrainRequest(BaseModel):
     train_ratio: float = Field(default=0.7, ge=0.5, le=0.9)
     val_ratio: float = Field(default=0.15, ge=0.05, le=0.3)
 
+    # Ensemble (only used when model_type='ensemble')
+    ensemble_config: Optional[dict] = None
+
     # Options
     save_model: bool = True
     model_name: str | None = None
 
     model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def _validate_ensemble_config(self) -> "TrainRequest":
+        if self.model_type == "ensemble":
+            if not self.ensemble_config:
+                raise ValueError(
+                    "ensemble_config is required when model_type='ensemble'"
+                )
+        else:
+            if self.ensemble_config is not None:
+                raise ValueError(
+                    "ensemble_config is forbidden when model_type != 'ensemble'"
+                )
+        return self
 
 
 class TrainResult(BaseModel):
@@ -202,7 +220,10 @@ class TrainingService:
                 )
 
             # 3. Create model with best params
-            model = get_model(request.model_type, **model_params)
+            if request.model_type == "ensemble":
+                model = get_model("ensemble", ensemble_config=request.ensemble_config)
+            else:
+                model = get_model(request.model_type, **model_params)
 
             # 4. Train
             logger.info("Training model...")
