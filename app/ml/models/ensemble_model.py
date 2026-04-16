@@ -70,10 +70,56 @@ class EnsembleModel(BaseModel):
         self.meta_model: Union[BaseModel, None] = None
 
     def fit(self, X: pd.DataFrame, y: pd.Series) -> "EnsembleModel":
-        raise NotImplementedError("fit() will be implemented in Task 2 / Task 3")
+        from app.ml.models import ModelFactory  # local import to avoid circular
+
+        if self.config.mode in ("voting_soft", "voting_hard"):
+            self._fit_voting(X, y, ModelFactory)
+        else:
+            self._fit_stacking(X, y, ModelFactory)
+
+        self.is_fitted = True
+        return self
+
+    def _fit_voting(self, X: pd.DataFrame, y: pd.Series, factory) -> None:
+        """Fit each base model on the full training set."""
+        self.base_models = []
+        for model_type in self.config.base_models:
+            params = self.config.base_model_params.get(model_type, {})
+            base = factory.create(model_type, **params)
+            base.fit(X, y)
+            self.base_models.append(base)
+        logger.info(
+            f"Voting ensemble fit: {len(self.base_models)} base models "
+            f"({self.config.base_models})"
+        )
+
+    def _fit_stacking(self, X: pd.DataFrame, y: pd.Series, factory) -> None:
+        """Placeholder — implemented in Task 3."""
+        raise NotImplementedError("stacking implemented in Task 3")
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         return (self.predict_proba(X)[:, 1] > 0.5).astype(int)
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
-        raise NotImplementedError("predict_proba() will be implemented in Task 2 / Task 3")
+        if not self.is_fitted:
+            raise RuntimeError("EnsembleModel not fitted — call fit() first")
+
+        mode = self.config.mode
+
+        if mode == "voting_soft":
+            # mean of predict_proba positive column across base models
+            probs = np.stack([m.predict_proba(X)[:, 1] for m in self.base_models], axis=1)
+            pos = probs.mean(axis=1)
+            return np.column_stack([1.0 - pos, pos])
+
+        if mode == "voting_hard":
+            # majority vote of predict() across base models
+            preds = np.stack([m.predict(X) for m in self.base_models], axis=1)
+            # Majority: positive class wins if > half of base models predict 1
+            pos = (preds.sum(axis=1) > len(self.base_models) / 2).astype(float)
+            return np.column_stack([1.0 - pos, pos])
+
+        if mode.startswith("stacking"):
+            raise NotImplementedError("stacking predict_proba implemented in Task 3")
+
+        raise ValueError(f"Unknown ensemble mode: {mode}")
