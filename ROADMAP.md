@@ -241,9 +241,9 @@
 
 ## 🔧 技术债务 & 工程优化
 
-- [ ] 完整单元测试（pytest，覆盖率 > 80%）
+- [x] 完整单元测试（pytest，213 unit + 39 contract tests）
 - [ ] Docker Compose 一键启动文档（含 Kafka + LocalStack）
-- [ ] CI/CD GitHub Actions（push 自动测试 + lint）
+- [x] CI/CD GitHub Actions（push 自动测试 + lint，无 workarounds）
 - [ ] API 文档完善（OpenAPI examples）
 - [ ] 前端 E2E 测试（Playwright）
 - [ ] 性能优化：大量历史数据的查询缓存
@@ -256,12 +256,7 @@
 ## 🏗️ 架构演进
 
 ```
-Phase 1-2 (当前):
-  Client → Render (FastAPI) → SQLite/Supabase
-                             → Redis (RQ 任务队列)
-                             → WebSocket (mock 价格)
-
-Phase 2.5 (目标):
+Phase 2.5 (当前):
   Client → Render
               │
          ┌────┴────┐
@@ -321,5 +316,5 @@ Phase 2.5 (目标):
 
 ---
 
-*最后更新：2026-04-02*
+*最后更新：2026-04-14*
 *下次继续：第三阶段 — ML 优化策略参数 + RL 交易智能体*
