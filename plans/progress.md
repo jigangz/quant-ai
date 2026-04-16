@@ -231,6 +231,26 @@
 - All 4 optimize API routes registered in app/main.py
 - Gate passed, all Optuna optimization tasks complete
 
+### Batch 15 (ENS-4, ENS-5, ENS-6) — completed 2026-04-16
+
+**ENS-4: Custom save/load for EnsembleModel**
+- Overrode save(): writes base_models.joblib (list of fitted base model instances), meta_model.joblib (stacking only), params.json (ensemble_config dict), metadata.json
+- Overrode load() classmethod: reconstructs via cls(**params), loads base_models + meta_model joblibs, is_fitted=True
+- Does NOT call BaseModel.save (which expects self.model — EnsembleModel has no single self.model)
+- 3 new tests (14 total): voting_soft roundtrip, stacking_logistic roundtrip (checks file layout), voting no meta_model.joblib
+
+**ENS-5: ModelFactory registration**
+- factory.py: added `from .ensemble_model import EnsembleModel` + `ModelFactory.register("ensemble", EnsembleModel)` after CatBoost block
+- __init__.py: added `from .ensemble_model import EnsembleModel, EnsembleConfig` + added to __all__
+- 1 new test (15 total): test_factory_creates_ensemble_model verifies 'ensemble' in list_models() and returned instance type
+
+**ENS-6: TrainRequest + TrainingService integration**
+- TrainRequest: added `ensemble_config: Optional[dict] = None` field
+- Added `@model_validator(mode='after')` that enforces: ensemble_config required when model_type='ensemble', forbidden otherwise
+- TrainingService.train(): dispatches `get_model("ensemble", ensemble_config=request.ensemble_config)` when ensemble, else normal path
+- Created tests/test_ensemble_training.py with 5 tests (4 validation + 1 e2e with monkeypatched DatasetBuilder)
+- 254 total unit tests pass
+
 ### Batch 14 (ENS-1, ENS-2, ENS-3) — completed 2026-04-16
 
 **ENS-1: EnsembleConfig + EnsembleModel skeleton**
