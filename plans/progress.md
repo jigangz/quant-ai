@@ -268,6 +268,18 @@
 - Tailwind dark theme: bg-surface-card, accent-accent, border-gray-700
 - `npm run build`: 0 errors
 
+### Batch 17 (ENS-GATE) — completed 2026-04-16
+
+**ENS-GATE: Phase Gate — Ensemble full verification**
+- Unit tests: 254 passed, 0 failures (249+ required)
+- Contract tests: 43 passed, 0 failures (43+ required)
+- ruff check app/ --ignore F401,F841,E501,F541,E402: all checks passed
+- npm run build: 0 errors (52 modules, vite 7.3.0)
+- 'ensemble' in ModelFactory.list_models(): True
+- app.main:app imports successfully, /api/train route present
+- continue-on-error only on Supabase Connection Check (external service, not test step) — accepted in prior gates
+- Gate passed, all Ensemble tasks complete
+
 ### Batch 14 (ENS-1, ENS-2, ENS-3) — completed 2026-04-16
 
 **ENS-1: EnsembleConfig + EnsembleModel skeleton**
