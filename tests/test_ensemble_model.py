@@ -265,3 +265,22 @@ def test_save_does_not_write_meta_model_for_voting():
         assert "meta_model.joblib" not in os.listdir(tmpdir)
         assert "base_models.joblib" in os.listdir(tmpdir)
         assert "params.json" in os.listdir(tmpdir)
+
+
+# ===========================================================================
+# ENS-5: ModelFactory registration test
+# ===========================================================================
+
+def test_factory_creates_ensemble_model():
+    """ModelFactory.create('ensemble', ensemble_config={...}) returns EnsembleModel."""
+    from app.ml.models import ModelFactory, EnsembleModel, EnsembleConfig
+
+    assert "ensemble" in ModelFactory.list_models()
+
+    model = ModelFactory.create("ensemble", ensemble_config={
+        "mode": "voting_soft",
+        "base_models": ["logistic", "random_forest"],
+    })
+    assert isinstance(model, EnsembleModel)
+    assert model.config.mode == "voting_soft"
+    assert model.is_fitted is False

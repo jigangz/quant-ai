@@ -21,6 +21,7 @@ All models implement unified interface:
 from .base import BaseModel, ModelMetadata
 from .factory import ModelFactory, get_model, list_available_models
 from .sklearn_models import LogisticModel, RandomForestModel
+from .ensemble_model import EnsembleModel, EnsembleConfig
 
 __all__ = [
     # Base
@@ -33,6 +34,9 @@ __all__ = [
     # Always available
     "LogisticModel",
     "RandomForestModel",
+    # Ensemble
+    "EnsembleModel",
+    "EnsembleConfig",
 ]
 
 # Conditionally export optional models

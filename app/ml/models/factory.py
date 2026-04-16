@@ -131,6 +131,12 @@ try:
 except ImportError:
     logger.debug("CatBoost not installed")
 
+# Ensemble model (always available)
+from .ensemble_model import EnsembleModel  # noqa: E402
+
+ModelFactory.register("ensemble", EnsembleModel)
+logger.debug("Ensemble registered")
+
 
 # ===================================
 # Convenience Functions
