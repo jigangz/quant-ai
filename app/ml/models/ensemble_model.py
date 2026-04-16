@@ -94,8 +94,54 @@ class EnsembleModel(BaseModel):
         )
 
     def _fit_stacking(self, X: pd.DataFrame, y: pd.Series, factory) -> None:
-        """Placeholder — implemented in Task 3."""
-        raise NotImplementedError("stacking implemented in Task 3")
+        """
+        Fit via K-fold out-of-fold predictions.
+
+        Steps:
+        1. K-fold split (shuffle=False, preserves time order)
+        2. For each fold: train bases on train side, predict on val side
+        3. Collect OOF matrix [N, n_base]
+        4. Train meta-learner on OOF matrix
+        5. Retrain base models on full data (used at inference)
+        """
+        from sklearn.model_selection import KFold
+
+        n = len(X)
+        n_base = len(self.config.base_models)
+        oof_preds = np.zeros((n, n_base))
+
+        kf = KFold(n_splits=self.config.cv_folds, shuffle=False)
+        fold_idx = 0
+        for train_idx, val_idx in kf.split(X):
+            X_tr, y_tr = X.iloc[train_idx], y.iloc[train_idx]
+            X_val = X.iloc[val_idx]
+
+            for i, model_type in enumerate(self.config.base_models):
+                params = self.config.base_model_params.get(model_type, {})
+                base = factory.create(model_type, **params)
+                base.fit(X_tr, y_tr)
+                oof_preds[val_idx, i] = base.predict_proba(X_val)[:, 1]
+            fold_idx += 1
+
+        logger.info(
+            f"Stacking OOF complete: {fold_idx} folds, OOF shape {oof_preds.shape}"
+        )
+
+        # Train meta-learner on OOF predictions
+        meta_type = "logistic" if self.config.mode == "stacking_logistic" else "xgboost"
+        self.meta_model = factory.create(meta_type)
+        self.meta_model.fit(
+            pd.DataFrame(oof_preds, columns=[f"base_{i}" for i in range(n_base)]),
+            y.reset_index(drop=True),
+        )
+
+        # Retrain base models on full data — these are used at inference
+        self.base_models = []
+        for model_type in self.config.base_models:
+            params = self.config.base_model_params.get(model_type, {})
+            base = factory.create(model_type, **params)
+            base.fit(X, y)
+            self.base_models.append(base)
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         return (self.predict_proba(X)[:, 1] > 0.5).astype(int)
@@ -120,6 +166,13 @@ class EnsembleModel(BaseModel):
             return np.column_stack([1.0 - pos, pos])
 
         if mode.startswith("stacking"):
-            raise NotImplementedError("stacking predict_proba implemented in Task 3")
+            # Stack base positive-class probabilities → feed to meta-learner
+            base_probs = np.stack(
+                [m.predict_proba(X)[:, 1] for m in self.base_models], axis=1
+            )
+            stacked = pd.DataFrame(
+                base_probs, columns=[f"base_{i}" for i in range(len(self.base_models))]
+            )
+            return self.meta_model.predict_proba(stacked)
 
         raise ValueError(f"Unknown ensemble mode: {mode}")
