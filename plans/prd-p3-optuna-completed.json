@@ -1,0 +1,165 @@
+{
+  "repo": "jigangz/quant-ai",
+  "branchName": "main",
+  "verifyCommand": "cd /c/Users/zjg09/projects/quant-ai && python -m pytest tests/ -v --tb=short --ignore=tests/contract -p no:cacheprovider 2>&1 | tail -5",
+  "features": [
+    {
+      "id": "OPT-1",
+      "title": "Multi-objective model optimization (NSGA-II)",
+      "acceptanceCriteria": [
+        "app/ml/hyperparam/multi_objective.py exists with MultiObjectiveSearch class",
+        "ParetoPoint and MultiObjectiveResult Pydantic models defined",
+        "_select_recommended picks closest to ideal (1.0, 1.0) after normalization",
+        "tests/test_multi_objective.py exists with 5+ tests all passing",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-15",
+      "notes": "See plan Task 1. Uses Optuna NSGAIISampler, reuses spaces.py and TrialResult from search.py"
+    },
+    {
+      "id": "OPT-2",
+      "title": "Strategy parameter optimizer with search space inference",
+      "acceptanceCriteria": [
+        "app/ml/hyperparam/strategy_optimizer.py exists with StrategyOptimizer class",
+        "infer_search_space() derives Optuna space from Pydantic schema",
+        "param_overrides correctly override inferred ranges",
+        "tests/test_strategy_optimizer.py exists with 5+ tests all passing",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-15",
+      "notes": "See plan Task 2. Uses TPESampler, infers space from strategy Parameters schema. get_prices_df is in app.db.prices_repo not app.providers.market"
+    },
+    {
+      "id": "OPT-3",
+      "title": "Integrate optuna_multi into HyperparamSearch",
+      "acceptanceCriteria": [
+        "SearchConfig.mode includes 'optuna_multi'",
+        "HyperparamSearch.__init__ accepts optional backtest_data param",
+        "HyperparamSearch.run() dispatches to _run_optuna_multi for mode='optuna_multi'",
+        "_run_optuna_multi delegates to MultiObjectiveSearch and converts result",
+        "All existing tests still pass",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-15",
+      "notes": "See plan Task 3. Modifies search.py only"
+    },
+    {
+      "id": "OPT-4",
+      "title": "Optimization persistence layer",
+      "acceptanceCriteria": [
+        "app/db/optimization_repo.py exists with OptimizationRepo class",
+        "OptimizationRun Pydantic model with id, type, config, best_params, etc.",
+        "save_run, get_run, list_runs methods work correctly",
+        "JSON storage in STORAGE_LOCAL_PATH/registry/optimization_runs.json",
+        "tests/test_optimization_service.py has 4+ repo tests passing",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-15",
+      "notes": "See plan Task 4. Follows LocalModelRegistry pattern"
+    },
+    {
+      "id": "OPT-5",
+      "title": "Optimization service orchestration",
+      "acceptanceCriteria": [
+        "app/services/optimization_service.py exists with OptimizationService class",
+        "optimize_model() builds dataset, runs MultiObjectiveSearch, persists result",
+        "optimize_strategy() runs StrategyOptimizer, persists result",
+        "get_run() and list_runs() delegate to repo",
+        "tests/test_optimization_service.py has 2+ service tests passing",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-15",
+      "notes": "See plan Task 5. Depends on OPT-1, OPT-2, OPT-4"
+    },
+    {
+      "id": "OPT-6",
+      "title": "REST API endpoints for optimization",
+      "acceptanceCriteria": [
+        "app/api/optimize.py exists with router",
+        "POST /api/optimize/model endpoint works",
+        "POST /api/optimize/strategy endpoint works",
+        "GET /api/optimize/runs and /runs/{id} endpoints work",
+        "Router registered in app/main.py",
+        "Invalid model_type returns 400, not found returns 404",
+        "tests/test_api_optimize.py exists with 4+ tests all passing",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-15",
+      "notes": "See plan Task 6. Register router in main.py"
+    },
+    {
+      "id": "OPT-7",
+      "title": "Frontend — API client + Training page Auto-Optimize",
+      "acceptanceCriteria": [
+        "client.js exports optimizeModel, optimizeStrategy, listOptimizationRuns, getOptimizationRun",
+        "Training.jsx has Auto-Optimize button",
+        "Clicking button calls /api/optimize/model",
+        "Results display recommended params + metrics",
+        "Tailwind dark theme styling (bg-surface-card, text-accent)",
+        "npm run build succeeds",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-15",
+      "notes": "See plan Task 7. Read current Training.jsx before modifying"
+    },
+    {
+      "id": "OPT-8",
+      "title": "Frontend — Strategy page Optimize Parameters",
+      "acceptanceCriteria": [
+        "Strategy.jsx has Optimize Parameters button",
+        "Clicking button calls /api/optimize/strategy",
+        "Optimal params auto-fill into form",
+        "Results summary displayed",
+        "npm run build succeeds",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-15",
+      "notes": "See plan Task 8. Read current Strategy.jsx before modifying"
+    },
+    {
+      "id": "OPT-9",
+      "title": "Update TrainRequest to support optuna_multi",
+      "acceptanceCriteria": [
+        "TrainRequest.search_mode pattern includes optuna_multi",
+        "All existing tests still pass",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-15",
+      "notes": "See plan Task 9. One-line change in training_service.py"
+    },
+    {
+      "id": "OPT-GATE",
+      "title": "Phase Gate — Optuna optimization full verification",
+      "acceptanceCriteria": [
+        "pytest tests/ -v --ignore=tests/contract — 0 failures (230+ tests)",
+        "pytest tests/contract/ -v — 39 passed",
+        "ruff check app/ --ignore F401,F841,E501,F541,E402 — 0 errors",
+        "npm run build — 0 errors",
+        "All 4 optimize API routes registered in app",
+        "No continue-on-error or workarounds in CI"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-15",
+      "notes": "PHASE GATE — 234 unit tests + 39 contract tests pass, ruff clean, npm build clean, optimize router registered"
+    }
+  ]
+}
