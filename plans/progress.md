@@ -230,3 +230,25 @@
 - npm run build: 0 errors (52 modules, vite 7.3.0)
 - All 4 optimize API routes registered in app/main.py
 - Gate passed, all Optuna optimization tasks complete
+
+### Batch 14 (ENS-1, ENS-2, ENS-3) — completed 2026-04-16
+
+**ENS-1: EnsembleConfig + EnsembleModel skeleton**
+- Created `app/ml/models/ensemble_model.py` with EnsembleConfig (mode Literal, base_models min_length=2, base_model_params dict, cv_folds 2-10 default 5)
+- EnsembleModel inherits BaseModel, __init__ accepts dict or EnsembleConfig (normalizes via pydantic)
+- fit/predict_proba stub raise NotImplementedError
+- 5 tests pass
+
+**ENS-2: Voting implementation (soft + hard)**
+- `_fit_voting` fits each base model via ModelFactory.create, respects base_model_params
+- `predict_proba` voting_soft: stack predict_proba[:,1] across bases, mean → [N,2]
+- `predict_proba` voting_hard: stack predict() across bases, majority vote → 0/1 values [N,2]
+- is_fitted set to True after fit
+- 8 tests pass (5 ENS-1 + 3 new voting)
+
+**ENS-3: Stacking (K-fold OOF + meta-learner)**
+- `_fit_stacking` uses sklearn KFold(shuffle=False) to build OOF matrix [N, n_base]
+- meta_model: logistic for stacking_logistic, xgboost for stacking_xgboost
+- Base models retrained on full data after OOF (used at inference)
+- `predict_proba` stacking branch: stack base probs → feed to meta_model.predict_proba
+- 11 tests pass (8 + 3 new stacking), 245 total unit tests pass

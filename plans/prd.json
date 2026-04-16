@@ -15,7 +15,8 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-16",
       "notes": "See plan Task 1. fit/predict_proba raise NotImplementedError at this stage"
     },
     {
@@ -30,7 +31,8 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-16",
       "notes": "See plan Task 2. is_fitted set to True after fit"
     },
     {
@@ -46,7 +48,8 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-16",
       "notes": "See plan Task 3"
     },
     {
