@@ -32,8 +32,14 @@ from sqlalchemy import text
 from app.db.engine import engine
 
 
+_table_ready = False
+
+
 def _ensure_table() -> None:
-    """Create the news table if it does not exist."""
+    """Create the news table if it does not exist (lazy, called on first use)."""
+    global _table_ready
+    if _table_ready:
+        return
     sql = text("""
         CREATE TABLE IF NOT EXISTS news (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,12 +58,12 @@ def _ensure_table() -> None:
             UNIQUE(ticker, date, url)
         );
     """)
-    with engine.begin() as conn:
-        conn.execute(sql)
-
-
-# Ensure table exists on module import
-_ensure_table()
+    try:
+        with engine.begin() as conn:
+            conn.execute(sql)
+    except Exception:
+        pass  # Table may already exist (Supabase) or DB unreachable
+    _table_ready = True
 
 
 def upsert_news(rows: List[Dict]) -> None:
@@ -70,6 +76,7 @@ def upsert_news(rows: List[Dict]) -> None:
     """
     if not rows:
         return
+    _ensure_table()
 
     sql = text("""
         INSERT INTO news (
@@ -118,6 +125,7 @@ def get_news(
         conditions.append("category = :category")
         params["category"] = category
 
+    _ensure_table()
     where_clause = " AND ".join(conditions)
 
     sql = text(f"""
@@ -153,6 +161,7 @@ def get_news_by_date_range(
     Returns:
         List of news record dicts.
     """
+    _ensure_table()
     sql = text("""
         SELECT ticker, date, headline, summary, url, source,
                category, sentiment_score, bullish_reason, bearish_reason,
@@ -186,6 +195,7 @@ def get_news_categories(ticker: str) -> List[Dict]:
     Returns:
         List of dicts with 'category' and 'count' keys.
     """
+    _ensure_table()
     sql = text("""
         SELECT category, COUNT(*) as count
         FROM news

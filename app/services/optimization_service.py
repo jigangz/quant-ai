@@ -63,6 +63,18 @@ class OptimizationService:
         builder = DatasetBuilder(dataset_config)
         dataset = builder.build()
 
+        # Load price data for backtest Sharpe calculation
+        backtest_data: dict = {}
+        try:
+            from app.db.prices_repo import get_prices_df
+
+            for ticker in tickers:
+                prices = get_prices_df(ticker)
+                if prices is not None and not prices.empty:
+                    backtest_data[ticker] = prices
+        except Exception:
+            logger.warning("Could not load backtest price data; sharpe will be 0")
+
         # Run multi-objective search
         search = MultiObjectiveSearch(
             model_type=model_type,
@@ -70,7 +82,7 @@ class OptimizationService:
             y_train=dataset.y_train,
             X_val=dataset.X_val,
             y_val=dataset.y_val,
-            backtest_data={},
+            backtest_data=backtest_data,
         )
         result = search.run(n_trials=n_trials, timeout=timeout)
 
