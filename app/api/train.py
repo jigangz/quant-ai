@@ -220,9 +220,10 @@ def _train_sync(request: TrainRequest) -> TrainSyncResponse:
         )
 
     # 4. Register the model
+    effective_model_id = result.model_id or run_record.id
     model_record = ModelRecord(
-        id=result.model_id,
-        name=request.model_name or f"{request.model_type}_{result.model_id[:8]}",
+        id=effective_model_id,
+        name=request.model_name or f"{request.model_type}_{effective_model_id[:8]}",
         model_type=result.model_type,
         tickers=result.tickers,
         feature_groups=result.feature_groups,
