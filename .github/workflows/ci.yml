@@ -106,6 +106,7 @@ jobs:
     name: Supabase Connection Check
     runs-on: ubuntu-latest
     needs: lint
+    continue-on-error: true  # External service — don't block CI if unreachable
     # Only run on main branch pushes (not PRs, to avoid exposing secrets)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
