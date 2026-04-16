@@ -251,6 +251,23 @@
 - Created tests/test_ensemble_training.py with 5 tests (4 validation + 1 e2e with monkeypatched DatasetBuilder)
 - 254 total unit tests pass
 
+### Batch 16 (ENS-7, ENS-8) — completed 2026-04-16
+
+**ENS-7: API contract tests for ensemble**
+- Created `tests/contract/test_api_ensemble.py` with 4 tests
+- Fixed bug in `app/api/train.py`: sync mode crashed when `save_model=False` because `result.model_id` is None — used `run_record.id` as fallback
+- Tests use `monkeypatch` to patch `DatasetBuilder.build`, force sync mode via `?async=true`
+- 4 contract tests pass, 254 unit tests pass
+
+**ENS-8: Frontend ensemble config form**
+- Modified `quant-ai-ui/src/components/TrainingForm.jsx` (not Training.jsx — model_type select lives in TrainingForm)
+- Added `ensembleConfig` state with mode/base_models/cv_folds
+- Added "ensemble" option to model_type dropdown
+- Conditional `EnsembleConfigForm` renders when ensemble selected: mode dropdown (4 options), base_models checkboxes (5), cv_folds input (stacking only)
+- Submit handler includes `ensemble_config` when `model_type === "ensemble"`
+- Tailwind dark theme: bg-surface-card, accent-accent, border-gray-700
+- `npm run build`: 0 errors
+
 ### Batch 14 (ENS-1, ENS-2, ENS-3) — completed 2026-04-16
 
 **ENS-1: EnsembleConfig + EnsembleModel skeleton**

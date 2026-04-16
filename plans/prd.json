@@ -112,8 +112,9 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 7. Uses monkeypatched DatasetBuilder via pytest fixture"
+      "passes": true,
+      "notes": "See plan Task 7. Uses monkeypatched DatasetBuilder via pytest fixture",
+      "completed_at": "2026-04-16T17:17:56Z"
     },
     {
       "id": "ENS-8",
@@ -127,8 +128,9 @@
         "git commit with message starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 8. Read current Training.jsx before modifying"
+      "passes": true,
+      "notes": "See plan Task 8. Read current Training.jsx before modifying",
+      "completed_at": "2026-04-16T17:17:56Z"
     },
     {
       "id": "ENS-GATE",
