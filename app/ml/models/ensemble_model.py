@@ -176,3 +176,82 @@ class EnsembleModel(BaseModel):
             return self.meta_model.predict_proba(stacked)
 
         raise ValueError(f"Unknown ensemble mode: {mode}")
+
+    # ------------------------------------------------------------------
+    # Persistence — custom save/load (does NOT use BaseModel.save which
+    # expects self.model; EnsembleModel has a list of base models instead)
+    # ------------------------------------------------------------------
+
+    def save(self, path: "str | Path") -> None:
+        """
+        Save ensemble to disk.
+
+        Layout::
+
+            <path>/
+                base_models.joblib   — list of fitted base model instances
+                meta_model.joblib    — fitted meta model (stacking only)
+                params.json          — EnsembleConfig as dict (for load())
+                metadata.json        — ModelMetadata (optional)
+        """
+        path = Path(path)
+        path.mkdir(parents=True, exist_ok=True)
+
+        # Serialize list of base model instances
+        joblib.dump(self.base_models, path / "base_models.joblib")
+
+        # Meta model only exists for stacking modes
+        if self.meta_model is not None:
+            joblib.dump(self.meta_model, path / "meta_model.joblib")
+
+        # params.json — only the ensemble_config dict is needed to reconstruct
+        with open(path / "params.json", "w") as f:
+            json.dump({"ensemble_config": self.config.model_dump()}, f, indent=2)
+
+        # metadata.json (optional)
+        if self.metadata is not None:
+            with open(path / "metadata.json", "w") as f:
+                json.dump(
+                    self.metadata.model_dump(mode="json"), f, indent=2, default=str
+                )
+
+        logger.info(f"EnsembleModel saved to {path}")
+
+    @classmethod
+    def load(cls, path: "str | Path") -> "EnsembleModel":
+        """
+        Load ensemble from disk.
+
+        Args:
+            path: Directory written by save()
+
+        Returns:
+            Fitted EnsembleModel instance
+        """
+        path = Path(path)
+
+        # Reconstruct instance from params
+        with open(path / "params.json") as f:
+            params = json.load(f)
+
+        instance = cls(**params)
+
+        # Restore fitted base models
+        instance.base_models = joblib.load(path / "base_models.joblib")
+
+        # Restore meta model if present
+        meta_path = path / "meta_model.joblib"
+        if meta_path.exists():
+            instance.meta_model = joblib.load(meta_path)
+
+        instance.is_fitted = True
+
+        # Restore metadata if present
+        metadata_path = path / "metadata.json"
+        if metadata_path.exists():
+            from app.ml.models.base import ModelMetadata
+            with open(metadata_path) as f:
+                instance.metadata = ModelMetadata(**json.load(f))
+
+        logger.info(f"EnsembleModel loaded from {path}")
+        return instance

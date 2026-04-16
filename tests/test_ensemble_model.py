@@ -184,3 +184,84 @@ def test_stacking_meta_model_trained_on_oof_shape():
     # (we can't introspect easily; just check it predicts correctly)
     probs = model.predict_proba(X)
     assert probs.shape == (120, 2)
+
+
+# ===========================================================================
+# ENS-4: Custom save/load tests
+# ===========================================================================
+
+import tempfile
+
+
+def test_voting_soft_save_load_roundtrip():
+    """save() + load() produces identical predictions for voting_soft."""
+    from app.ml.models.ensemble_model import EnsembleModel
+
+    X, y = _make_dummy_data(n=100)
+    model = EnsembleModel(ensemble_config={
+        "mode": "voting_soft",
+        "base_models": ["logistic", "random_forest"],
+    })
+    model.fit(X, y)
+    probs_before = model.predict_proba(X)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        model.save(tmpdir)
+        loaded = EnsembleModel.load(tmpdir)
+
+    assert loaded.is_fitted is True
+    assert loaded.config.mode == "voting_soft"
+    assert len(loaded.base_models) == 2
+    assert loaded.meta_model is None
+
+    probs_after = loaded.predict_proba(X)
+    assert np.allclose(probs_before, probs_after, atol=1e-6)
+
+
+def test_stacking_logistic_save_load_roundtrip():
+    """save() + load() produces identical predictions for stacking_logistic."""
+    from app.ml.models.ensemble_model import EnsembleModel
+
+    X, y = _make_dummy_data(n=200)
+    model = EnsembleModel(ensemble_config={
+        "mode": "stacking_logistic",
+        "base_models": ["logistic", "random_forest"],
+        "cv_folds": 3,
+    })
+    model.fit(X, y)
+    probs_before = model.predict_proba(X)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        model.save(tmpdir)
+        # Verify file layout
+        import os
+        files = os.listdir(tmpdir)
+        assert "base_models.joblib" in files
+        assert "meta_model.joblib" in files
+        assert "params.json" in files
+
+        loaded = EnsembleModel.load(tmpdir)
+
+    assert loaded.is_fitted is True
+    assert loaded.meta_model is not None
+    probs_after = loaded.predict_proba(X)
+    assert np.allclose(probs_before, probs_after, atol=1e-6)
+
+
+def test_save_does_not_write_meta_model_for_voting():
+    """Voting modes should NOT write meta_model.joblib."""
+    from app.ml.models.ensemble_model import EnsembleModel
+
+    X, y = _make_dummy_data()
+    model = EnsembleModel(ensemble_config={
+        "mode": "voting_hard",
+        "base_models": ["logistic", "random_forest"],
+    })
+    model.fit(X, y)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        model.save(tmpdir)
+        import os
+        assert "meta_model.joblib" not in os.listdir(tmpdir)
+        assert "base_models.joblib" in os.listdir(tmpdir)
+        assert "params.json" in os.listdir(tmpdir)
