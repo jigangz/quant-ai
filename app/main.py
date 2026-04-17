@@ -60,8 +60,12 @@ async def lifespan(app: FastAPI):
     # Register serverless functions
     from app.functions import register_all_functions
     register_all_functions()
+    # Start Kafka prediction event producer (no-op if BROKER_BACKEND != kafka)
+    from app.services.prediction_event_publisher import start_producer, stop_producer
+    await start_producer()
     yield
     # Shutdown
+    await stop_producer()
     logger.info("Shutting down Quant AI Backend")
 
 
