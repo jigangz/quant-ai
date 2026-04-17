@@ -471,3 +471,21 @@
 - 15 query hooks + 11 mutation hooks confirmed present
 - useRunStatus: conditional polling stops on success/failed
 - useScreenerTickers: Promise.all with per-ticker catch
+
+### Batch 26 (FE-6, FE-7, FE-8) — completed 2026-04-17
+
+**FE-6: Zustand live store + useLivePrices WebSocket hook**
+- liveStore.js and useLivePrices.js were already implemented as prereqs in the FE-13 batch
+- liveStore.js: useLiveStore with prices dict, connectionStatus, updatePrice, setConnectionStatus, clearPrices
+- useLivePrices.js: connects to /api/trading/ws/prices, auto-reconnects with 1s backoff, cleanup on unmount via mounted flag + clearTimeout + ws.onclose=null + ws.close()
+
+**FE-7: Shared components**
+- All 7 components (PageHeader, EmptyState, LoadingSpinner+LoadingOverlay, ErrorBoundary, ErrorState, ConfirmDialog, TickerSearch) were already implemented as prereqs in FE-10/FE-13 batches
+- Components verified: PageHeader (border-bottom + space-between), ConfirmDialog (destructive=bg-down), TickerSearch (4 suggestion pills)
+
+**FE-8: AppShell + Sidebar + Router**
+- Created src/app/Sidebar.jsx: 64px fixed, hidden md:flex, 6 Lucide icons (BarChart2/LayoutDashboard/Brain/TrendingUp/LineChart/Lightbulb) + Tooltip each, active=bg-accent
+- Created src/app/AppShell.jsx: Sidebar + md:ml-16 main + ErrorBoundary wrapping Outlet
+- Created src/app/router.jsx: AppShell parent with 6 child routes + / → /screener redirect
+- App.jsx replaced with thin wrapper: `import AppRouter; export default function App() { return <AppRouter /> }`
+- npm run build: 0 errors, vitest: 6/6 pass
