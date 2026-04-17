@@ -42,3 +42,7 @@ aioboto3>=12.0
 
 # Kafka (when BROKER_BACKEND=kafka)
 aiokafka>=0.9.0
+
+# Prometheus metrics
+prometheus-client>=0.20.0
+prometheus-fastapi-instrumentator>=7.0.0
