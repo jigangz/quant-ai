@@ -107,16 +107,6 @@ export function listFeatureGroups() {
 }
 
 // ===================================
-// RAG
-// ===================================
-export function ragAnswer(query, topK = 5) {
-  return request(`/rag/answer`, {
-    method: "POST",
-    body: JSON.stringify({ query, top_k: topK }),
-  });
-}
-
-// ===================================
 // Strategies
 // ===================================
 export function listStrategies() {
@@ -163,10 +153,6 @@ export function getPortfolio() {
   return request(`/api/trading/portfolio`);
 }
 
-export function getPortfolioHistory() {
-  return request(`/api/trading/portfolio/history`);
-}
-
 export function resetPortfolio() {
   return request(`/api/trading/portfolio/reset`, { method: "POST" });
 }
@@ -204,15 +190,3 @@ export async function optimizeStrategy(request) {
   return res.json();
 }
 
-export async function listOptimizationRuns(type) {
-  const params = type ? `?type=${type}` : "";
-  const res = await fetch(`${BASE}/api/optimize/runs${params}`);
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-export async function getOptimizationRun(id) {
-  const res = await fetch(`${BASE}/api/optimize/runs/${id}`);
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}

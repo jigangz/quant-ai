@@ -46,3 +46,16 @@ artifacts/registry/
 artifacts/
 !artifacts/.gitkeep
 k8s/secret.yaml
+
+# ===== Test artifacts =====
+test_artifacts/
+
+# ===== Agent / MCP (per-developer config, not committed) =====
+.agents/
+.mcp.json
+skills-lock.json
+
+# ===== Ralph loop runtime state =====
+.claude/ralph-state.local.md
+.claude/ralph-status.local.json
+scripts/ralph/runs/

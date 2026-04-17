@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { placeOrder, listOrders, getPortfolio, getPortfolioHistory, resetPortfolio, cancelOrder, getTrades } from "../api/client";
+import { placeOrder, listOrders, getPortfolio, resetPortfolio, cancelOrder, getTrades } from "../api/client";
 
 const BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 

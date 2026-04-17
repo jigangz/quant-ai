@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { explain, search } from "../api/client";
-import DisabledPanel from "../components/DisabledPanel";
 
 export default function Explain() {
   const [ticker, setTicker] = useState("AAPL");
@@ -89,20 +88,6 @@ export default function Explain() {
         )}
       </div>
 
-      <DisabledPanel
-        title="Research Summary (v2)"
-        description="LLM-generated summary over SHAP, signals, and similar historical cases."
-      />
-
-      <DisabledPanel
-        title="Bull / Bear Narrative (v2)"
-        description="Multi-horizon market narrative with confidence bands."
-      />
-
-      <DisabledPanel
-        title="Agent Output (v3)"
-        description="Autonomous trading agent reasoning and action plan."
-      />
     </div>
   );
 }
