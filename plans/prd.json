@@ -193,7 +193,8 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-17",
       "notes": "See plan Task 12"
     },
     {
@@ -209,7 +210,8 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-17",
       "notes": "See plan Task 13"
     },
     {
@@ -224,7 +226,8 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-17",
       "notes": "See plan Task 14"
     },
     {
