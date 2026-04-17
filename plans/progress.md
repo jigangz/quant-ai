@@ -451,3 +451,23 @@
 - Deleted legacy pages: Screener.jsx, Dashboard.jsx, Training.jsx, Strategy.jsx, Trading.jsx, Explain.jsx
 - Deleted legacy components: TrainingForm.jsx, ModelsList.jsx, RunsList.jsx
 - npm run build: 0 errors, npm test -- --run: 6/6 pass
+
+### Batch 25 (FE-3, FE-4, FE-5) — completed 2026-04-17
+
+**FE-3: Providers wrapper + lib helpers**
+- Created src/app/Providers.jsx: wraps QueryClientProvider + BrowserRouter with retry=1, staleTime=10s, refetchOnWindowFocus=false
+- Updated src/main.jsx to use <Providers> wrapper (removed inline BrowserRouter)
+- lib/utils.js and lib/formatters.js already existed from batch 23 prereq work
+
+**FE-4: shadcn/ui primitives**
+- Created 10 new UI components: dialog, tooltip, sheet, checkbox, switch, slider, popover, toast, dropdown-menu, form
+- Combined with existing 9 (accordion, alert-dialog, badge, button, card, input, label, select, tabs) = 19 total
+- All use Radix primitives + cn() + surface/accent color tokens
+- form.jsx: useFormField + FormField/Item/Label/Control/Message (react-hook-form + Radix Slot)
+- npm run build: 0 errors
+
+**FE-5: TanStack Query hooks**
+- queries.js was already implemented in batch 23 as a prereq for FE-10
+- 15 query hooks + 11 mutation hooks confirmed present
+- useRunStatus: conditional polling stops on success/failed
+- useScreenerTickers: Promise.all with per-ticker catch

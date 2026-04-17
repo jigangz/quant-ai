@@ -48,8 +48,9 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 3"
+      "passes": true,
+      "completed_at": "2026-04-17",
+      "notes": "Providers.jsx created wrapping QueryClientProvider + BrowserRouter with retry=1/staleTime=10s/refetchOnWindowFocus=false. main.jsx updated to use <Providers>. lib/utils.js and lib/formatters.js already existed from FE-10 prereq."
     },
     {
       "id": "FE-4",
@@ -64,8 +65,9 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 4. For primitives not shown in full in plan, follow standard shadcn/ui patterns from shadcn-ui/ui GitHub repo, strip Next.js-specific imports"
+      "passes": true,
+      "completed_at": "2026-04-17",
+      "notes": "All 19 UI components in src/components/ui/: accordion, alert-dialog, badge, button, card, checkbox, dialog, dropdown-menu, form, input, label, popover, select, sheet, slider, switch, tabs, toast, tooltip. button.jsx exports buttonVariants (cva). Card has all 6 sub-components. Form has useFormField + FormField/Item/Label/Control/Message."
     },
     {
       "id": "FE-5",
@@ -80,8 +82,9 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 5"
+      "passes": true,
+      "completed_at": "2026-04-17",
+      "notes": "queries.js implemented in batch 23 as prereq: 15 query hooks + 11 mutation hooks. useRunStatus conditionally polls (stops on success/failed). useScreenerTickers uses Promise.all with per-ticker catch. placeOrder/cancelOrder/resetPortfolio invalidate portfolio+orders+trades appropriately."
     },
     {
       "id": "FE-6",
