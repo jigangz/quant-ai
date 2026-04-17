@@ -68,9 +68,15 @@ export default function TrainForm() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {(modelTypes || ["logistic", "random_forest", "xgboost", "lightgbm", "catboost", "ensemble"]).map((t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
-              ))}
+              {(() => {
+                // Backend returns { types: [{ type, class_name, available }], total }
+                // Also defensively handle plain string arrays
+                const FALLBACK = ["logistic", "random_forest", "xgboost", "lightgbm", "catboost", "ensemble"];
+                let list = FALLBACK;
+                if (Array.isArray(modelTypes)) list = modelTypes;
+                else if (Array.isArray(modelTypes?.types)) list = modelTypes.types.map((m) => m.type || m);
+                return list.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>);
+              })()}
             </SelectContent>
           </Select>
         </div>
