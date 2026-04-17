@@ -41,12 +41,32 @@ export default function ExplainPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader><CardTitle>SHAP Top Features</CardTitle></CardHeader>
-            <CardContent><ShapFeatureList features={explain.data?.top_features} /></CardContent>
+            <CardContent>
+              <ShapFeatureList
+                features={
+                  explain.data?.top_features ||
+                  explain.data?.data?.top_features ||
+                  []
+                }
+                message={explain.data?.data?.error || explain.data?.error}
+              />
+            </CardContent>
           </Card>
           <Card>
             <CardHeader><CardTitle>Similar Historical Cases</CardTitle></CardHeader>
             <CardContent>
-              {search.isLoading ? <LoadingOverlay label="Searching..." /> : <SimilarCasesList results={search.data} />}
+              {search.isLoading ? (
+                <LoadingOverlay label="Searching..." />
+              ) : (
+                <SimilarCasesList
+                  results={
+                    Array.isArray(search.data)
+                      ? search.data
+                      : search.data?.results || []
+                  }
+                  message={search.data?.message}
+                />
+              )}
             </CardContent>
           </Card>
         </div>

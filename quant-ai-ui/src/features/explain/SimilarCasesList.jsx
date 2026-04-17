@@ -1,9 +1,13 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../components/ui/accordion";
 import { Badge } from "../../components/ui/badge";
 
-export default function SimilarCasesList({ results }) {
-  if (!results || results.length === 0) {
-    return <p className="text-sm text-muted">No similar cases found.</p>;
+export default function SimilarCasesList({ results, message }) {
+  if (!Array.isArray(results) || results.length === 0) {
+    return (
+      <p className="text-sm text-muted">
+        {message || "No similar cases found."}
+      </p>
+    );
   }
   return (
     <Accordion type="multiple">

@@ -1,6 +1,10 @@
-export default function ShapFeatureList({ features }) {
-  if (!features || features.length === 0) {
-    return <p className="text-sm text-muted">No SHAP data available.</p>;
+export default function ShapFeatureList({ features, message }) {
+  if (!Array.isArray(features) || features.length === 0) {
+    return (
+      <p className="text-sm text-muted">
+        {message || "No SHAP data available."}
+      </p>
+    );
   }
   const max = features[0].mean_abs_shap;
 
