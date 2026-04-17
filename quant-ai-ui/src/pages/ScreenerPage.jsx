@@ -1,15 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import PageHeader from "../components/PageHeader";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Badge } from "../components/ui/badge";
-import { Select } from "../components/ui/select";
 import { LoadingOverlay } from "../components/LoadingSpinner";
 import ErrorState from "../components/ErrorState";
+import EmptyState from "../components/EmptyState";
 import { useScreenerTickers } from "../api/queries";
-import { fmtPrice, fmtPct, classForDelta } from "../lib/formatters";
-import { RefreshCw } from "lucide-react";
+import ScreenerTable from "../features/screener/ScreenerTable";
+import { RefreshCw, BarChart2 } from "lucide-react";
 import { cn } from "../lib/utils";
 
 const SORT_OPTIONS = [
@@ -19,17 +17,10 @@ const SORT_OPTIONS = [
 
 export default function ScreenerPage() {
   const [sortBy, setSortBy] = useState("change_pct");
-  const navigate = useNavigate();
 
   const { data, isLoading, error, refetch, isFetching } = useScreenerTickers();
 
-  const rows = (data || [])
-    .filter(Boolean)
-    .sort((a, b) =>
-      sortBy === "change_pct"
-        ? (b.change_pct ?? 0) - (a.change_pct ?? 0)
-        : (b.volume ?? 0) - (a.volume ?? 0)
-    );
+  const rows = (data || []).filter(Boolean);
 
   return (
     <div className="space-y-6">
@@ -55,49 +46,20 @@ export default function ScreenerPage() {
         }
       />
 
+      {error && <ErrorState message={error.message} onRetry={() => refetch()} />}
+
       <Card className="relative">
         {isLoading && <LoadingOverlay label="Loading tickers…" />}
-        {error && <ErrorState message={error.message} onRetry={() => refetch()} />}
         <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-surface-border text-muted">
-                <th className="text-left px-4 py-3 font-medium">Ticker</th>
-                <th className="text-right px-4 py-3 font-medium">Last</th>
-                <th className="text-right px-4 py-3 font-medium">Change</th>
-                <th className="text-right px-4 py-3 font-medium">Change %</th>
-                <th className="text-right px-4 py-3 font-medium">Volume</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={row.ticker}
-                  onClick={() => navigate(`/dashboard?ticker=${row.ticker}`)}
-                  className="border-b border-surface-border hover:bg-surface-hover cursor-pointer transition-colors"
-                >
-                  <td className="px-4 py-3 font-medium text-foreground">{row.ticker}</td>
-                  <td className="px-4 py-3 text-right">${fmtPrice(row.close)}</td>
-                  <td className={cn("px-4 py-3 text-right font-medium", classForDelta(row.change ?? 0))}>
-                    {row.change >= 0 ? "+" : ""}{fmtPrice(row.change ?? 0)}
-                  </td>
-                  <td className={cn("px-4 py-3 text-right font-medium", classForDelta(row.change_pct ?? 0))}>
-                    {fmtPct(row.change_pct ?? 0)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-muted">
-                    {row.volume?.toLocaleString() ?? "—"}
-                  </td>
-                </tr>
-              ))}
-              {!isLoading && rows.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted">
-                    No data available
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          {!isLoading && rows.length === 0 && !error ? (
+            <EmptyState
+              icon={BarChart2}
+              title="No tickers available"
+              description="Market data could not be loaded."
+            />
+          ) : (
+            <ScreenerTable rows={rows} sortBy={sortBy} />
+          )}
         </CardContent>
       </Card>
     </div>
