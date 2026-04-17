@@ -1,10 +1,10 @@
 import { Routes, Route, NavLink, Navigate } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
-import Explain from "./pages/Explain";
-import Training from "./pages/Training";
-import Screener from "./pages/Screener";
-import Strategy from "./pages/Strategy";
-import Trading from "./pages/Trading";
+import DashboardPage from "./pages/DashboardPage";
+import ExplainPage from "./pages/ExplainPage";
+import TrainingPage from "./pages/TrainingPage";
+import ScreenerPage from "./pages/ScreenerPage";
+import StrategyPage from "./pages/StrategyPage";
+import TradingPage from "./pages/TradingPage";
 
 const NAV = [
   { to: "/screener", label: "Screener" },
@@ -41,12 +41,12 @@ function App() {
       <main className="max-w-7xl mx-auto px-6 py-6">
         <Routes>
           <Route path="/" element={<Navigate to="/screener" replace />} />
-          <Route path="/screener" element={<Screener />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/training" element={<Training />} />
-          <Route path="/strategy" element={<Strategy />} />
-          <Route path="/trading" element={<Trading />} />
-          <Route path="/explain" element={<Explain />} />
+          <Route path="/screener" element={<ScreenerPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/training" element={<TrainingPage />} />
+          <Route path="/strategy" element={<StrategyPage />} />
+          <Route path="/trading" element={<TradingPage />} />
+          <Route path="/explain" element={<ExplainPage />} />
         </Routes>
       </main>
     </div>
