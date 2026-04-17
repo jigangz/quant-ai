@@ -7,6 +7,7 @@ import pytest
 
 # Ensure in-memory backends for all infrastructure during tests
 # ALL env vars must be set BEFORE any app imports
+os.environ.setdefault("ENV", "test")
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test_quant.db")
 os.environ.setdefault("STORAGE_BACKEND", "local")
 os.environ.setdefault("STORAGE_LOCAL_PATH", "./test_artifacts")
