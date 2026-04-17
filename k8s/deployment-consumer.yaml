@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quant-ai-consumer
+  namespace: quant-ai
+  labels:
+    app: quant-ai-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: quant-ai-consumer
+  template:
+    metadata:
+      labels:
+        app: quant-ai-consumer
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8001"
+    spec:
+      containers:
+        - name: consumer
+          image: quant-ai-consumer:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8001
+              name: http
+          envFrom:
+            - configMapRef:
+                name: quant-ai-config
+            - secretRef:
+                name: quant-ai-secrets
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 30
