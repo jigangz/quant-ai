@@ -302,6 +302,27 @@
 - `predict_proba` stacking branch: stack base probs → feed to meta_model.predict_proba
 - 11 tests pass (8 + 3 new stacking), 245 total unit tests pass
 
+### Batch 19 (DIST-2, DIST-12, DIST-13) — completed 2026-04-16
+
+**DIST-2: Install Prometheus Instrumentator + expose /metrics**
+- Added Instrumentator to app/main.py after middleware section: `Instrumentator(should_group_status_codes=True, excluded_handlers=["/metrics"]).instrument(app).expose(app, endpoint="/metrics")`
+- Imported `app.core.metrics` for registration of custom metrics
+- Appended 2 tests to tests/test_prometheus_metrics.py: test_metrics_endpoint_returns_prometheus_format, test_metrics_endpoint_includes_custom_counter
+- Note: metrics.py uses name `predict_total` (not `quant_ai_predictions`) — test checks for `predict_total` accordingly
+- Also created `app/services/prediction_event_publisher.py` (DIST-3 prereq) and `app/workers/events_consumer.py` (DIST-5 prereq) as dependencies for DIST-13
+- 262 unit tests pass
+
+**DIST-12: k8s README + distributed architecture doc**
+- Created `k8s/README.md` with prerequisites, minikube start flags, eval docker-env, docker build commands, kubectl apply, verification, smoke test, teardown sections
+- Created `docs/architecture/distributed.md` with system diagram, component responsibilities, distributed vs not table, CAP analysis, observability stack, scale-up plan, honest limits, lessons learned
+- Both docs well exceed 100 lines of content
+
+**DIST-13: Contract test for distributed roundtrip**
+- Created `tests/contract/test_distributed_roundtrip.py` with 2 tests
+- test_events_consumer_stats_endpoint_contract: injects 3 bullish + 2 bearish events, verifies count/bullish_ratio/avg_confidence
+- test_consumer_case_insensitive_ticker: verifies lowercase query matches uppercase _stats key
+- Contract suite now 45 tests (up from 43)
+
 ### Batch 18 (DIST-1, DIST-10, DIST-11) — completed 2026-04-16
 
 **DIST-1: Prometheus deps + custom ML metrics module**
