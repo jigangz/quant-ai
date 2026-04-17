@@ -390,6 +390,30 @@
 - Created tests/test_events_consumer.py with 5 tests: health endpoint, empty stats, stats with injected events (avg/ratio), case-insensitive ticker, all-bearish ratio
 - Tests inject events directly into _stats dict (no Kafka needed); autouse fixture clears _stats before each test
 
+### Batch 23 (FE-1, FE-10, FE-11) — completed 2026-04-17
+
+**FE-1: Install frontend deps**
+- Installed @tremor/react (--legacy-peer-deps needed, React 19 vs Tremor's peer req React 18)
+- Installed all @radix-ui/* primitives, @tanstack/react-query, zustand, lightweight-charts, react-hook-form, zod, etc.
+- Installed dev deps: vitest, @testing-library/*, jsdom, @tailwindcss/forms, tailwindcss-animate
+- npm run build: 0 errors (51 modules)
+
+**FE-10: DashboardPage with CandlestickChart + prediction + SHAP**
+- Created src/features/charts/CandlestickChart.jsx: wraps lightweight-charts v4, dark theme, cleanup on unmount
+- Created src/pages/DashboardPage.jsx: 5-col grid, TickerSearch in header, Prediction card + SHAP bars
+- Also created as prerequisites: src/lib/utils.js, src/lib/formatters.js, src/api/queries.js (all hooks)
+- Created src/components/ui/: button, input, label, card, badge, tabs, select, alert-dialog
+- Created src/components/: PageHeader, EmptyState, LoadingSpinner, ErrorBoundary, ErrorState, ConfirmDialog, TickerSearch
+- Updated tailwind.config.js with new design tokens + Tremor content path + plugins
+- npm run build: 0 errors
+
+**FE-11: TrainingPage with 3 tabs**
+- Created src/features/training/TrainForm.jsx: react-hook-form + zod, model_type Select, search mode Select
+- Created src/features/training/RunsTable.jsx: useRuns(20), status Badge coloring
+- Created src/features/training/ModelsTable.jsx: useModels + usePromotedModel + ConfirmDialog for promote
+- Created src/pages/TrainingPage.jsx: Tabs with train/runs/models
+- npm run build: 0 errors
+
 ### Batch 22 (DIST-GATE) — completed 2026-04-16
 
 **DIST-GATE: Phase Gate — Distributed Systems full verification**
