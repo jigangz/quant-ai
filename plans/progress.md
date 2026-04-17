@@ -280,6 +280,27 @@
 - continue-on-error only on Supabase Connection Check (external service, not test step) — accepted in prior gates
 - Gate passed, all Ensemble tasks complete
 
+### Batch 21 (DIST-6, DIST-7, DIST-8) — completed 2026-04-16
+
+**DIST-6: Dockerfile.consumer**
+- Created Dockerfile.consumer with multi-stage build: base → builder → production
+- Python 3.11-slim base, non-root appuser, exposes port 8001
+- CMD: uvicorn app.workers.events_consumer:app --host 0.0.0.0 --port 8001
+
+**DIST-7: K8s namespace, config, API deployment/service/HPA + /health/ready**
+- Created k8s/namespace.yaml (quant-ai namespace)
+- Created k8s/configmap.yaml (ENV, BROKER_BACKEND=kafka, KAFKA_BOOTSTRAP_SERVERS, REDIS_URL, etc.)
+- Created k8s/secret.example.yaml template; added k8s/secret.yaml to .gitignore
+- Created k8s/deployment-api.yaml: 2 replicas, envFrom configmap+secret, readiness on /health/ready, liveness on /health, resources set
+- Created k8s/service-api.yaml: NodePort 30001
+- Created k8s/hpa-api.yaml: min=2, max=5, CPU 70% target
+- Added /health/ready endpoint to app/api/health.py — checks DB with SELECT 1, returns 503 if unreachable
+
+**DIST-8: K8s consumer deployment + service**
+- Created k8s/deployment-consumer.yaml: 1 replica, quant-ai-consumer:latest, envFrom configmap+secret, liveness on /health, resources set
+- Created k8s/service-consumer.yaml: NodePort 30002
+- 274 unit tests pass
+
 ### Batch 14 (ENS-1, ENS-2, ENS-3) — completed 2026-04-16
 
 **ENS-1: EnsembleConfig + EnsembleModel skeleton**
