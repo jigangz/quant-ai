@@ -96,8 +96,9 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 6"
+      "passes": true,
+      "completed_at": "2026-04-17",
+      "notes": "Implemented as prereq in FE-13 batch. liveStore.js exports useLiveStore with prices/connectionStatus/updatePrice/setConnectionStatus/clearPrices. useLivePrices.js auto-reconnects with 1s backoff and cleans up on unmount."
     },
     {
       "id": "FE-7",
@@ -113,8 +114,9 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 7"
+      "passes": true,
+      "completed_at": "2026-04-17",
+      "notes": "Implemented as prereq in FE-10/FE-13 batches. All 7 components: PageHeader (title/subtitle/actions + border-bottom), EmptyState (icon+title+desc+CTA), LoadingSpinner (sm/md/lg) + LoadingOverlay, ErrorBoundary (class component + retry), ErrorState (red-tinted + onRetry), ConfirmDialog (AlertDialog wrap + destructive=bg-down), TickerSearch (navigates /dashboard?ticker=X, 4 suggestion pills)."
     },
     {
       "id": "FE-8",
@@ -130,8 +132,9 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 8"
+      "passes": true,
+      "completed_at": "2026-04-17",
+      "notes": "Created src/app/Sidebar.jsx (64px fixed, hidden md:flex, 6 Lucide icons + Tooltip), src/app/AppShell.jsx (Sidebar + Outlet + ErrorBoundary), src/app/router.jsx (6 routes under AppShell, / redirects to /screener). App.jsx replaced with thin wrapper. All 6 pages exist with full implementations (FE-9-14 already complete)."
     },
     {
       "id": "FE-9",
