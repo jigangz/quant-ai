@@ -61,3 +61,32 @@ def test_metrics_endpoint_includes_custom_counter():
     assert resp.status_code == 200
     assert "predict_total" in resp.text
     assert 'ticker="SPY"' in resp.text
+
+
+def test_predict_service_increments_metrics_on_success():
+    """Integration: PredictionService increments PREDICT_TOTAL after successful prediction."""
+    from unittest.mock import MagicMock, patch
+
+    import numpy as np
+
+    from app.services.predict_service import PredictionService
+
+    mock_model = MagicMock()
+    mock_model.model_type = "logistic"
+    mock_model.predict_proba.return_value = np.array([[0.4, 0.6]])
+    mock_model.predict.return_value = np.array([1])
+
+    mock_features = MagicMock()
+    mock_features.__len__ = lambda self: 1
+
+    before = PREDICT_TOTAL.labels(ticker="INTC", model_type="logistic")._value.get()
+
+    with patch("app.services.predict_service.get_model", return_value=mock_model), patch.object(
+        PredictionService, "_build_features", return_value=mock_features
+    ):
+        result = PredictionService().predict(ticker="INTC")
+
+    after = PREDICT_TOTAL.labels(ticker="INTC", model_type="logistic")._value.get()
+    assert after == before + 1.0
+    assert result["success"] is True
+    assert result["signal"] == "LONG"
