@@ -347,3 +347,24 @@
 - api service env updated with BROKER_BACKEND=kafka + KAFKA_BOOTSTRAP_SERVERS=kafka:9092
 - kafka ADVERTISED_LISTENERS changed from localhost:9092 → kafka:9092 (internal docker networking)
 - docker-compose.yml valid YAML (yaml.safe_load parses successfully)
+
+### Batch 20 (DIST-3, DIST-4, DIST-5) — completed 2026-04-16
+
+**DIST-3: Kafka prediction event publisher with FastAPI lifespan**
+- prediction_event_publisher.py already existed (created as DIST-13 prereq in Batch 19)
+- Added start_producer/stop_producer calls to app/main.py lifespan (imports inside lifespan to avoid circular)
+- Created tests/test_prediction_event_publisher.py with 6 tests: PredictionEvent validation, start_producer noop when not kafka, publish noop when not kafka, publish noop when no producer, stop_producer resets state, publish handles send failure silently
+- 274 total unit tests pass
+
+**DIST-4: Instrument predict_service with metrics + Kafka publish**
+- Modified app/services/predict_service.py: added imports for PREDICT_TOTAL/PREDICT_CONFIDENCE/MODEL_INFERENCE_SECONDS and PredictionEvent/publish_prediction_event
+- model_type = getattr(model, "model_type", "unknown") — uses BaseModel.model_type attribute
+- MODEL_INFERENCE_SECONDS.labels(model_type=...).time() wraps predict_proba + predict calls
+- PREDICT_TOTAL.labels(ticker=..., model_type=...).inc() + PREDICT_CONFIDENCE.labels(ticker=...).observe(prob_up) after successful prediction
+- asyncio.get_running_loop().create_task(publish_prediction_event(event)) — gracefully skips if no running loop (sync context)
+- Added test_predict_service_increments_metrics_on_success to test_prometheus_metrics.py — mocks get_model and _build_features, verifies PREDICT_TOTAL increments
+
+**DIST-5: Events consumer tests**
+- app/workers/__init__.py already existed; app/workers/events_consumer.py already existed (created as DIST-13 prereq)
+- Created tests/test_events_consumer.py with 5 tests: health endpoint, empty stats, stats with injected events (avg/ratio), case-insensitive ticker, all-bearish ratio
+- Tests inject events directly into _stats dict (no Kafka needed); autouse fixture clears _stats before each test
