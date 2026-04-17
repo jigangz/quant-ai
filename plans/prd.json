@@ -150,8 +150,9 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 9"
+      "passes": true,
+      "completed_at": "2026-04-17",
+      "notes": "Created src/features/screener/ScreenerTable.jsx (prop-driven: rows+sortBy props, text-up/text-down via classForDelta, row click navigates /dashboard?ticker=X). Updated ScreenerPage.jsx to use ScreenerTable + EmptyState. Build succeeds."
     },
     {
       "id": "FE-10",
@@ -282,8 +283,9 @@
         "No 'Coming Soon' or placeholder text in any page"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "PHASE GATE - runs solo, comprehensive verification"
+      "passes": true,
+      "completed_at": "2026-04-17",
+      "notes": "Build: 0 errors. vitest: 6/6 pass. Backend: 319 unit + 45 contract. ruff: 0 errors. All directories populated. No placeholder text. Fixed: added ENV=test to tests/conftest.py so RateLimitMiddleware bypasses in tests (was causing 14 tests to 429)."
     }
   ]
 }
