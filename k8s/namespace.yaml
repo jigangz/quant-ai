@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: quant-ai
+  labels:
+    app.kubernetes.io/name: quant-ai
+    app.kubernetes.io/part-of: quant-ai

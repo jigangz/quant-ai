@@ -45,3 +45,4 @@ artifacts/models/
 artifacts/registry/
 artifacts/
 !artifacts/.gitkeep
+k8s/secret.yaml

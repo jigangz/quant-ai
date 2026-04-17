@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quant-ai-config
+  namespace: quant-ai
+data:
+  ENV: "prod"
+  CACHE_BACKEND: "redis"
+  BROKER_BACKEND: "kafka"
+  QUEUE_BACKEND: "redis"
+  NOTIFY_BACKEND: "memory"
+  FUNCTIONS_BACKEND: "local"
+  STORAGE_BACKEND: "local"
+  STORAGE_LOCAL_PATH: "/data/artifacts"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  REDIS_URL: "redis://redis:6379/0"
