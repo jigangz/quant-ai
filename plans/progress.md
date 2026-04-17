@@ -301,3 +301,28 @@
 - Base models retrained on full data after OOF (used at inference)
 - `predict_proba` stacking branch: stack base probs → feed to meta_model.predict_proba
 - 11 tests pass (8 + 3 new stacking), 245 total unit tests pass
+
+### Batch 18 (DIST-1, DIST-10, DIST-11) — completed 2026-04-16
+
+**DIST-1: Prometheus deps + custom ML metrics module**
+- Added prometheus-client>=0.20.0 + prometheus-fastapi-instrumentator>=7.0.0 to requirements.txt
+- Created app/core/metrics.py with PREDICT_TOTAL (Counter, labels: ticker/model_type), PREDICT_CONFIDENCE (Histogram, labels: ticker), MODEL_INFERENCE_SECONDS (Histogram, labels: model_type)
+- Created tests/test_prometheus_metrics.py with 6 tests (type checks, inc, observe, context manager)
+- 260 total unit tests pass
+
+**DIST-10: K8s Prometheus + Grafana with dashboard**
+- Created k8s/configmap-prometheus.yaml: scrapes api:8000 + consumer:8001
+- Created k8s/deployment-prometheus.yaml: prom/prometheus:v2.51.2, NodePort 30090
+- Created k8s/configmap-grafana.yaml: datasource (Prometheus) + dashboards provider configs
+- Created k8s/deployment-grafana.yaml: grafana/grafana:10.4.2, NodePort 30030, admin/admin creds
+- Created observability/dashboards/quant-ai.json with 6 panels: request rate, HTTP latency p95, predictions/min per ticker, confidence heatmap, inference time p95, pod count
+- All YAMLs valid (yaml.safe_load_all), dashboard JSON valid
+
+**DIST-11: docker-compose + observability directory**
+- Created observability/prometheus.yml: global scrape_interval 15s, scrapes api:8000 + consumer:8001
+- Created observability/grafana-datasources.yml: provisions Prometheus datasource
+- Created observability/grafana-dashboards.yml: provisions /var/lib/grafana/dashboards dir
+- Updated docker-compose.yml: kafka profile removed (always-on), added consumer/prometheus/grafana services
+- api service env updated with BROKER_BACKEND=kafka + KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+- kafka ADVERTISED_LISTENERS changed from localhost:9092 → kafka:9092 (internal docker networking)
+- docker-compose.yml valid YAML (yaml.safe_load parses successfully)
