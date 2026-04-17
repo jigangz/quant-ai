@@ -1,0 +1,153 @@
+{
+  "repo": "jigangz/quant-ai",
+  "branchName": "main",
+  "verifyCommand": "cd /c/Users/zjg09/projects/quant-ai && python -m pytest tests/ -v --tb=short --ignore=tests/contract -p no:cacheprovider 2>&1 | tail -5",
+  "features": [
+    {
+      "id": "ENS-1",
+      "title": "EnsembleConfig pydantic + EnsembleModel skeleton",
+      "acceptanceCriteria": [
+        "app/ml/models/ensemble_model.py exists with EnsembleConfig and EnsembleModel classes",
+        "EnsembleConfig has fields: mode (4 Literal options), base_models (min_length=2), base_model_params (dict), cv_folds (2-10, default 5)",
+        "EnsembleModel inherits BaseModel with model_type='ensemble'",
+        "__init__ accepts EnsembleConfig or dict (ModelFactory-compatible)",
+        "tests/test_ensemble_model.py has 5+ tests passing",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 1. fit/predict_proba raise NotImplementedError at this stage"
+    },
+    {
+      "id": "ENS-2",
+      "title": "Voting implementation (soft + hard)",
+      "acceptanceCriteria": [
+        "_fit_voting method fits each base model via ModelFactory.create",
+        "predict_proba voting_soft returns mean of base predict_proba, shape [N, 2]",
+        "predict_proba voting_hard returns majority vote, shape [N, 2] with 0/1 values",
+        "base_model_params dict is respected and passed to factory",
+        "tests/test_ensemble_model.py has 3+ new tests passing (8 total)",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 2. is_fitted set to True after fit"
+    },
+    {
+      "id": "ENS-3",
+      "title": "Stacking implementation (K-fold OOF + meta-learner)",
+      "acceptanceCriteria": [
+        "_fit_stacking uses sklearn KFold with shuffle=False (preserves time order)",
+        "OOF matrix shape [N, n_base] built across folds",
+        "meta_model is logistic for stacking_logistic, xgboost for stacking_xgboost",
+        "base_models are retrained on full data after OOF (used at inference)",
+        "predict_proba stacking branch feeds base probs to meta_model",
+        "tests/test_ensemble_model.py has 3+ new tests passing (11 total)",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 3"
+    },
+    {
+      "id": "ENS-4",
+      "title": "Custom save/load for EnsembleModel",
+      "acceptanceCriteria": [
+        "save() writes base_models.joblib + (meta_model.joblib if stacking) + params.json + metadata.json",
+        "load() reconstructs instance via cls(**params), loads base_models, meta_model, metadata",
+        "save/load roundtrip produces identical predictions for voting_soft and stacking_logistic",
+        "tests/test_ensemble_model.py has 3+ new tests passing (14 total)",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 4. Does NOT use BaseModel default save which expects self.model"
+    },
+    {
+      "id": "ENS-5",
+      "title": "ModelFactory registration",
+      "acceptanceCriteria": [
+        "app/ml/models/factory.py registers 'ensemble' -> EnsembleModel",
+        "app/ml/models/__init__.py exports EnsembleModel and EnsembleConfig",
+        "ModelFactory.create('ensemble', ensemble_config={...}) returns EnsembleModel instance",
+        "tests/test_ensemble_model.py has 1+ new test passing (15 total)",
+        "All existing tests still pass (234+ + 15 ensemble = 249+)",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 5. Register after optional models in factory.py"
+    },
+    {
+      "id": "ENS-6",
+      "title": "TrainRequest + TrainingService integration",
+      "acceptanceCriteria": [
+        "TrainRequest has ensemble_config: Optional[dict] field",
+        "model_validator(mode='after') enforces: ensemble required when model_type='ensemble', forbidden otherwise",
+        "TrainingService.train() dispatches: if ensemble, call get_model('ensemble', ensemble_config=...); else normal path",
+        "tests/test_ensemble_training.py has 4+ tests passing (validation + end-to-end)",
+        "All existing tests still pass",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 6. Uses monkeypatched DatasetBuilder for e2e test"
+    },
+    {
+      "id": "ENS-7",
+      "title": "API contract tests for ensemble",
+      "acceptanceCriteria": [
+        "tests/contract/test_api_ensemble.py exists",
+        "Test: POST /api/train with voting_soft returns 200 success",
+        "Test: POST /api/train with stacking_logistic returns 200 success",
+        "Test: POST /api/train with model_type='ensemble' but no ensemble_config returns 422",
+        "Test: POST /api/train with model_type='logistic' but ensemble_config set returns 422",
+        "Contract suite goes from 43+ (39 existing + 4 new) all passing",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "notes": "See plan Task 7. Uses monkeypatched DatasetBuilder via pytest fixture",
+      "completed_at": "2026-04-16T17:17:56Z"
+    },
+    {
+      "id": "ENS-8",
+      "title": "Frontend - Training.jsx ensemble config form",
+      "acceptanceCriteria": [
+        "Training.jsx has 'ensemble' option in model_type dropdown",
+        "When ensemble selected, EnsembleConfigForm renders with: mode dropdown (4 options), base_models checkboxes (5), cv_folds input (stacking only)",
+        "Submit handler includes ensemble_config in POST body when model_type='ensemble'",
+        "Tailwind dark theme styling (bg-surface-card, text-accent, border-surface-border)",
+        "npm run build succeeds (0 errors)",
+        "git commit with message starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "notes": "See plan Task 8. Read current Training.jsx before modifying",
+      "completed_at": "2026-04-16T17:17:56Z"
+    },
+    {
+      "id": "ENS-GATE",
+      "title": "Phase Gate - Ensemble full verification",
+      "acceptanceCriteria": [
+        "pytest tests/ -v --ignore=tests/contract - 0 failures (249+ tests)",
+        "pytest tests/contract/ -v - 43+ passed",
+        "ruff check app/ --ignore F401,F841,E501,F541,E402 - 0 errors",
+        "npm run build - 0 errors",
+        "'ensemble' in ModelFactory.list_models()",
+        "app.main:app imports successfully (no DB crash) and includes /api/train route",
+        "No continue-on-error or workarounds in CI"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "PHASE GATE - run solo, verify everything before marking complete. All criteria met: 254 unit tests, 43 contract tests, ruff clean, npm build 0 errors, ensemble in ModelFactory, app imports OK"
+    }
+  ]
+}
