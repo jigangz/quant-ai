@@ -100,6 +100,20 @@ app.add_middleware(RequestContextMiddleware)
 
 
 # ===================================
+# Prometheus Instrumentation
+# ===================================
+from prometheus_fastapi_instrumentator import Instrumentator
+
+# Import custom metrics so they register with the default registry
+from app.core import metrics as _metrics  # noqa: F401
+
+Instrumentator(
+    should_group_status_codes=True,
+    excluded_handlers=["/metrics"],
+).instrument(app).expose(app, include_in_schema=False, endpoint="/metrics")
+
+
+# ===================================
 # Exception Handler
 # ===================================
 @app.exception_handler(Exception)

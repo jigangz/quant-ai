@@ -36,3 +36,28 @@ def test_predict_confidence_observes():
 def test_model_inference_seconds_context_manager():
     with MODEL_INFERENCE_SECONDS.labels(model_type="xgboost").time():
         pass  # simulates inference
+
+
+def test_metrics_endpoint_returns_prometheus_format():
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+    resp = client.get("/metrics")
+    assert resp.status_code == 200
+    body = resp.text
+    assert "# HELP" in body
+    assert "# TYPE" in body
+
+
+def test_metrics_endpoint_includes_custom_counter():
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    PREDICT_TOTAL.labels(ticker="SPY", model_type="ensemble").inc()
+
+    client = TestClient(app)
+    resp = client.get("/metrics")
+    assert resp.status_code == 200
+    assert "predict_total" in resp.text
+    assert 'ticker="SPY"' in resp.text
