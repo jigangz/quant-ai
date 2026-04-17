@@ -426,3 +426,28 @@
 - npm run build: 0 errors (52 modules, vite 7.3.0)
 - No continue-on-error in CI workflows
 - Gate passed, all DIST tasks complete
+
+### Batch 24 (FE-2, FE-15, FE-16) — completed 2026-04-17
+
+**FE-2: Tailwind dark theme tokens + Geist fonts + base styles**
+- index.html: added `class="dark"` to `<html>`, updated title to "Quant AI — ML Stock Prediction Platform"
+- index.css: added @font-face declarations for Geist (Regular/Medium/SemiBold/Bold) and Geist Mono (Regular/Medium) using woff2 files from node_modules/geist/dist/fonts/
+- Note: geist npm package exports Next.js-only modules, no CSS files; @font-face is the correct Vite approach
+- Added @layer base with scrollbar styles and :focus-visible ring
+- tailwind.config.js tokens were already complete from FE-10
+
+**FE-15: Vitest smoke tests + CI frontend-test job**
+- Created vitest.config.js with jsdom environment, globals true, setupFiles
+- Created src/setupTests.js: imports jest-dom, mocks lightweight-charts + WebSocket
+- Created __tests__/pages.smoke.test.jsx: 6 tests (one per page) verifying heading text renders
+- Added 'test': 'vitest' to package.json scripts
+- All 6 tests pass (npm test -- --run)
+- Added frontend-test job to .github/workflows/ci.yml (npm ci → npm test --run → npm run build)
+- Created src/pages/ScreenerPage.jsx as prereq (ScreenerPage didn't exist yet)
+- Key mock details: useLivePrices is named export; useLiveStore also needs mocking for TradingPage
+
+**FE-16: Migration cleanup**
+- Updated App.jsx to import new *Page.jsx components (DashboardPage, TrainingPage, StrategyPage, TradingPage, ExplainPage, ScreenerPage)
+- Deleted legacy pages: Screener.jsx, Dashboard.jsx, Training.jsx, Strategy.jsx, Trading.jsx, Explain.jsx
+- Deleted legacy components: TrainingForm.jsx, ModelsList.jsx, RunsList.jsx
+- npm run build: 0 errors, npm test -- --run: 6/6 pass

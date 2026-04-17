@@ -32,8 +32,9 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 2"
+      "passes": true,
+      "completed_at": "2026-04-17",
+      "notes": "See plan Task 2. Geist loaded via @font-face in index.css (npm pkg is Next.js-only, no CSS exports). tailwind.config.js tokens already done in FE-10. index.html has dark class + updated title."
     },
     {
       "id": "FE-3",
@@ -243,8 +244,9 @@
         "git commit starting 'feat:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 15"
+      "passes": true,
+      "completed_at": "2026-04-17",
+      "notes": "See plan Task 15. vitest.config.js + src/setupTests.js + __tests__/pages.smoke.test.jsx (6/6 pass). Added 'test': 'vitest' script. CI frontend-test job added to ci.yml."
     },
     {
       "id": "FE-16",
@@ -257,8 +259,9 @@
         "git commit starting 'chore:'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 16"
+      "passes": true,
+      "completed_at": "2026-04-17",
+      "notes": "See plan Task 16. Deleted 6 legacy pages + 3 legacy components. Updated App.jsx to import new *Page.jsx files. Build and tests pass."
     },
     {
       "id": "FE-GATE",
