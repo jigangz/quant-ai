@@ -1,0 +1,233 @@
+{
+  "repo": "jigangz/quant-ai",
+  "branchName": "main",
+  "verifyCommand": "cd /c/Users/zjg09/projects/quant-ai && python -m pytest tests/ -v --tb=short --ignore=tests/contract -p no:cacheprovider 2>&1 | tail -5",
+  "features": [
+    {
+      "id": "DIST-1",
+      "title": "Prometheus deps + custom ML metrics module",
+      "acceptanceCriteria": [
+        "requirements.txt adds prometheus-client>=0.20.0 and prometheus-fastapi-instrumentator>=7.0.0",
+        "app/core/metrics.py defines PREDICT_TOTAL (Counter), PREDICT_CONFIDENCE (Histogram), MODEL_INFERENCE_SECONDS (Histogram)",
+        "tests/test_prometheus_metrics.py has 3+ tests passing for custom metrics",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 1"
+    },
+    {
+      "id": "DIST-2",
+      "title": "Install Instrumentator + expose /metrics endpoint",
+      "acceptanceCriteria": [
+        "app/main.py installs prometheus_fastapi_instrumentator.Instrumentator",
+        "Imports app.core.metrics for registration",
+        "/metrics endpoint returns 200 with Prometheus text format",
+        "Custom counter visible in /metrics output",
+        "2+ new tests in tests/test_prometheus_metrics.py passing",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 2"
+    },
+    {
+      "id": "DIST-3",
+      "title": "Kafka prediction event publisher with FastAPI lifespan",
+      "acceptanceCriteria": [
+        "app/services/prediction_event_publisher.py has PredictionEvent pydantic model + start_producer + stop_producer + publish_prediction_event",
+        "app/main.py lifespan calls start_producer/stop_producer",
+        "Publisher is no-op if BROKER_BACKEND != kafka",
+        "Publisher handles Kafka unreachable without raising",
+        "tests/test_prediction_event_publisher.py has 4+ tests passing",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 3"
+    },
+    {
+      "id": "DIST-4",
+      "title": "Instrument predict service with metrics + Kafka publish",
+      "acceptanceCriteria": [
+        "app/services/predict_service.py imports metrics + publisher",
+        "PREDICT_TOTAL.inc() called after successful prediction",
+        "PREDICT_CONFIDENCE.observe() called with positive-class probability",
+        "MODEL_INFERENCE_SECONDS.time() wraps model inference",
+        "Fire-and-forget publish_prediction_event after prediction (asyncio.create_task)",
+        "1+ new test in tests/test_prometheus_metrics.py passing (integration)",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 4"
+    },
+    {
+      "id": "DIST-5",
+      "title": "Events consumer FastAPI app with /stats endpoint",
+      "acceptanceCriteria": [
+        "app/workers/__init__.py exists (new package)",
+        "app/workers/events_consumer.py has FastAPI app with lifespan + /health + /stats/{ticker}",
+        "In-memory _stats dict using defaultdict(deque maxlen=1000)",
+        "Consumer background task subscribes to prediction_events topic (no-op if BROKER_BACKEND != kafka)",
+        "/stats/{ticker} returns count, avg_confidence, bullish_ratio, last_prediction_ts",
+        "Ticker case-insensitive (upper() normalize)",
+        "tests/test_events_consumer.py has 4+ tests passing",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 5"
+    },
+    {
+      "id": "DIST-6",
+      "title": "Dockerfile.consumer for separate consumer image",
+      "acceptanceCriteria": [
+        "Dockerfile.consumer exists, Python 3.11-slim base",
+        "Multi-stage build with builder + production",
+        "CMD runs uvicorn app.workers.events_consumer:app on port 8001",
+        "Non-root user (appuser)",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 6"
+    },
+    {
+      "id": "DIST-7",
+      "title": "K8s: namespace, config, API deployment/service/HPA + /health/ready",
+      "acceptanceCriteria": [
+        "k8s/namespace.yaml creates quant-ai namespace",
+        "k8s/configmap.yaml has ENV, BROKER_BACKEND=kafka, KAFKA_BOOTSTRAP_SERVERS, REDIS_URL etc.",
+        "k8s/secret.example.yaml template (k8s/secret.yaml added to .gitignore)",
+        "k8s/deployment-api.yaml: 2 replicas, envFrom configmap+secret, readiness probe on /health/ready, liveness on /health, resources set",
+        "k8s/service-api.yaml: NodePort 30001",
+        "k8s/hpa-api.yaml: min=2 max=5, CPU 70% target",
+        "app/api/health.py has /health/ready endpoint that checks DB",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 7"
+    },
+    {
+      "id": "DIST-8",
+      "title": "K8s consumer deployment + service",
+      "acceptanceCriteria": [
+        "k8s/deployment-consumer.yaml: 1 replica, image quant-ai-consumer:latest, envFrom configmap+secret, liveness on /health, resources set",
+        "k8s/service-consumer.yaml: NodePort 30002",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 8"
+    },
+    {
+      "id": "DIST-9",
+      "title": "K8s Kafka/Postgres/Redis stateful components",
+      "acceptanceCriteria": [
+        "k8s/statefulset-kafka.yaml: bitnami/kafka:3.6, KRaft mode, 1 broker, PVC 1Gi",
+        "k8s/service-kafka.yaml: headless service (clusterIP None) ports 9092+9093",
+        "k8s/statefulset-postgres.yaml: postgres:16-alpine, PVC 1Gi",
+        "k8s/service-postgres.yaml: ClusterIP 5432",
+        "k8s/deployment-redis.yaml: redis:7-alpine with resources",
+        "k8s/service-redis.yaml: ClusterIP 6379",
+        "All YAMLs are valid (yaml.safe_load_all parses)",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 9"
+    },
+    {
+      "id": "DIST-10",
+      "title": "K8s Prometheus + Grafana with dashboard",
+      "acceptanceCriteria": [
+        "k8s/configmap-prometheus.yaml scrapes api:8000 + consumer:8001",
+        "k8s/deployment-prometheus.yaml + NodePort 30090",
+        "k8s/configmap-grafana.yaml has datasource + dashboards provider configs",
+        "k8s/deployment-grafana.yaml + NodePort 30030, admin/admin credentials",
+        "observability/dashboards/quant-ai.json has 6 panels: request rate, latency p95, predictions/min per ticker, confidence heatmap, inference time p95, pod count",
+        "Dashboard JSON is valid JSON (can be loaded)",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 10"
+    },
+    {
+      "id": "DIST-11",
+      "title": "docker-compose + observability directory",
+      "acceptanceCriteria": [
+        "observability/prometheus.yml scrape config for api + consumer",
+        "observability/grafana-datasources.yml provisions Prometheus",
+        "observability/grafana-dashboards.yml provisions dashboards dir",
+        "docker-compose.yml adds: kafka (bitnami KRaft), consumer (Dockerfile.consumer), prometheus, grafana",
+        "api service env updated with BROKER_BACKEND=kafka + KAFKA_BOOTSTRAP_SERVERS=kafka:9092",
+        "docker-compose config validates as valid YAML",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "medium",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 11"
+    },
+    {
+      "id": "DIST-12",
+      "title": "Docs: k8s/README + distributed architecture doc",
+      "acceptanceCriteria": [
+        "k8s/README.md has: prerequisites, minikube start flags, eval docker-env, docker build commands, kubectl apply, verification, smoke test, teardown",
+        "docs/architecture/distributed.md has: system diagram, distributed vs not table, CAP analysis, observability section, scale-up plan, honest limits, lessons learned",
+        "Both docs >= 100 lines of actual content",
+        "git commit starting 'docs:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 12"
+    },
+    {
+      "id": "DIST-13",
+      "title": "Contract test for distributed predict to stats roundtrip",
+      "acceptanceCriteria": [
+        "tests/contract/test_distributed_roundtrip.py has 2+ tests",
+        "Tests inject events via _stats dict and assert /stats endpoint response",
+        "Tests case-insensitive ticker lookup",
+        "Contract suite goes from 43 to 45+ tests",
+        "git commit starting 'feat:'"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "See plan Task 13"
+    },
+    {
+      "id": "DIST-GATE",
+      "title": "Phase Gate - Distributed Systems full verification",
+      "acceptanceCriteria": [
+        "pytest tests/ --ignore=tests/contract - 260+ pass, 0 fail",
+        "pytest tests/contract/ - 45+ pass, 0 fail",
+        "ruff check app/ --ignore F401,F841,E501,F541,E402 - 0 errors",
+        "/metrics endpoint returns Prometheus format",
+        "app.workers.events_consumer:app importable and has /stats + /health routes",
+        "All k8s/*.yaml parse as valid YAML",
+        "npm run build succeeds",
+        "No continue-on-error or test workarounds introduced"
+      ],
+      "priority": "high",
+      "passes": true,
+      "completed_at": "2026-04-16",
+      "notes": "PHASE GATE - all criteria met: 274 unit tests, 45 contract tests, ruff clean, /metrics 200, events_consumer importable, all k8s YAMLs valid, npm build OK"
+    }
+  ]
+}
