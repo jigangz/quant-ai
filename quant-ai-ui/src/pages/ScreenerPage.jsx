@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import PageHeader from "../components/PageHeader";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -20,7 +20,27 @@ export default function ScreenerPage() {
 
   const { data, isLoading, error, refetch, isFetching } = useScreenerTickers();
 
-  const rows = (data || []).filter(Boolean);
+  // Transform [{ticker, data: {rows: [...]}}] → [{ticker, close, change, change_pct, volume}]
+  const rows = useMemo(() => {
+    if (!data) return [];
+    return data
+      .map(({ ticker, data: tickerData }) => {
+        const ohlcv = tickerData?.rows || [];
+        if (ohlcv.length === 0) return null;
+        const last = ohlcv[ohlcv.length - 1];
+        const prev = ohlcv.length >= 2 ? ohlcv[ohlcv.length - 2] : last;
+        const change = last.close - prev.close;
+        const change_pct = prev.close ? change / prev.close : 0;
+        return {
+          ticker,
+          close: last.close,
+          change,
+          change_pct,
+          volume: last.volume,
+        };
+      })
+      .filter(Boolean);
+  }, [data]);
 
   return (
     <div className="space-y-6">
