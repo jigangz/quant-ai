@@ -8,29 +8,39 @@ export default function CandlestickChart({ data, markers = [], height = 420 }) {
 
   useEffect(() => {
     if (!containerRef.current) return;
+    // Lightweight Charts parser only accepts comma-separated rgb() or hex — not Tailwind's space-separated syntax
+    const COLORS = {
+      bg: "#18181b",        // zinc-900
+      text: "#a1a1aa",      // zinc-400
+      grid: "#27272a",      // zinc-800
+      border: "#3f3f46",    // zinc-700
+      up: "#10b981",        // emerald-500
+      down: "#f43f5e",      // rose-500
+    };
+
     const chart = createChart(containerRef.current, {
       autoSize: true,
       height,
       layout: {
-        background: { type: ColorType.Solid, color: "rgb(24 24 27)" },
-        textColor: "rgb(161 161 170)",
+        background: { type: ColorType.Solid, color: COLORS.bg },
+        textColor: COLORS.text,
         fontFamily: "Geist, system-ui, sans-serif",
       },
       grid: {
-        vertLines: { color: "rgb(39 39 42)" },
-        horzLines: { color: "rgb(39 39 42)" },
+        vertLines: { color: COLORS.grid },
+        horzLines: { color: COLORS.grid },
       },
-      rightPriceScale: { borderColor: "rgb(63 63 70)" },
-      timeScale: { borderColor: "rgb(63 63 70)", timeVisible: true },
+      rightPriceScale: { borderColor: COLORS.border },
+      timeScale: { borderColor: COLORS.border, timeVisible: true },
       crosshair: { mode: 1 },
     });
     chartRef.current = chart;
     const series = chart.addCandlestickSeries({
-      upColor: "rgb(16 185 129)",
-      downColor: "rgb(244 63 94)",
+      upColor: COLORS.up,
+      downColor: COLORS.down,
       borderVisible: false,
-      wickUpColor: "rgb(16 185 129)",
-      wickDownColor: "rgb(244 63 94)",
+      wickUpColor: COLORS.up,
+      wickDownColor: COLORS.down,
     });
     seriesRef.current = series;
 
