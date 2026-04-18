@@ -4,10 +4,27 @@ import * as api from "./client";
 const SCREENER_TICKERS = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "JPM", "V", "WMT"];
 
 // ===== Market =====
+// Backend /data/market returns a flat array of OHLCV rows (newest first).
+// Normalize to { rows: [...] } ascending by date so Lightweight Charts and
+// Screener table can read it uniformly.
+const normalizeMarket = (raw) => {
+  if (!raw) return { rows: [] };
+  if (Array.isArray(raw)) {
+    const rows = [...raw].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    return { rows };
+  }
+  if (Array.isArray(raw.rows)) {
+    const rows = [...raw.rows].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    return { ...raw, rows };
+  }
+  return { rows: [] };
+};
+
 export const useMarket = (ticker, opts = {}) =>
   useQuery({
     queryKey: ["market", ticker],
     queryFn: () => api.getMarket(ticker),
+    select: normalizeMarket,
     enabled: !!ticker,
     staleTime: 30_000,
     ...opts,
@@ -20,7 +37,9 @@ export const useScreenerTickers = () =>
       const results = await Promise.all(
         SCREENER_TICKERS.map((t) => api.getMarket(t).catch(() => null))
       );
-      return results.map((r, idx) => ({ ticker: SCREENER_TICKERS[idx], data: r })).filter((x) => x.data);
+      return results
+        .map((r, idx) => ({ ticker: SCREENER_TICKERS[idx], data: normalizeMarket(r) }))
+        .filter((x) => x.data.rows.length > 0);
     },
     staleTime: 60_000,
   });
