@@ -22,8 +22,9 @@ async function request(path, options = {}) {
 // ===================================
 // Market Data
 // ===================================
-export function getMarket(ticker) {
-  return request(`/data/market?ticker=${ticker}`);
+export function getMarket(ticker, lookback) {
+  const qs = lookback ? `&lookback=${lookback}` : "";
+  return request(`/data/market?ticker=${ticker}${qs}`);
 }
 
 // ===================================

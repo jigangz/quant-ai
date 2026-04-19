@@ -1,0 +1,30 @@
+name: Keep Render Alive
+
+# Render free tier spins down after 15 minutes of inactivity.
+# Ping /health every 10 minutes to keep the pod warm.
+# Cost: 0 (GitHub Actions free tier allows this easily)
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"  # every 10 minutes
+  workflow_dispatch:  # allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Ping Render health endpoint
+        run: |
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt..."
+            STATUS=$(curl -sf -m 30 https://quant-ai-qzrg.onrender.com/health 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "fail")
+            if [ "$STATUS" = "ok" ]; then
+              echo "Render is healthy (attempt $attempt)"
+              exit 0
+            fi
+            echo "Not ready yet (status=$STATUS), waiting 15s..."
+            sleep 15
+          done
+          echo "::warning::Render did not respond healthy after 3 attempts (may be a cold start in progress)"
+          exit 0

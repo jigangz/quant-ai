@@ -34,8 +34,9 @@ export const useScreenerTickers = () =>
   useQuery({
     queryKey: ["screener", SCREENER_TICKERS],
     queryFn: async () => {
+      // lookback=5 → only need last 2 close prices to compute change; 5 gives safety buffer
       const results = await Promise.all(
-        SCREENER_TICKERS.map((t) => api.getMarket(t).catch(() => null))
+        SCREENER_TICKERS.map((t) => api.getMarket(t, 5).catch(() => null))
       );
       return results
         .map((r, idx) => ({ ticker: SCREENER_TICKERS[idx], data: normalizeMarket(r) }))
