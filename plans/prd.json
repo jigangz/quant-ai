@@ -44,8 +44,9 @@
         "git commit 'feat(theme): FE-DASH-2 ThemeScope'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 2"
+      "passes": true,
+      "notes": "See plan Task 2",
+      "completed_at": "2026-04-20T00:00:00Z"
     },
     {
       "id": "FE-DASH-3",
@@ -56,8 +57,9 @@
         "git commit 'feat(theme): FE-DASH-3 MigrationBanner'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 3"
+      "passes": true,
+      "notes": "See plan Task 3",
+      "completed_at": "2026-04-20T00:00:00Z"
     },
     {
       "id": "FE-DASH-4",
@@ -301,8 +303,9 @@
         "git commit 'docs(backend-gaps): FE-DASH-20 post-implementation gap check-in'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 20"
+      "passes": true,
+      "notes": "See plan Task 20",
+      "completed_at": "2026-04-20T00:00:00Z"
     },
     {
       "id": "FE-DASH-GATE",
