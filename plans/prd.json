@@ -211,7 +211,8 @@
         "git commit 'feat(dashboard): FE-DASH-14 ModelComparison'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-20",
       "notes": "See plan Task 14"
     },
     {
@@ -225,7 +226,8 @@
         "git commit 'feat(dashboard): FE-DASH-15 Gauge + GaugesSection'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-20",
       "notes": "See plan Task 15. Signature AI visualization — must render correctly."
     },
     {
@@ -238,7 +240,8 @@
         "git commit 'feat(dashboard): FE-DASH-16 SeasonalityHeatmap + CTARow'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-20",
       "notes": "See plan Task 16"
     },
     {
