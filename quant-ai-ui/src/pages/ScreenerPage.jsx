@@ -20,7 +20,7 @@ export default function ScreenerPage() {
 
   const { data, isLoading, error, refetch, isFetching } = useScreenerTickers();
 
-  // Transform [{ticker, data: {rows: [...]}}] → [{ticker, close, change, change_pct, volume}]
+  // Transform [{ticker, data: {rows: [...]}}] → [{ticker, close, change, change_pct, volume, series}]
   const rows = useMemo(() => {
     if (!data) return [];
     return data
@@ -37,6 +37,7 @@ export default function ScreenerPage() {
           change,
           change_pct,
           volume: last.volume,
+          series: ohlcv.map((r) => r.close),
         };
       })
       .filter(Boolean);

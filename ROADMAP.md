@@ -147,30 +147,89 @@
 
 ---
 
-## 🤖 第三阶段：AI 优化量化策略
+## 🤖 第三阶段：AI + 工程升级（Sub-projects）
 
-### 11. ML 优化策略参数
-- [ ] **贝叶斯优化**（Optuna）自动搜索最优参数
-  - 例：自动找最优均线周期、RSI 阈值
-- [ ] **遗传算法**优化策略组合
-- [ ] 参数优化结果可视化（热力图）
+### ✅ Sub 1 — Optuna 超参数优化（已完成 2026-04-10）
+- [x] `Optuna` 多目标贝叶斯优化（NSGA-II），同时优化 Sharpe + MaxDD
+- [x] 策略参数 TPE 搜索（均线周期、RSI 阈值、布林带 K）
+- [x] 优化 Run 持久化：`optimization_runs` 表 + `/api/optimize/runs` 列表
+- [x] 前端 Training 页 "Auto-Optimize" 按钮 + Strategy 页 "Optimize Params"
 
-### 12. 强化学习交易智能体（RL Agent）
-- [ ] 接入 `stable-baselines3`
-- [ ] 状态空间：技术指标 + 新闻情绪 + 持仓状态
-- [ ] 动作空间：买入 / 卖出 / 持有
-- [ ] 奖励函数：风险调整后收益（Sharpe 导向）
-- [ ] 对比 XGBoost vs RL 策略回测表现
+### ✅ Sub 2 — 多模型集成（已完成 2026-04-11）
+- [x] `ModelFactory` 6 种模型：logistic / random forest / XGBoost / LightGBM / CatBoost / ensemble
+- [x] Ensemble 支持 voting（软投票）+ stacking（KFold shuffle=False 保时序）
+- [x] `/models/types` 暴露可用模型 + `available` 字段（可选依赖缺失时自动隐藏）
+- [x] 置信度加权 + 模型分歧度作为风险信号
 
-### 13. 多模型集成预测
-- [ ] Ensemble：XGBoost + LSTM + Transformer 投票
-- [ ] 置信度加权，高置信度才下单
-- [ ] 模型分歧度作为风险信号（分歧大 = 不确定性高）
+### ✅ Sub 3 — Distributed Systems（已完成 2026-04-16）
+- [x] **Kubernetes manifests**（`k8s/` 目录 18 个 YAML）
+  - API Deployment 2 副本 + HPA 2-5（CPU > 70% 自动扩容）
+  - Consumer Deployment 独立 Pod（Kafka events → per-ticker stats）
+  - Liveness / Readiness probes，失败自动重启
+- [x] **Prometheus + Grafana** 观测栈
+  - HTTP metrics 自动采集
+  - 3 个自定义 ML metrics：`PREDICT_TOTAL` / `PREDICT_CONFIDENCE` / `MODEL_INFERENCE_SECONDS`
+  - 预置 6 面板 Dashboard（RPS, p95, 预测数, 置信度热图, 推理时间, Pod 数）
+- [x] **Kafka prediction event stream**
+  - `/predict` 每次请求发布事件 → Consumer 聚合 `/stats/{ticker}`
+  - `aiokafka` + in-memory fallback（pluggable via `BROKER_BACKEND`）
+- [x] **Dockerfile.consumer** + `docker-compose.yml` 一键跑全栈（API + Consumer + Prometheus + Grafana）
+- [x] **分布式文档**：`docs/architecture/distributed.md`（CAP 分析 + 生产扩容方案）
+- [x] 274 unit + 45 contract tests 全绿，CI 无 skip
+- **当前范围：** 本地 Minikube 演示（免费演练分布式）
+- **后续：** Sub 5 — 云端托管 K8s（GKE Autopilot / EKS / OKE 免费层）
 
-### 14. LLM 策略生成（实验性）
-- [ ] 用 Claude 分析新闻，生成自然语言策略描述
-- [ ] 自动转换为 Python 策略代码
-- [ ] 类 Pine Script 的简化 DSL（quant-ai 自己的策略语言）
+### ✅ Sub 4 — Frontend Redesign（已完成 2026-04-17）
+> 从裸 inline styles 重构成企业级仪表盘 UI。
+
+- [x] **新技术栈：**
+  - UI kit：**Tremor** (图表/KPI) + **shadcn/ui** (built on Radix primitives)
+  - 图表：**Lightweight Charts v4**（TradingView 同款，K 线 / 成交量）
+  - 数据层：**TanStack Query v5**（cache / stale / auto-refetch）+ **Zustand**（WebSocket live store）
+  - 表单：react-hook-form + zod 校验
+  - 字体：Geist + Geist Mono（@font-face 加载 woff2）
+  - 测试：Vitest + @testing-library/react（6 smoke tests）
+- [x] **Dark theme 设计 token**（tailwind.config.js）— background/surface/accent/up/down/warn/info
+- [x] **路由重构**：React Router v7 + AppShell + Sidebar（6 Lucide icons + Tooltip）
+- [x] **6 个页面全部重写**（`src/pages/*Page.jsx`）：
+  - Screener 排序表（点击跳 Dashboard）
+  - Dashboard K 线 + Prediction + SHAP
+  - Training 3-tab（Train / Runs / Models Promote）
+  - Strategy（schema-driven params + backtest）
+  - Trading（订单表 + 持仓卡 + 实时 WebSocket 价格）
+  - Explain（SHAP top features + similar cases + graceful fallback）
+- [x] **共享组件**：PageHeader / EmptyState / LoadingOverlay / ErrorBoundary / ConfirmDialog / TickerSearch
+- [x] **CI frontend-test job**（npm ci → vitest --run → npm run build）
+- [x] **legacy 清理**：删除 `Dashboard.jsx` / `Screener.jsx` 等 6 个旧页 + 3 个旧组件
+
+### ✅ 数据层打通（已完成 2026-04-18）
+- [x] **Supabase `prices` 表** — 程序化创建（SQLAlchemy `engine.begin()`），含 RLS（service_role 全权 + 公开读）
+- [x] **yfinance 回填脚本**（`scripts/backfill_prices.py`）
+  - 10 只股票（AAPL/MSFT/GOOGL/AMZN/NVDA/TSLA/META/JPM/V/WMT）× 2 年 = **5010 行**
+  - 幂等 `ON CONFLICT DO NOTHING`，安全重跑
+- [x] **前端数据 wiring 修 3 个 bug：**
+  - `normalizeMarket` helper — 后端返回扁平数组，前端统一成 `{rows: [...]}`
+  - `ScreenerPage` useMemo transform — 扁平行转成 per-ticker summary
+  - `CandlestickChart` 切 hex — Lightweight Charts 拒绝 Tailwind v3 的空格分隔 `rgb(24 24 27)`
+
+### ✅ 性能优化（已完成 2026-04-19）
+- [x] **GitHub Actions keep-alive cron** — `.github/workflows/keepalive.yml`，每 10 分钟 ping `/health`，避免 Render 免费层 15 分钟冷启动
+- [x] **Screener `lookback=5`** — 以前每 ticker 拉全量（2 年 × 10 只 ≈ 500KB），现在只拉最近 5 行 → **payload 减 98%**
+- [x] **页面级代码拆分** — `React.lazy()` + `Suspense`，6 个页面各自 chunk → **首屏 JS 710KB → 335KB (-53%)**
+
+### 🔜 Sub 5 — K8s 云端托管（Next sub-project）
+> 把 `k8s/` 的本地 Minikube manifests 搬到托管 K8s，实现真正的弹性伸缩 + 生产可观测。
+- [ ] 选平台：GKE Autopilot（推荐，$300 credit + per-pod billing）/ EKS（AWS 免费层 1 cluster）/ OKE（Oracle 永久免费 2 节点 ARM）
+- [ ] Ingress + TLS（cert-manager + Let's Encrypt）
+- [ ] Secret 管理（Sealed Secrets 或 External Secrets）
+- [ ] 云端 Prometheus + Grafana（持久化 PVC）
+- [ ] HPA 真实压测验证（k6 / locust）
+- [ ] 迁移指南 `k8s/CLOUD_MIGRATION.md`
+
+### ⏳ 待开发：ML/LLM 深化
+- [ ] **强化学习 Agent**（`stable-baselines3`）— 状态空间：技术指标+情绪+持仓；奖励：Sharpe
+- [ ] **LLM 策略生成** — Claude 读新闻 → 自然语言策略 → 自动转 Python 代码
+- [ ] 策略 DSL（类 Pine Script 的简化语法）
 
 ---
 
@@ -241,44 +300,52 @@
 
 ## 🔧 技术债务 & 工程优化
 
-- [x] 完整单元测试（pytest，213 unit + 39 contract tests）
-- [ ] Docker Compose 一键启动文档（含 Kafka + LocalStack）
-- [x] CI/CD GitHub Actions（push 自动测试 + lint，无 workarounds）
+- [x] 完整单元测试（pytest，274 unit + 45 contract tests）
+- [x] Frontend smoke tests（Vitest，6/6 pass）
+- [x] CI/CD GitHub Actions（push 自动测试 + lint，无 skip，无 continue-on-error）
+- [x] **监控 & 可观测性**（Prometheus `/metrics` + Grafana 6 面板 Dashboard）✅ Sub 3
+- [x] **前端性能优化**（keep-alive cron + 代码拆分 + Screener lookback 收缩）✅ 2026-04-19
+- [x] Docker Compose 一键启动（API + Consumer + Prometheus + Grafana + DB）
 - [ ] API 文档完善（OpenAPI examples）
 - [ ] 前端 E2E 测试（Playwright）
-- [ ] 性能优化：大量历史数据的查询缓存
-- [ ] Terraform / CDK 基础设施即代码（AWS 资源管理）
-- [ ] 监控 & 可观测性（Prometheus + Grafana / CloudWatch）
-- [ ] 日志聚合（ELK / CloudWatch Logs）
+- [ ] Terraform / CDK 基础设施即代码（GKE/EKS 资源管理）
+- [ ] 日志聚合（Loki / CloudWatch Logs）
+- [ ] 定时数据拉取（GitHub Actions cron → `backfill_prices.py` daily after US close）
 
 ---
 
 ## 🏗️ 架构演进
 
 ```
-Phase 2.5 (当前):
-  Client → Render
-              │
-         ┌────┴────┐
-         │ API Pod │────→ Render Redis (缓存/限流/Pub-Sub)
-         └────┬────┘
-              │
-         ┌────┴────────┐
-         │ Upstash     │ (实时行情/新闻/信号流)
-         │ Kafka       │
-         └────┬────────┘
-              │
-    ┌─────────┼─────────┐
-    ↓         ↓         ↓
-┌───────┐ ┌───────┐ ┌────────┐
-│Render │ │AWS    │ │Render  │
-│Worker │ │Lambda │ │Stream  │
-│(SQS)  │ │(事件) │ │Service │
-└───────┘ └───┬───┘ └────────┘
-              ↓
-         ┌────────┐
-         │AWS SNS │ → Email / Discord / WebSocket
-         └────────┘
+Phase 3 Sub 3/4 (当前):
+
+  Vercel CDN (React 19 + Tremor + shadcn + Lightweight Charts)
+       │
+       │ HTTPS + WebSocket
+       ▼
+  Render Backend (FastAPI + /metrics)
+       │
+       ├─────────────┬──────────────┬───────────────┐
+       ▼             ▼              ▼               ▼
+  Supabase PG   Render Redis   Kafka Events   AWS Lambda
+  (prices=5010)  (cache/WS)    (aiokafka)     (情感分析)
+       │             │              │
+       │             │              ▼
+       │             │         Consumer Pod
+       │             │         (/stats/{ticker})
+       │             │
+       ▼             ▼
+  RLS 公开读    分布式限流
+
+本地 Minikube (k8s/*.yaml, Sub 3):
+  ┌───────────────┬───────────────┬──────────┬──────────┐
+  │ api pod ×2    │ consumer pod  │Prometheus│ Grafana  │
+  │ HPA 2-5       │ stats aggreg. │ scrape   │ 6 panels │
+  └───────────────┴───────────────┴──────────┴──────────┘
+
+GitHub Actions:
+  · CI (test + lint + build + docker)
+  · keep-alive cron */10min (ping /health)
 ```
 
 ---
@@ -301,20 +368,28 @@ Phase 2.5 (当前):
 
 **项目地址：** https://github.com/jigangz/quant-ai
 **主分支：** main
-**部署：** Render (API/Worker/Frontend/Redis) + Upstash Kafka + AWS Free Tier (SQS/SNS/Lambda)
-**技术栈：** Python (FastAPI) + React + PostgreSQL/SQLite + Redis + Kafka + AWS
+**Live 部署：**
+- Frontend: https://quant-ai-ui.vercel.app (Vercel)
+- Backend API: https://quant-ai-qzrg.onrender.com (Render)
+- API Docs: https://quant-ai-qzrg.onrender.com/docs
+- Database: Supabase `ppxkpookjsbqfxsjxfck`（`prices` + `news` 表 + RLS）
+
+**技术栈：**
+- **Backend:** Python 3.11 + FastAPI + SQLAlchemy + Pydantic + Prometheus client
+- **Frontend:** React 19 + Vite + Tailwind v3 + Tremor + shadcn/ui（Radix） + Lightweight Charts v4 + TanStack Query v5 + Zustand + react-hook-form + zod + Geist fonts + Vitest
+- **Data:** PostgreSQL (Supabase) / Redis / Kafka (aiokafka) / SQS / S3
+- **ML:** scikit-learn / XGBoost / LightGBM / CatBoost / Optuna / SHAP
+- **Infra:** Docker multi-stage + Kubernetes (k8s/) + Prometheus + Grafana
 
 **已知技术决策：**
 - Python 策略类替代 Pine Script
-- Lightweight Charts 替代 D3（已完成）
-- Optuna 做参数优化
-- stable-baselines3 做 RL 智能体
-- Render 做主要部署平台（免费）
-- Upstash Kafka 替代 AWS MSK（免费 Serverless）
-- LocalStack 模拟 AWS 服务（本地开发）
-- EKS 搁置，Render 够用时不迁移
+- Lightweight Charts 替代 D3（Phase 1 完成）
+- Optuna 做参数优化（Phase 3 Sub 1 完成）
+- 前端彻底重构成 Tremor + shadcn（Phase 3 Sub 4 完成 2026-04-17）
+- 本地 Minikube 完整跑 K8s（Phase 3 Sub 3 完成 2026-04-16），云端托管留给 Sub 5
+- yfinance 替代 Polygon（开发期免费），生产期如需实时切 Polygon
 
 ---
 
-*最后更新：2026-04-14*
-*下次继续：第三阶段 — ML 优化策略参数 + RL 交易智能体*
+*最后更新：2026-04-19*
+*下次继续：前端逐页功能检查 → Sub 5 K8s 云端托管*

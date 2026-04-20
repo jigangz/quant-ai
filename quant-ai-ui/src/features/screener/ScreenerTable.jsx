@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { fmtPrice, fmtPct, fmtVolume, classForDelta } from "../../lib/formatters";
+import Sparkline from "./Sparkline";
 
 export default function ScreenerTable({ rows = [], sortBy }) {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function ScreenerTable({ rows = [], sortBy }) {
           <th className="text-right px-4 py-3 font-medium">Last</th>
           <th className="text-right px-4 py-3 font-medium">Change</th>
           <th className="text-right px-4 py-3 font-medium">Change %</th>
+          <th className="text-center px-4 py-3 font-medium">30D</th>
           <th className="text-right px-4 py-3 font-medium">Volume</th>
         </tr>
       </thead>
@@ -39,6 +41,11 @@ export default function ScreenerTable({ rows = [], sortBy }) {
             <td className={cn("px-4 py-3 text-right font-medium", classForDelta(row.change_pct ?? 0))}>
               {fmtPct(row.change_pct ?? 0)}
             </td>
+            <td className="px-4 py-3">
+              <div className="flex justify-center">
+                <Sparkline values={row.series ?? []} />
+              </div>
+            </td>
             <td className="px-4 py-3 text-right text-muted">
               {fmtVolume(row.volume)}
             </td>
@@ -46,7 +53,7 @@ export default function ScreenerTable({ rows = [], sortBy }) {
         ))}
         {sorted.length === 0 && (
           <tr>
-            <td colSpan={5} className="px-4 py-8 text-center text-muted">
+            <td colSpan={6} className="px-4 py-8 text-center text-muted">
               No data available
             </td>
           </tr>

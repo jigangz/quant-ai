@@ -1,22 +1,22 @@
 {
-  "run_id": "20260413-202348",
-  "iteration": 8,
-  "max_iterations": 20,
-  "status": "running",
+  "run_id": "20260417-045005",
+  "iteration": 7,
+  "max_iterations": 25,
+  "status": "complete",
   "current_task": {
-    "id": "P3-1",
-    "title": "Local E2E verification — walk through 5 flows"
+    "id": "FE-GATE",
+    "title": "Phase Gate - Frontend Redesign full verification"
   },
-  "remaining_tasks": 4,
-  "started_at": "2026-04-13T20:23:48-07:00",
-  "updated_at": "2026-04-13T21:04:23-07:00",
+  "remaining_tasks": 1,
+  "started_at": "2026-04-17T04:50:05-07:00",
+  "updated_at": "2026-04-17T05:20:18-07:00",
   "branch": "main",
-  "log_file": "scripts/ralph/runs/20260413-202348/iteration-8.txt",
+  "log_file": "scripts/ralph/runs/20260417-045005/iteration-7.txt",
   "tokens": {
-    "input": 8652,
-    "output": 93819,
-    "cache_read": 23338153,
-    "cache_write": 351237,
-    "cost_usd": "10.451912"
+    "input": 22196,
+    "output": 103738,
+    "cache_read": 17169887,
+    "cache_write": 445448,
+    "cost_usd": "8.444053"
   }
 }

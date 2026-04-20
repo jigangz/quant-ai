@@ -18,16 +18,18 @@ Production-grade ML platform for stock direction prediction, strategy backtestin
 
 ---
 
-## Frontend (React + Tailwind, dark theme)
+## Frontend (React 19 + Tremor + shadcn/ui, dark theme)
 
 | Page | Route | What you can do |
 |------|-------|-----------------|
-| Screener | `/screener` | Hot-ticker table, sort by change% or volume |
-| Dashboard | `/dashboard?ticker=AAPL` | Market data + 5-day prediction + signal |
-| Training | `/training` | Train any of 6 model types, Auto-Optimize hyperparams, promote to production |
-| Strategy | `/strategy` | 4 strategies (MA cross, RSI, Bollinger, Sentiment), generate signals, backtest, Optimize params |
-| Trading | `/trading` | Paper-trade with market/limit orders, live WebSocket prices, portfolio P&L |
-| Explain | `/explain` | SHAP top features for any ticker + similar historical cases |
+| Screener | `/screener` | 10 hot tickers with real Supabase prices, sort by change% or volume, click-through to Dashboard |
+| Dashboard | `/dashboard?ticker=AAPL` | Lightweight Charts K-line + volume, 5-day prediction, SHAP explain panel |
+| Training | `/training` | Train any of 6 model types, Auto-Optimize (Optuna), 3-tab layout (Train / Runs / Models promote) |
+| Strategy | `/strategy` | 4 strategies (MA cross, RSI, Bollinger, Sentiment) with schema-driven params, signal viz, backtest, Optimize params |
+| Trading | `/trading` | Paper-trade with market/limit orders, live WebSocket prices (Zustand store), portfolio P&L, order book |
+| Explain | `/explain` | SHAP top features + similar historical cases via vector search, graceful fallback when optional deps missing |
+
+Frontend stack: **React 19 + Vite + Tailwind v3 + Tremor** (charts/KPI) **+ shadcn/ui** (Radix primitives) **+ Lightweight Charts v4 + TanStack Query v5 + Zustand + react-hook-form + zod + Geist fonts + Vitest**. Page-level code splitting via `React.lazy()` keeps first-screen JS under 340KB.
 
 ---
 
@@ -67,11 +69,16 @@ Full OpenAPI docs: [https://quant-ai-qzrg.onrender.com/docs](https://quant-ai-qz
 | Job queue | SQS / Redis / in-memory (pluggable) |
 | Artifact storage | Local / Supabase / S3 (pluggable) |
 | Observability | Prometheus metrics (`/metrics`) + Grafana dashboard |
+| Frontend UI kit | Tremor + shadcn/ui (built on Radix) + Lightweight Charts v4 |
 | Frontend | React 19, Vite, Tailwind CSS v3, React Router v7 |
+| Frontend state | TanStack Query v5 (server state) + Zustand (WebSocket live store) |
+| Frontend forms | react-hook-form + zod |
+| Frontend fonts | Geist + Geist Mono (@font-face woff2) |
+| Frontend tests | Vitest + @testing-library/react (6 smoke tests) |
 | Container | Docker (multi-stage, separate api + consumer images) |
 | Orchestration | Kubernetes (manifests in `k8s/`) + Horizontal Pod Autoscaler |
-| CI | GitHub Actions |
-| Deploy | Render (backend) + Vercel (frontend) |
+| CI | GitHub Actions (unit + contract + frontend test + docker build + post-deploy health check + keep-alive cron) |
+| Deploy | Render (backend) + Vercel (frontend) + Supabase (prices + news + RLS) |
 
 ---
 
@@ -79,8 +86,9 @@ Full OpenAPI docs: [https://quant-ai-qzrg.onrender.com/docs](https://quant-ai-qz
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    React Frontend (Vercel CDN)                           │
+│     React 19 + Tremor + shadcn/ui + Lightweight Charts (Vercel CDN)      │
 │   Screener · Dashboard · Training · Strategy · Trading · Explain         │
+│   lazy-loaded pages · TanStack Query cache · Zustand WS live store       │
 └───────────────────────────────┬─────────────────────────────────────────┘
                                 │ HTTPS / WebSocket
 ┌───────────────────────────────▼─────────────────────────────────────────┐
@@ -186,6 +194,41 @@ X_train, X_test = train_test_split(X, shuffle=True)
 ```
 
 The `DatasetBuilder` enforces this via `SplitConfig` with `train_ratio`/`val_ratio`. Stacking ensembles use `KFold(shuffle=False)` to preserve ordering in OOF predictions.
+
+---
+
+## Data pipeline
+
+Live frontend is backed by real market data, not mocks:
+
+| Component | Detail |
+|-----------|--------|
+| Source | yfinance (free, no API key needed) |
+| Loader | `scripts/backfill_prices.py` — idempotent (`ON CONFLICT DO NOTHING`) |
+| Target | Supabase `prices` table (5010 rows = 10 tickers × 501 trading days × 2 years) |
+| Tickers | AAPL, MSFT, GOOGL, AMZN, NVDA, TSLA, META, JPM, V, WMT |
+| RLS | `service_role` full access + public read via anon key |
+| Schema | `scripts/create_prices_table.sql` (declarative, programmatic creation via SQLAlchemy) |
+
+Re-run any time without duplicates:
+
+```bash
+python -m scripts.backfill_prices
+```
+
+---
+
+## Performance optimizations
+
+Frontend first-screen load went from ~4 seconds (cold Render + 710KB JS + full 500KB payload) down to <1.5s (warm Render + 335KB JS + 8KB payload):
+
+| Fix | Technique | Impact |
+|-----|-----------|--------|
+| Render cold-start | `.github/workflows/keepalive.yml` cron `*/10 * * * *` pings `/health` | no more 30s cold-start on free tier |
+| First-screen JS | `React.lazy()` + `<Suspense>` per page, 6 route-level chunks | 710KB → 335KB (-53%) |
+| Screener payload | `useMarket(ticker, lookback=5)` — only need last 2 closes for %change | 500KB → 8KB (-98%) per screener load |
+
+See `quant-ai-ui/src/api/queries.js` (`normalizeMarket` + `useScreenerTickers`) and `quant-ai-ui/src/app/router.jsx` (lazy routes).
 
 ---
 
