@@ -326,7 +326,8 @@
         "This task is a GATE — ALL criteria must pass before marking passes:true (SIGN-010)"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-20",
       "notes": "Final gate for Sub 1. Runs SOLO, not batched."
     }
   ]
