@@ -30,6 +30,13 @@ vi.mock("../src/api/queries", () => ({
   useResetPortfolio: () => ({ mutate: vi.fn(), isPending: false }),
   useOptimizeModel: () => ({ mutate: vi.fn(), isPending: false }),
   useOptimizeStrategy: () => ({ mutate: vi.fn(), isPending: false }),
+  useAgentTechnical: () => ({ data: null, isLoading: false, error: null }),
+  useModelMeta: () => ({ data: null, isLoading: false }),
+  useModelsForTicker: () => ({ data: [], isLoading: false }),
+  useRelatedStocks: () => ({ data: [], isLoading: false }),
+  useSeasonalAccuracy: () => ({ data: null, isLoading: false }),
+  useRelatedStocksSignals: () => ({ data: null, isLoading: false }),
+  useSentiment: () => ({ data: null, isLoading: false }),
 }));
 
 // Mock the live prices hook (named export)
