@@ -73,8 +73,9 @@
         "git commit 'feat(api): FE-DASH-4 Dashboard V2 client + query hooks'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 4. MUST reference docs/api-samples-2026-04-20.md from FE-DASH-0."
+      "passes": true,
+      "completed_at": "2026-04-20",
+      "notes": "See plan Task 4. All client functions and query hooks implemented. Existing 35/35 tests pass."
     },
     {
       "id": "FE-DASH-5",
@@ -85,8 +86,9 @@
         "git commit 'feat(layout): FE-DASH-5 TopNavBar'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 5"
+      "passes": true,
+      "completed_at": "2026-04-20",
+      "notes": "See plan Task 5. TopNavBar.jsx renders brand, nav links, search input, upgrade button. 3/3 tests pass."
     },
     {
       "id": "FE-DASH-6",
@@ -98,8 +100,9 @@
         "git commit 'feat(layout): FE-DASH-6 GlobalRagButton'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 6"
+      "passes": true,
+      "completed_at": "2026-04-20",
+      "notes": "See plan Task 6. GlobalRagButton.jsx floating button with Radix Dialog, uses ragAnswer mutation. 2/2 tests pass."
     },
     {
       "id": "FE-DASH-7",

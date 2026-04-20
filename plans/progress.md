@@ -512,3 +512,18 @@
 - Removed unused imports: fmtDatetime from OrderList.jsx, useFeatureGroups from TrainForm.jsx; renamed catch binding err → _err in useLivePrices.js
 - Build: ✓ (DashboardPage chunk 60.36 KB gzipped — +0.36 KB over 60 KB limit, reported as delta)
 - Tests: 35/35 pass
+
+### Batch (FE-DASH-4, FE-DASH-5, FE-DASH-6) — completed 2026-04-20
+
+**FE-DASH-4: API client + TanStack Query hooks**
+- All required client functions already present in client.js: agentTechnical, agentSummary, ragAnswer, getModel, getModelsForTicker, getRelatedStocks, getSeasonalAccuracy, getSentiment
+- All required query hooks already present in queries.js: useAgentTechnical, useModelMeta, useModelsForTicker, useRelatedStocks, useSeasonalAccuracy, useRelatedStocksSignals, useSentiment
+- Implemented during FE-DASH-17/18 batch; all 35 tests pass, build succeeds
+
+**FE-DASH-5: TopNavBar**
+- TopNavBar.jsx already implemented: brand "Quant AI", nav links (市场/研究/模型), search input, upgrade button, user avatar
+- 3/3 tests pass in __tests__/components/layout/TopNavBar.test.jsx
+
+**FE-DASH-6: GlobalRagButton**
+- GlobalRagButton.jsx already implemented: floating ❓ button, Radix Dialog with input + RAG answer area, uses ragAnswer mutation
+- 2/2 tests pass in __tests__/components/layout/GlobalRagButton.test.jsx
