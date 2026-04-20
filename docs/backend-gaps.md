@@ -101,5 +101,24 @@ These will be added to this doc as each sub starts.
 
 ---
 
+## Verified 2026-04-20
+
+Live backend audit against https://quant-ai-qzrg.onrender.com (see docs/api-samples-2026-04-20.md for full samples).
+
+| Endpoint | Expected shape | Actual shape | Mismatch? | Fallback |
+|----------|---------------|-------------|-----------|---------|
+| POST /agents/technical | `{prediction, probability:{up,down}, confidence, summary, signals[], top_features[]}` | Same, but `probability` is `null` (not `{up:null,down:null}`) when no model | Minor — use `probability?.up` optional chaining in components | Components use optional chaining |
+| POST /agents/summary | `{overall_signal, analyses[], summary}` | Same | ✅ None | N/A |
+| POST /rag/answer | `{answer, evidence[], confidence}` | Same | ✅ None | N/A |
+| GET /models/{id} | model object | Unverified (no models in live env) | ⚠️ Unknown | Handle 404 in useModelMeta |
+| GET /models?status=active | `{models:[], total:N}` | `{models:[], total:N}` | ✅ None (plan already normalizes with `?? allActive`) | Already normalized |
+| GET /data/market | flat array of `{ticker,date,open,high,low,close,volume}` | Same | ✅ None (prior bug already fixed) | N/A |
+| GET /data/sentiment | flat array of `{ticker,date,sentiment_score,...}` | Same | ✅ None | N/A |
+
+**Conclusion:** No blocking shape mismatches. All normalization already in place or handled by optional chaining in components.
+
+---
+
 ## Change Log
+- 2026-04-20: Added Verified section from FE-DASH-0 API contract audit
 - 2026-04-19: Initial document, 6 gaps from Sub 1 Dashboard V2
