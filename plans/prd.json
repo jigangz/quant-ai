@@ -15,7 +15,8 @@
         "git commit 'docs: FE-DASH-0 API contract audit + shape verification'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-20",
       "notes": "Prevents the prior 'backend returns flat array, frontend expected {rows: []}' class of bug (see data-backfill-progress.md). Must complete before FE-DASH-4."
     },
     {
@@ -30,7 +31,8 @@
         "git commit 'feat(theme): FE-DASH-1 CSS variable tokens'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-20",
       "notes": "See plan Task 1"
     },
     {
@@ -150,8 +152,9 @@
         "git commit 'feat(dashboard): FE-DASH-10 ChartSection + PerformancePills'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 10"
+      "passes": true,
+      "completed_at": "2026-04-20",
+      "notes": "See plan Task 10. Used addCandlestickSeries (lw-charts v4 API, not v5 addSeries). Hex colors for canvas. SIGN-006 cleanup implemented."
     },
     {
       "id": "FE-DASH-11",
