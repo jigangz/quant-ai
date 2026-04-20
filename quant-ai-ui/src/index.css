@@ -1,3 +1,5 @@
+@import "./theme/tokens.css";
+
 /* geist/font.css — Geist Sans */
 @font-face {
   font-family: "Geist";

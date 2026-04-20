@@ -14,27 +14,26 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "rgb(2 6 23)",
+        background: "rgb(var(--color-bg-page) / <alpha-value>)",
         surface: {
-          DEFAULT: "rgb(24 24 27)",
-          muted: "rgb(39 39 42)",
-          border: "rgb(63 63 70)",
-          hover: "rgb(30 30 33)",
+          DEFAULT: "rgb(var(--color-bg-surface) / <alpha-value>)",
+          muted: "rgb(var(--color-bg-sunken) / <alpha-value>)",
+          border: "rgb(var(--color-border) / <alpha-value>)",
+          hover: "rgb(var(--color-bg-sunken) / <alpha-value>)",
         },
-        foreground: "rgb(250 250 250)",
-        muted: "rgb(161 161 170)",
+        foreground: "rgb(var(--color-text-primary) / <alpha-value>)",
+        muted: "rgb(var(--color-text-muted) / <alpha-value>)",
         accent: {
-          DEFAULT: "rgb(99 102 241)",
-          hover: "rgb(129 140 248)",
-          ring: "rgb(99 102 241 / 0.2)",
-          foreground: "rgb(255 255 255)",
+          DEFAULT: "rgb(var(--color-accent) / <alpha-value>)",
+          hover: "rgb(var(--color-accent-hover) / <alpha-value>)",
+          ring: "rgb(var(--color-accent-ring) / 0.2)",
+          foreground: "rgb(255 255 255 / <alpha-value>)",
         },
-        up: "rgb(16 185 129)",
-        down: "rgb(244 63 94)",
-        warn: "rgb(245 158 11)",
-        info: "rgb(14 165 233)",
-        // Legacy aliases for gradual migration
-        "surface-card": "rgb(24 24 27)",
+        up: "rgb(var(--color-up) / <alpha-value>)",
+        down: "rgb(var(--color-down) / <alpha-value>)",
+        warn: "rgb(var(--color-warn) / <alpha-value>)",
+        info: "rgb(var(--color-info) / <alpha-value>)",
+        "surface-card": "rgb(var(--color-bg-surface) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["Geist", "Inter", "system-ui", "sans-serif"],

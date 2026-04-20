@@ -1,0 +1,34 @@
+:root,
+:root[data-theme="dark"] {
+  --color-bg-page: 2 6 23;
+  --color-bg-surface: 24 24 27;
+  --color-bg-sunken: 39 39 42;
+  --color-border: 39 39 42;
+  --color-text-primary: 244 244 245;
+  --color-text-secondary: 212 212 216;
+  --color-text-muted: 161 161 170;
+  --color-accent: 99 102 241;
+  --color-accent-hover: 129 140 248;
+  --color-accent-ring: 99 102 241;
+  --color-up: 16 185 129;
+  --color-down: 244 63 94;
+  --color-warn: 245 158 11;
+  --color-info: 14 165 233;
+}
+
+:root[data-theme="light"] {
+  --color-bg-page: 255 255 255;
+  --color-bg-surface: 255 255 255;
+  --color-bg-sunken: 250 250 250;
+  --color-border: 229 231 235;
+  --color-text-primary: 24 24 27;
+  --color-text-secondary: 82 82 91;
+  --color-text-muted: 113 113 122;
+  --color-accent: 79 70 229;
+  --color-accent-hover: 99 102 241;
+  --color-accent-ring: 79 70 229;
+  --color-up: 5 150 105;
+  --color-down: 225 29 72;
+  --color-warn: 217 119 6;
+  --color-info: 2 132 199;
+}
