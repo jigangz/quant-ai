@@ -116,8 +116,9 @@
         "git commit 'feat(layout): FE-DASH-7 RightRailWatchlist'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 7"
+      "passes": true,
+      "completed_at": "2026-04-20",
+      "notes": "See plan Task 7. watchlist.js (localStorage CRUD) + RightRailWatchlist (INDICES/YOUR HOLDINGS/AI prediction card). 3/3 tests pass."
     },
     {
       "id": "FE-DASH-8",
