@@ -130,8 +130,9 @@
         "git commit 'feat(dashboard): FE-DASH-8 SymbolHeader and SymbolTabs'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 8"
+      "passes": true,
+      "completed_at": "2026-04-20",
+      "notes": "See plan Task 8. SymbolHeader (logo/name/exchange/price/change up-down colors) + SymbolTabs (6 tabs with active state). 3/3 tests pass."
     },
     {
       "id": "FE-DASH-9",
