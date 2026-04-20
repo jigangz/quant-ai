@@ -44,7 +44,7 @@
 
 ### SIGN-020: Use Plan File for Code
 **Trigger:** Implementing any task
-**Instruction:** Read docs/superpowers/plans/2026-04-13-phase1-2.5-verification.md for exact code. Don't improvise.
+**Instruction:** Read docs/superpowers/plans/2026-04-19-dashboard-productization.md for exact code. Don't improvise. Task IDs FE-DASH-N in PRD map to Task N in the plan.
 
 ### SIGN-021: Frontend Work from quant-ai-ui/
 **Trigger:** Any npm or frontend command
@@ -54,10 +54,18 @@
 **Trigger:** Writing API tests
 **Instruction:** Patch the function the router imports (e.g. app.api.market.get_prices), not deep internal functions.
 
-### SIGN-023: Tailwind Dark Theme
+### SIGN-023: Page-Scoped Theme (migration in progress)
 **Trigger:** Any UI styling
-**Instruction:** Use the custom colors: bg-surface, bg-surface-card, text-up, text-down, bg-accent. No inline styles.
+**Instruction:** Theme is managed via `<ThemeScope value="light|dark">` at the page level (Sub 1 = `/dashboard` uses light; other 5 pages stay dark until their sub migrates them). Always use semantic Tailwind tokens: bg-background, bg-surface, text-foreground, text-muted, bg-accent, text-up, text-down, text-warn — these resolve per-theme automatically via CSS variables. No hardcoded hex and no inline styles.
 
 ### SIGN-024: Python 3.9 Compat
 **Trigger:** Writing Python code
 **Instruction:** Every file must have `from __future__ import annotations` at top. Use Optional[str] not str | None in runtime contexts.
+
+### SIGN-025: API Contract Pre-Check (Boundary Safety)
+**Trigger:** Adding a new client function in src/api/client.js OR consuming a backend endpoint for the first time
+**Instruction:** BEFORE writing the client function, curl the endpoint against https://quant-ai-qzrg.onrender.com (live backend) to confirm response shape. If the actual shape differs from what the plan expects, normalize at the client.js boundary (per SIGN-004) and document the mismatch in docs/backend-gaps.md. NEVER let components deal with shape mismatches. Prior incident: `/data/market` returned a flat array while frontend expected `{rows: [...]}` — caused empty Screener/Dashboard until normalization was added. Prevent repeats.
+
+### SIGN-026: Page-Scope Theme Wrapper
+**Trigger:** Creating or modifying a migrated-to-light page
+**Instruction:** Wrap the page root in `<ThemeScope value="light">`. Do not change the global `<html>` data-theme. Other pages remain dark until their sub-project migrates them.
