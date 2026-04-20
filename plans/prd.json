@@ -166,7 +166,8 @@
         "git commit 'feat(dashboard): FE-DASH-11 KeyDataGrid + AboutBlock'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-20",
       "notes": "See plan Task 11"
     },
     {
@@ -180,8 +181,9 @@
         "git commit 'feat(dashboard): FE-DASH-12 RelatedStocks'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 12"
+      "passes": true,
+      "completed_at": "2026-04-20",
+      "notes": "See plan Task 12. Added @/ alias to vitest.config.js (needed for new feature tests)."
     },
     {
       "id": "FE-DASH-13",
@@ -194,7 +196,8 @@
         "git commit 'feat(dashboard): FE-DASH-13 NewsGrid'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-20",
       "notes": "See plan Task 13"
     },
     {
