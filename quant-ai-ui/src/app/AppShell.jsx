@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import ErrorBoundary from "../components/ErrorBoundary";
@@ -18,6 +19,14 @@ const ALL_PATHS = [
 export default function AppShell() {
   const { pathname } = useLocation();
   const onDashboard = pathname.startsWith("/dashboard");
+
+  // Sync <html data-theme> so shell chrome (sidebar / top nav) also picks up
+  // the route's theme. ThemeScope inside the page is redundant but harmless.
+  useEffect(() => {
+    const theme = MIGRATED_PATHS.some((p) => pathname.startsWith(p)) ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [pathname]);
+
   return (
     <div className="min-h-screen flex bg-background text-foreground">
       <Sidebar />
