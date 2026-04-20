@@ -22,9 +22,17 @@ async function request(path, options = {}) {
 // ===================================
 // Market Data
 // ===================================
-export function getMarket(ticker, lookback) {
-  const qs = lookback ? `&lookback=${lookback}` : "";
-  return request(`/data/market?ticker=${ticker}${qs}`);
+export function getMarket(tickerOrOpts, lookback) {
+  let ticker, qs;
+  if (tickerOrOpts && typeof tickerOrOpts === "object") {
+    const { ticker: t, period, lookback: lb } = tickerOrOpts;
+    ticker = t;
+    qs = period ? `&period=${encodeURIComponent(period)}` : lb ? `&lookback=${lb}` : "";
+  } else {
+    ticker = tickerOrOpts;
+    qs = lookback ? `&lookback=${lookback}` : "";
+  }
+  return request(`/data/market?ticker=${encodeURIComponent(ticker)}${qs}`);
 }
 
 // ===================================
@@ -189,5 +197,57 @@ export async function optimizeStrategy(request) {
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
+}
+
+// ===================================
+// Dashboard V2 — Agents + RAG
+// ===================================
+function post(path, body) {
+  return request(path, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function agentTechnical({ ticker, model_id = null, include_shap = true, top_features = 5 }) {
+  return post("/agents/technical", { ticker, model_id, include_shap, top_features });
+}
+
+export function agentSummary({ tickers, model_id = null }) {
+  return post("/agents/summary", { tickers, model_id });
+}
+
+export function ragAnswer({ query, top_k = 5 }) {
+  return post("/rag/answer", { query, top_k });
+}
+
+export function getModelsForTicker(ticker, { status = "active" } = {}) {
+  return request(`/models?status=${status}&limit=50`).then((allActive) => {
+    const models = Array.isArray(allActive) ? allActive : (allActive.models ?? []);
+    return models.filter((m) => (m.tickers ?? []).includes(ticker));
+  });
+}
+
+const SECTOR_PEERS = {
+  AAPL: ["MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA"],
+  MSFT: ["AAPL", "GOOGL", "AMZN", "NVDA", "META", "CRM"],
+  GOOGL: ["AAPL", "MSFT", "AMZN", "META", "NVDA", "NFLX"],
+  AMZN: ["AAPL", "MSFT", "GOOGL", "META", "NVDA", "WMT"],
+  NVDA: ["AAPL", "MSFT", "AMD", "GOOGL", "META", "TSM"],
+  TSLA: ["F", "GM", "RIVN", "NIO", "LCID", "XPEV"],
+  META: ["GOOGL", "AAPL", "AMZN", "SNAP", "PINS", "NFLX"],
+  JPM: ["BAC", "WFC", "C", "GS", "MS", "USB"],
+  V: ["MA", "AXP", "PYPL", "SQ", "DFS", "COF"],
+  WMT: ["TGT", "COST", "AMZN", "KR", "HD", "LOW"],
+};
+
+export function getRelatedStocks(ticker, { limit = 6 } = {}) {
+  const peers = SECTOR_PEERS[ticker] ?? [];
+  return Promise.resolve(peers.slice(0, limit));
+}
+
+export function getSeasonalAccuracy(_ticker, _modelId) {
+  return Promise.resolve({ monthly: null, overall: null });
+}
+
+export function getSentiment({ ticker, days = 30 }) {
+  return request(`/data/sentiment?ticker=${encodeURIComponent(ticker)}&days=${days}`);
 }
 

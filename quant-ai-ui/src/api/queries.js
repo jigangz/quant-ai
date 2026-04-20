@@ -226,3 +226,67 @@ export const useResetPortfolio = () => {
 // ===== Optimization =====
 export const useOptimizeModel = () => useMutation({ mutationFn: api.optimizeModel });
 export const useOptimizeStrategy = () => useMutation({ mutationFn: api.optimizeStrategy });
+
+// ===== Dashboard V2 hooks =====
+export function useAgentTechnical(ticker, modelId) {
+  return useQuery({
+    queryKey: ["agent", "technical", ticker, modelId],
+    queryFn: () => api.agentTechnical({ ticker, model_id: modelId }),
+    enabled: !!ticker,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useModelMeta(modelId) {
+  return useQuery({
+    queryKey: ["model", modelId],
+    queryFn: () => api.getModel(modelId),
+    enabled: !!modelId,
+    staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useModelsForTicker(ticker) {
+  return useQuery({
+    queryKey: ["models", "forTicker", ticker],
+    queryFn: () => api.getModelsForTicker(ticker),
+    enabled: !!ticker,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useRelatedStocks(ticker) {
+  return useQuery({
+    queryKey: ["related", ticker],
+    queryFn: () => api.getRelatedStocks(ticker),
+    enabled: !!ticker,
+    staleTime: 60 * 60 * 1000,
+  });
+}
+
+export function useSeasonalAccuracy(ticker, modelId) {
+  return useQuery({
+    queryKey: ["seasonal", ticker, modelId],
+    queryFn: () => api.getSeasonalAccuracy(ticker, modelId),
+    enabled: !!ticker,
+    staleTime: 30 * 60 * 1000,
+  });
+}
+
+export function useRelatedStocksSignals(tickers) {
+  return useQuery({
+    queryKey: ["agent", "summary", tickers],
+    queryFn: () => api.agentSummary({ tickers }),
+    enabled: tickers && tickers.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useSentiment(ticker, days = 30) {
+  return useQuery({
+    queryKey: ["sentiment", ticker, days],
+    queryFn: () => api.getSentiment({ ticker, days }),
+    enabled: !!ticker,
+    staleTime: 10 * 60 * 1000,
+  });
+}
