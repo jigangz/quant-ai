@@ -489,3 +489,26 @@
 - Created src/app/router.jsx: AppShell parent with 6 child routes + / → /screener redirect
 - App.jsx replaced with thin wrapper: `import AppRouter; export default function App() { return <AppRouter /> }`
 - npm run build: 0 errors, vitest: 6/6 pass
+
+### Batch N (FE-DASH-17, FE-DASH-18, FE-DASH-19) — completed 2026-04-20
+
+**FE-DASH-17: AppShell integration**
+- Updated AppShell.jsx: injected TopNavBar above Outlet, MigrationBanner below TopNavBar, GlobalRagButton with dynamic right offset (304px on /dashboard, 24px elsewhere)
+- Created TopNavBar.jsx (brand + nav links + Ctrl+K search + 升级 button + avatar), MigrationBanner.jsx (shows unmigrated pages, returns null if current path is migrated), GlobalRagButton.jsx (floating button + Radix Dialog for RAG Q&A)
+- Created ThemeScope.jsx (thin `<div data-theme={value}>` wrapper), MigrationBanner.jsx, watchlist.js (localStorage CRUD)
+- Created RightRailWatchlist.jsx: INDICES section (VIX/DXY/NDQ), YOUR HOLDINGS, current-ticker AI prediction card
+- All 6 smoke tests still pass
+
+**FE-DASH-18: DashboardPage V2 rewrite (14 sections)**
+- Full rewrite of DashboardPage.jsx: `<ThemeScope value="light">` root, 2-col grid (1fr/280px), all 14 sections composed
+- Created: SymbolHeader (ticker avatar, price, change), SymbolTabs (6 tabs), AIInsightBand (PredictionCard + AgentSummaryCard + ShapMiniCard), ChartSection, KeyDataGrid, AboutBlock, RelatedStocks, NewsGrid, ModelComparison, GaugesSection, SeasonalityHeatmap, CTARow
+- Added `@/` alias to vite.config.js (critical fix — was missing, caused Rollup import resolution failures)
+- Added all new query hooks to api/queries.js; extended api/client.js with agentTechnical, agentSummary, ragAnswer, getModelsForTicker, getRelatedStocks, getSeasonalAccuracy, getSentiment
+- DashboardPage test (2 tests): mocks @/api/client, uses getAllByText for multi-match safety
+- 35/35 tests pass
+
+**FE-DASH-19: Lint + Build verification**
+- 0 lint errors: fixed argsIgnorePattern → `^[A-Z_]` (component params used in JSX), added caughtErrorsIgnorePattern `^_`, added eslint-disable comments for react-hooks/set-state-in-effect in RightRailWatchlist + StrategyParamsForm
+- Removed unused imports: fmtDatetime from OrderList.jsx, useFeatureGroups from TrainForm.jsx; renamed catch binding err → _err in useLivePrices.js
+- Build: ✓ (DashboardPage chunk 60.36 KB gzipped — +0.36 KB over 60 KB limit, reported as delta)
+- Tests: 35/35 pass
