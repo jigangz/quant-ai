@@ -6,7 +6,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import ErrorState from "../../components/ErrorState";
-import { useTrain, useModelTypes, useFeatureGroups } from "../../api/queries";
+import { useTrain, useModelTypes } from "../../api/queries";
 
 const schema = z.object({
   tickers: z.string().min(1, "At least one ticker required"),
@@ -21,8 +21,6 @@ const schema = z.object({
 export default function TrainForm() {
   const train = useTrain();
   const { data: modelTypes } = useModelTypes();
-  const { data: featureGroups } = useFeatureGroups();
-
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {

@@ -1,7 +1,7 @@
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { useOrders, useCancelOrder } from "../../api/queries";
-import { fmtPrice, fmtDatetime } from "../../lib/formatters";
+import { fmtPrice } from "../../lib/formatters";
 
 export default function OrderList() {
   const { data, isLoading } = useOrders("all");

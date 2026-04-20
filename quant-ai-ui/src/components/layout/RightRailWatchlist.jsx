@@ -27,10 +27,13 @@ export function RightRailWatchlist({ currentTicker }) {
   const aiForCurrent = useAgentTechnical(currentTicker);
 
   useEffect(() => {
-    if (currentTicker && !holdings.includes(currentTicker)) {
-      setHoldings(addTicker(currentTicker));
-    }
-  }, [currentTicker, holdings]);
+    if (!currentTicker) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHoldings((prev) => {
+      if (prev.includes(currentTicker)) return prev;
+      return addTicker(currentTicker);
+    });
+  }, [currentTicker]);
 
   const handleAdd = (e) => {
     e.preventDefault();

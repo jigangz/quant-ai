@@ -12,6 +12,7 @@ export default function StrategyParamsForm({ name, onResult }) {
   const backtest = useStrategyBacktest();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (strategy?.default_params) setParams(strategy.default_params);
     else if (strategy?.parameters) {
       const defaults = {};

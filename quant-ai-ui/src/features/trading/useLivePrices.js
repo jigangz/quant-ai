@@ -29,7 +29,7 @@ export function useLivePrices() {
           if (msg.ticker && msg.price != null) {
             updatePrice(msg.ticker, msg.price, msg.timestamp || Date.now());
           }
-        } catch (err) {
+        } catch (_err) {
           // ignore parse errors
         }
       };
