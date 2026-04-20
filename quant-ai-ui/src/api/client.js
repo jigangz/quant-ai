@@ -218,6 +218,8 @@ export function ragAnswer({ query, top_k = 5 }) {
   return post("/rag/answer", { query, top_k });
 }
 
+// G3 (docs/backend-gaps.md): /models has no ?ticker= filter yet.
+// MVP: fetch all active, filter client-side.
 export function getModelsForTicker(ticker, { status = "active" } = {}) {
   return request(`/models?status=${status}&limit=50`).then((allActive) => {
     const models = Array.isArray(allActive) ? allActive : (allActive.models ?? []);
@@ -225,6 +227,8 @@ export function getModelsForTicker(ticker, { status = "active" } = {}) {
   });
 }
 
+// G2 (docs/backend-gaps.md): no /tickers/{ticker}/related endpoint.
+// MVP: static sector-peer map until backend exposes a sector API.
 const SECTOR_PEERS = {
   AAPL: ["MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA"],
   MSFT: ["AAPL", "GOOGL", "AMZN", "NVDA", "META", "CRM"],
@@ -243,7 +247,9 @@ export function getRelatedStocks(ticker, { limit = 6 } = {}) {
   return Promise.resolve(peers.slice(0, limit));
 }
 
-export function getSeasonalAccuracy(_ticker, _modelId) {
+// G1 (docs/backend-gaps.md): no /models/{id}/accuracy endpoint yet.
+// MVP: return null placeholder; UI shows "数据积累中".
+export function getSeasonalAccuracy() {
   return Promise.resolve({ monthly: null, overall: null });
 }
 

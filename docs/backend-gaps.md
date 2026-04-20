@@ -119,6 +119,20 @@ Live backend audit against https://quant-ai-qzrg.onrender.com (see docs/api-samp
 
 ---
 
+## Post-Implementation Check-in — Discovered during Sub 1 implementation 2026-04-20
+
+Re-verified G1, G2, G3, G6 after full DashboardPage V2 implementation:
+
+| Gap | Status | Normalization in client.js |
+|-----|--------|---------------------------|
+| G1 (historical accuracy) | Still missing — `getSeasonalAccuracy()` returns `{monthly:null,overall:null}` stub; UI shows "数据积累中" placeholder | Comment referencing G1 added at `getSeasonalAccuracy` |
+| G2 (sector peer lookup) | Still missing — `getRelatedStocks()` uses `SECTOR_PEERS` static map | Comment referencing G2 added at `getRelatedStocks` / `SECTOR_PEERS` |
+| G3 (filter /models by ticker) | Still missing — `getModelsForTicker()` fetches all, filters client-side | Comment referencing G3 added at `getModelsForTicker` |
+| G6 (model source metadata in /agents/technical) | Still missing — `useModelMeta` does a second `GET /models/{id}` roundtrip | No normalization needed; 404 handled in query hook |
+
+No new shape mismatches discovered beyond those already in the Verified 2026-04-20 table.
+
 ## Change Log
+- 2026-04-20: Post-implementation gap check-in (FE-DASH-20) — no new gaps; G1/G2/G3/G6 normalization comments added to client.js
 - 2026-04-20: Added Verified section from FE-DASH-0 API contract audit
 - 2026-04-19: Initial document, 6 gaps from Sub 1 Dashboard V2
