@@ -146,8 +146,9 @@
         "git commit 'feat(dashboard): FE-DASH-9 AIInsightBand'"
       ],
       "priority": "high",
-      "passes": false,
-      "notes": "See plan Task 9"
+      "passes": true,
+      "completed_at": "2026-04-20",
+      "notes": "See plan Task 9. PredictionCard + AgentSummaryCard + ShapMiniCard + AIInsightBand (1fr/1.5fr/1fr grid, skeleton, error, null). 4/4 tests pass."
     },
     {
       "id": "FE-DASH-10",
