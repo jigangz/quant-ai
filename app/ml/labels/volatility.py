@@ -21,13 +21,16 @@ target alongside direction/return baselines.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
 
-from app.ml.dataset.schemas import LabelConfig
+if TYPE_CHECKING:
+    from app.ml.dataset.schemas import LabelConfig
 
 
-def add_volatility_label(df: pd.DataFrame, cfg: LabelConfig) -> pd.DataFrame:
+def add_volatility_label(df: pd.DataFrame, cfg: "LabelConfig") -> pd.DataFrame:
     """Add realized future volatility label (regression target).
 
     Computes std of the next `cfg.horizon_days` daily returns. Rows near the

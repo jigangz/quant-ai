@@ -12,12 +12,17 @@ Callers that need strict "valid-only" labels should filter by future_return.notn
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pandas as pd
 
-from app.ml.dataset.schemas import LabelConfig
+if TYPE_CHECKING:
+    # Imported only for type hints. Importing at runtime creates a circular
+    # dependency (app.ml.dataset.__init__ imports builder → labels.registry).
+    from app.ml.dataset.schemas import LabelConfig
 
 
-def add_direction_label(df: pd.DataFrame, cfg: LabelConfig) -> pd.DataFrame:
+def add_direction_label(df: pd.DataFrame, cfg: "LabelConfig") -> pd.DataFrame:
     """Add direction label (binary 0/1) based on sign of future return.
 
     Args:

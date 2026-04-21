@@ -14,24 +14,26 @@ Usage:
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import pandas as pd
 
-from app.ml.dataset.schemas import LabelConfig
 from app.ml.labels.direction import add_direction_label
 from app.ml.labels.returns import add_return_label
 from app.ml.labels.volatility import add_volatility_label
 
+if TYPE_CHECKING:
+    from app.ml.dataset.schemas import LabelConfig
 
-def _not_implemented_meta_label(df: pd.DataFrame, cfg: LabelConfig) -> pd.DataFrame:
+
+def _not_implemented_meta_label(df: pd.DataFrame, cfg: "LabelConfig") -> pd.DataFrame:
     raise NotImplementedError(
         "meta_label generator is a V4 Phase 3 target (López de Prado triple-barrier). "
         "Tracking: ml-pivot-task-plan.md Phase 3."
     )
 
 
-LABEL_GENERATORS: dict[str, Callable[[pd.DataFrame, LabelConfig], pd.DataFrame]] = {
+LABEL_GENERATORS: dict[str, Callable[[pd.DataFrame, "LabelConfig"], pd.DataFrame]] = {
     "direction": add_direction_label,
     "return": add_return_label,
     "volatility": add_volatility_label,
@@ -39,7 +41,7 @@ LABEL_GENERATORS: dict[str, Callable[[pd.DataFrame, LabelConfig], pd.DataFrame]]
 }
 
 
-def add_labels(df: pd.DataFrame, cfg: LabelConfig) -> pd.DataFrame:
+def add_labels(df: pd.DataFrame, cfg: "LabelConfig") -> pd.DataFrame:
     """Dispatch label generation based on cfg.label_type.
 
     Args:

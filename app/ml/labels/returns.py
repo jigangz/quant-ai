@@ -7,12 +7,16 @@ label = future_return (float; NaN for rows without future data)
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pandas as pd
 from app.ml.config import HORIZON_DAYS
-from app.ml.dataset.schemas import LabelConfig
+
+if TYPE_CHECKING:
+    from app.ml.dataset.schemas import LabelConfig
 
 
-def add_return_label(df: pd.DataFrame, cfg: LabelConfig) -> pd.DataFrame:
+def add_return_label(df: pd.DataFrame, cfg: "LabelConfig") -> pd.DataFrame:
     """Add regression label = raw future_return.
 
     V4 Pivot registry-compatible signature.
