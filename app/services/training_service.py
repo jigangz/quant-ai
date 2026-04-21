@@ -31,6 +31,24 @@ from sklearn.metrics import (
 from app.core.settings import settings
 from app.ml.dataset import DatasetBuilder, DatasetConfig, LabelConfig, SplitConfig
 from app.ml.models import get_model
+from app.backtest.metrics import (
+    calculate_classification_metrics,
+    calculate_regression_metrics,
+)
+
+
+# V4 Pivot: multi-task ML — map label_type to sklearn task kind.
+LABEL_TYPE_TO_TASK: dict[str, str] = {
+    "direction": "classification",
+    "return": "regression",
+    "volatility": "regression",
+    "meta_label": "classification",  # P3 will decide; default binary for now.
+}
+
+
+def _task_for_label_type(label_type: str) -> str:
+    """Map LabelConfig.label_type → sklearn task kind."""
+    return LABEL_TYPE_TO_TASK.get(label_type, "classification")
 
 logger = logging.getLogger(__name__)
 
@@ -220,16 +238,23 @@ class TrainingService:
                 )
 
             # 3. Create model with best params
+            task = _task_for_label_type(request.label_type)
             if request.model_type == "ensemble":
+                if task != "classification":
+                    raise ValueError(
+                        f"Ensemble model not yet supported for task='{task}' "
+                        f"(label_type='{request.label_type}'). V4 Pivot limitation; "
+                        f"ensemble regression planned post-P1."
+                    )
                 model = get_model("ensemble", ensemble_config=request.ensemble_config)
             else:
-                model = get_model(request.model_type, **model_params)
+                model = get_model(request.model_type, task=task, **model_params)
 
             # 4. Train
             logger.info("Training model...")
             model.fit(dataset.X_train, dataset.y_train)
 
-            # 4. Evaluate
+            # 4. Evaluate — dispatch on task (classification vs regression)
             metrics = self._evaluate(
                 model,
                 dataset.X_train,
@@ -238,6 +263,7 @@ class TrainingService:
                 dataset.y_val,
                 dataset.X_test,
                 dataset.y_test,
+                task=task,
             )
 
             logger.info(f"Metrics: {metrics}")
@@ -310,8 +336,9 @@ class TrainingService:
         y_val,
         X_test,
         y_test,
+        task: str = "classification",
     ) -> dict[str, float]:
-        """Evaluate model on all splits."""
+        """Evaluate model on all splits — dispatches on task (classification/regression)."""
         metrics = {}
 
         for split_name, X, y in [
@@ -322,21 +349,29 @@ class TrainingService:
             if len(X) == 0:
                 continue
 
-            y_pred = model.predict(X)
-            y_prob = model.predict_proba(X)[:, 1]
+            # Drop NaN labels (regression tail-of-series rows for vol/return targets)
+            import pandas as pd  # local to avoid top-level import churn
+            mask = pd.Series(y).notna().values
+            X_clean = X.loc[mask] if hasattr(X, "loc") else X[mask]
+            y_clean = pd.Series(y).loc[mask].values if hasattr(y, "loc") else y[mask]
+            if len(y_clean) == 0:
+                continue
 
-            metrics[f"{split_name}_accuracy"] = round(accuracy_score(y, y_pred), 4)
-            metrics[f"{split_name}_precision"] = round(
-                precision_score(y, y_pred, zero_division=0), 4
-            )
-            metrics[f"{split_name}_recall"] = round(
-                recall_score(y, y_pred, zero_division=0), 4
-            )
-            metrics[f"{split_name}_f1"] = round(f1_score(y, y_pred, zero_division=0), 4)
+            y_pred = model.predict(X_clean)
 
-            # AUC only if both classes present
-            if len(set(y)) > 1:
-                metrics[f"{split_name}_auc"] = round(roc_auc_score(y, y_prob), 4)
+            if task == "classification":
+                y_prob = model.predict_proba(X_clean)[:, 1]
+                cls_metrics = calculate_classification_metrics(y_clean, y_pred, y_prob)
+                for k, v in cls_metrics.items():
+                    if v is not None:
+                        metrics[f"{split_name}_{k}"] = v
+            elif task == "regression":
+                reg_metrics = calculate_regression_metrics(y_clean, y_pred)
+                for k, v in reg_metrics.items():
+                    if v is not None:
+                        metrics[f"{split_name}_{k}"] = v
+            else:
+                raise ValueError(f"Unknown task: {task}")
 
         return metrics
 

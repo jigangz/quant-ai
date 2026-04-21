@@ -27,12 +27,13 @@ except ImportError:
 
 
 class XGBoostModel(BaseModel):
-    """XGBoost model with imputation."""
+    """XGBoost wrapper — Classifier or Regressor based on task."""
 
     model_type = "xgboost"
 
     def __init__(
         self,
+        task: str = "classification",
         n_estimators: int = 100,
         max_depth: int = 6,
         learning_rate: float = 0.1,
@@ -45,6 +46,7 @@ class XGBoostModel(BaseModel):
             raise ImportError("XGBoost is not installed. Run: pip install xgboost")
 
         super().__init__(
+            task=task,
             n_estimators=n_estimators,
             max_depth=max_depth,
             learning_rate=learning_rate,
@@ -53,32 +55,34 @@ class XGBoostModel(BaseModel):
             use_gpu=use_gpu,
             **kwargs,
         )
+        self.task = task
 
-        # Configure device
         tree_method = "hist"
-        device = "cpu"
-        if use_gpu:
-            tree_method = "hist"
-            device = "cuda"
+        device = "cuda" if use_gpu else "cpu"
+
+        common_kwargs = dict(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            learning_rate=learning_rate,
+            subsample=subsample,
+            colsample_bytree=colsample_bytree,
+            tree_method=tree_method,
+            device=device,
+            random_state=42,
+        )
+        if task == "classification":
+            clf = xgb.XGBClassifier(
+                use_label_encoder=False, eval_metric="logloss", **common_kwargs,
+            )
+        elif task == "regression":
+            clf = xgb.XGBRegressor(eval_metric="rmse", **common_kwargs)
+        else:
+            raise ValueError(f"Unknown task: {task}")
 
         self.model = Pipeline(
             [
                 ("imputer", SimpleImputer(strategy="median")),
-                (
-                    "clf",
-                    xgb.XGBClassifier(
-                        n_estimators=n_estimators,
-                        max_depth=max_depth,
-                        learning_rate=learning_rate,
-                        subsample=subsample,
-                        colsample_bytree=colsample_bytree,
-                        tree_method=tree_method,
-                        device=device,
-                        random_state=42,
-                        use_label_encoder=False,
-                        eval_metric="logloss",
-                    ),
-                ),
+                ("clf", clf),
             ]
         )
 
@@ -91,6 +95,10 @@ class XGBoostModel(BaseModel):
         return self.model.predict(X)
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+        if self.task != "classification":
+            raise NotImplementedError(
+                f"predict_proba not available for task='{self.task}'."
+            )
         return self.model.predict_proba(X)
 
     def get_feature_importance(self, feature_names: list[str]) -> dict[str, float]:

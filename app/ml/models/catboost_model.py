@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Try to import CatBoost
 try:
-    from catboost import CatBoostClassifier
+    from catboost import CatBoostClassifier, CatBoostRegressor
 
     CATBOOST_AVAILABLE = True
 except ImportError:
@@ -29,19 +29,14 @@ except ImportError:
 
 class CatBoostModel(BaseModel):
     """
-    CatBoost model with imputation.
-    
-    Features:
-    - Native categorical feature support (no encoding needed)
-    - Ordered boosting to reduce overfitting
-    - Fast GPU training
-    - Robust to outliers
+    CatBoost wrapper — Classifier or Regressor based on task.
     """
 
     model_type = "catboost"
 
     def __init__(
         self,
+        task: str = "classification",
         iterations: int = 100,
         depth: int = 6,
         learning_rate: float = 0.1,
@@ -55,6 +50,7 @@ class CatBoostModel(BaseModel):
             raise ImportError("CatBoost is not installed. Run: pip install catboost")
 
         super().__init__(
+            task=task,
             iterations=iterations,
             depth=depth,
             learning_rate=learning_rate,
@@ -64,28 +60,34 @@ class CatBoostModel(BaseModel):
             use_gpu=use_gpu,
             **kwargs,
         )
+        self.task = task
 
-        # Configure device
         task_type = "GPU" if use_gpu else "CPU"
+
+        common_kwargs = dict(
+            iterations=iterations,
+            depth=depth,
+            learning_rate=learning_rate,
+            l2_leaf_reg=l2_leaf_reg,
+            border_count=border_count,
+            task_type=task_type,
+            random_state=42,
+            verbose=False,
+            allow_writing_files=False,
+        )
+        if task == "classification":
+            clf = CatBoostClassifier(
+                auto_class_weights=auto_class_weights, **common_kwargs,
+            )
+        elif task == "regression":
+            clf = CatBoostRegressor(**common_kwargs)
+        else:
+            raise ValueError(f"Unknown task: {task}")
 
         self.model = Pipeline(
             [
                 ("imputer", SimpleImputer(strategy="median")),
-                (
-                    "clf",
-                    CatBoostClassifier(
-                        iterations=iterations,
-                        depth=depth,
-                        learning_rate=learning_rate,
-                        l2_leaf_reg=l2_leaf_reg,
-                        border_count=border_count,
-                        auto_class_weights=auto_class_weights,
-                        task_type=task_type,
-                        random_state=42,
-                        verbose=False,
-                        allow_writing_files=False,
-                    ),
-                ),
+                ("clf", clf),
             ]
         )
 
@@ -101,6 +103,10 @@ class CatBoostModel(BaseModel):
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
         """Predict class probabilities."""
+        if self.task != "classification":
+            raise NotImplementedError(
+                f"predict_proba not available for task='{self.task}'."
+            )
         return self.model.predict_proba(X)
 
     def get_feature_importance(self, feature_names: list[str]) -> dict[str, float]:

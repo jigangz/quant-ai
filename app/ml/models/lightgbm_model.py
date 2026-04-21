@@ -41,6 +41,7 @@ class LightGBMModel(BaseModel):
 
     def __init__(
         self,
+        task: str = "classification",
         n_estimators: int = 100,
         max_depth: int = 6,
         learning_rate: float = 0.1,
@@ -54,6 +55,7 @@ class LightGBMModel(BaseModel):
             raise ImportError("LightGBM is not installed. Run: pip install lightgbm")
 
         super().__init__(
+            task=task,
             n_estimators=n_estimators,
             max_depth=max_depth,
             learning_rate=learning_rate,
@@ -63,25 +65,30 @@ class LightGBMModel(BaseModel):
             class_weight=class_weight,
             **kwargs,
         )
+        self.task = task
+
+        common_kwargs = dict(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            learning_rate=learning_rate,
+            num_leaves=num_leaves,
+            subsample=subsample,
+            colsample_bytree=colsample_bytree,
+            random_state=42,
+            verbose=-1,
+            n_jobs=-1,
+        )
+        if task == "classification":
+            clf = lgb.LGBMClassifier(class_weight=class_weight, **common_kwargs)
+        elif task == "regression":
+            clf = lgb.LGBMRegressor(**common_kwargs)
+        else:
+            raise ValueError(f"Unknown task: {task}")
 
         self.model = Pipeline(
             [
                 ("imputer", SimpleImputer(strategy="median")),
-                (
-                    "clf",
-                    lgb.LGBMClassifier(
-                        n_estimators=n_estimators,
-                        max_depth=max_depth,
-                        learning_rate=learning_rate,
-                        num_leaves=num_leaves,
-                        subsample=subsample,
-                        colsample_bytree=colsample_bytree,
-                        class_weight=class_weight,
-                        random_state=42,
-                        verbose=-1,
-                        n_jobs=-1,
-                    ),
-                ),
+                ("clf", clf),
             ]
         )
 
@@ -97,6 +104,10 @@ class LightGBMModel(BaseModel):
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
         """Predict class probabilities."""
+        if self.task != "classification":
+            raise NotImplementedError(
+                f"predict_proba not available for task='{self.task}'."
+            )
         return self.model.predict_proba(X)
 
     def get_feature_importance(self, feature_names: list[str]) -> dict[str, float]:
