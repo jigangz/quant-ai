@@ -17,6 +17,7 @@ import pandas as pd
 from app.providers import get_market_provider
 from app.ml.features.technical import add_technical_features
 from app.ml.features.registry import feature_registry
+from app.ml.labels.registry import add_labels
 from app.ml.dataset.schemas import (
     DatasetConfig,
     DatasetResult,
@@ -202,23 +203,13 @@ class DatasetBuilder:
         return df
 
     def _add_labels(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Add labels based on config."""
-        df = df.sort_values("date").copy()
+        """Add labels by dispatching to the label registry.
 
-        horizon = self.config.label_config.horizon_days
-        threshold = self.config.label_config.threshold
-
-        # Calculate future return
-        df["future_price"] = df["close"].shift(-horizon)
-        df["future_return"] = (df["future_price"] - df["close"]) / df["close"]
-
-        # Generate label based on type
-        if self.config.label_config.label_type == "direction":
-            df["label"] = (df["future_return"] > threshold).astype(int)
-        else:  # return
-            df["label"] = df["future_return"]
-
-        return df
+        V4 Pivot refactor (2026-04-22): previously inlined direction/return logic;
+        now delegates to `app.ml.labels.registry.add_labels` to support the full
+        multi-task target set (direction / return / volatility / meta_label).
+        """
+        return add_labels(df, self.config.label_config)
 
     def _get_feature_columns(self, df: pd.DataFrame) -> list[str]:
         """Get feature column names based on configured feature groups."""
