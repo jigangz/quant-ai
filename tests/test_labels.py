@@ -149,19 +149,113 @@ class TestRegistry:
         # ...but their label is 0 (NaN > threshold → False → 0 via astype(int))
         assert (tail["label"] == 0).all()
 
-    def test_volatility_raises_not_implemented(self):
-        """V4 Phase 2 implementation target (Day 3+) — Day 2 placeholder."""
-        df = _make_monotonic_rising_df()
-        cfg = LabelConfig(label_type="volatility", horizon_days=5)
-        with pytest.raises(NotImplementedError, match="volatility"):
-            add_labels(df, cfg)
-
     def test_meta_label_raises_not_implemented(self):
         """V4 Phase 3 implementation target — Day 2 placeholder."""
         df = _make_monotonic_rising_df()
         cfg = LabelConfig(label_type="meta_label", horizon_days=5)
         with pytest.raises(NotImplementedError, match="meta_label"):
             add_labels(df, cfg)
+
+
+# ==========================================================================
+# Volatility label generator (V4 Phase 2)
+# ==========================================================================
+
+
+class TestVolatility:
+    """add_volatility_label computes forward-looking realized vol."""
+
+    def test_constant_close_produces_zero_vol(self):
+        """Constant price → zero daily returns → zero realized vol."""
+        n = 20
+        df = pd.DataFrame(
+            {
+                "date": pd.date_range("2024-01-01", periods=n, freq="D"),
+                "ticker": ["AAPL"] * n,
+                "close": [100.0] * n,
+            }
+        )
+        cfg = LabelConfig(label_type="volatility", horizon_days=5)
+        result = add_labels(df, cfg)
+
+        valid = result.dropna(subset=["label"])
+        assert len(valid) > 0
+        assert (valid["label"] == 0).all()
+
+    def test_rising_close_produces_positive_vol(self):
+        """Strictly rising close → non-zero returns → positive vol."""
+        df = _make_monotonic_rising_df(n=20)
+        cfg = LabelConfig(label_type="volatility", horizon_days=5)
+        result = add_labels(df, cfg)
+
+        valid = result.dropna(subset=["label"])
+        assert len(valid) > 0
+        assert (valid["label"] > 0).all()
+
+    def test_nan_tail_for_insufficient_future(self):
+        """Last `horizon` rows lack future data → NaN label."""
+        n, horizon = 20, 5
+        df = _make_monotonic_rising_df(n=n)
+        cfg = LabelConfig(label_type="volatility", horizon_days=horizon)
+        result = add_labels(df, cfg)
+
+        # Last `horizon` rows get NaN (not enough forward returns)
+        tail = result.iloc[-horizon:]
+        assert tail["label"].isna().all()
+
+    def test_annualize_multiplies_by_sqrt_252(self):
+        """volatility_annualize=True multiplies raw vol by sqrt(252)."""
+        # Synthetic: alternating ±1% return gives constant vol
+        prices = [100.0]
+        for i in range(25):
+            prices.append(prices[-1] * (1.01 if i % 2 == 0 else 1 / 1.01))
+        df = pd.DataFrame(
+            {
+                "date": pd.date_range("2024-01-01", periods=len(prices), freq="D"),
+                "ticker": ["AAPL"] * len(prices),
+                "close": prices,
+            }
+        )
+
+        cfg_ann = LabelConfig(
+            label_type="volatility", horizon_days=5, volatility_annualize=True
+        )
+        cfg_raw = LabelConfig(
+            label_type="volatility", horizon_days=5, volatility_annualize=False
+        )
+
+        ann = add_labels(df, cfg_ann).dropna(subset=["label"])
+        raw = add_labels(df, cfg_raw).dropna(subset=["label"])
+
+        import math
+
+        ratio = ann["label"].iloc[0] / raw["label"].iloc[0]
+        assert abs(ratio - math.sqrt(252)) < 1e-6
+
+    def test_vol_magnitude_reasonable_for_toy_data(self):
+        """1% daily alternating swings → annualized vol ~ 1% * sqrt(252) ≈ 15.9%."""
+        import math
+
+        prices = [100.0]
+        for i in range(30):
+            prices.append(prices[-1] * (1.01 if i % 2 == 0 else 1 / 1.01))
+        df = pd.DataFrame(
+            {
+                "date": pd.date_range("2024-01-01", periods=len(prices), freq="D"),
+                "ticker": ["AAPL"] * len(prices),
+                "close": prices,
+            }
+        )
+        cfg = LabelConfig(
+            label_type="volatility", horizon_days=10, volatility_annualize=True
+        )
+        result = add_labels(df, cfg).dropna(subset=["label"])
+
+        # Daily vol ~ 0.01 (1% log returns); annualized ~ 0.01 * sqrt(252) ≈ 0.159
+        median_vol = result["label"].median()
+        assert 0.10 < median_vol < 0.25, (
+            f"Annualized vol outside sane range for 1% daily swings: {median_vol}"
+        )
 
 
 # ==========================================================================

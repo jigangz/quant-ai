@@ -21,13 +21,7 @@ import pandas as pd
 from app.ml.dataset.schemas import LabelConfig
 from app.ml.labels.direction import add_direction_label
 from app.ml.labels.returns import add_return_label
-
-
-def _not_implemented_volatility(df: pd.DataFrame, cfg: LabelConfig) -> pd.DataFrame:
-    raise NotImplementedError(
-        "volatility label generator is a V4 Phase 2 target scheduled for Day 3+. "
-        "Tracking: ml-pivot-task-plan.md Phase 2."
-    )
+from app.ml.labels.volatility import add_volatility_label
 
 
 def _not_implemented_meta_label(df: pd.DataFrame, cfg: LabelConfig) -> pd.DataFrame:
@@ -40,7 +34,7 @@ def _not_implemented_meta_label(df: pd.DataFrame, cfg: LabelConfig) -> pd.DataFr
 LABEL_GENERATORS: dict[str, Callable[[pd.DataFrame, LabelConfig], pd.DataFrame]] = {
     "direction": add_direction_label,
     "return": add_return_label,
-    "volatility": _not_implemented_volatility,
+    "volatility": add_volatility_label,
     "meta_label": _not_implemented_meta_label,
 }
 
