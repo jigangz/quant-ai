@@ -3,14 +3,16 @@ from __future__ import annotations
 """
 Prediction API
 
-GET /predict - Legacy endpoint (backward compatible)
-POST /predict - JSON-based prediction with model selection
+GET /predict                - Legacy endpoint (backward compatible)
+POST /predict               - JSON-based direction prediction with model selection
+POST /predict/volatility    - [V4 P2] Forward-looking realized volatility (regression)
 """
 
 from fastapi import APIRouter, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.services.predict_service import predict
+from app.services.volatility_predict_service import predict_volatility
 
 router = APIRouter()
 
@@ -25,6 +27,14 @@ class PredictRequest(BaseModel):
     horizons: list[int] = [5]  # Reserved for future use
     features: dict = {}  # Reserved for future use
     model_id: str | None = None  # Specific model to use
+
+
+class PredictVolatilityRequest(BaseModel):
+    """Request for POST /predict/volatility (V4 Phase 2)."""
+
+    ticker: str
+    model_id: str | None = None
+    horizon_days: int = Field(default=5, ge=1, le=60)
 
 
 # ===================================
@@ -71,4 +81,39 @@ def predict_api_post(request: PredictRequest):
     return predict(
         ticker=request.ticker,
         model_id=request.model_id,
+    )
+
+
+# ===================================
+# POST /predict/volatility  [V4 Phase 2]
+# ===================================
+@router.post("/predict/volatility")
+def predict_volatility_api(request: PredictVolatilityRequest):
+    """
+    Forward-looking realized volatility prediction (V4 Pivot Phase 2).
+
+    Accepts a regression model trained with label_type='volatility'.
+
+    Example:
+        POST /predict/volatility
+        {
+            "ticker": "AAPL",
+            "model_id": "xgboost_vol_AAPL_v1",
+            "horizon_days": 5
+        }
+
+    Returns:
+        {
+            "success": true,
+            "ticker": "AAPL",
+            "predicted_volatility": 0.28,   # 28% annualized
+            "annualized": true,
+            "horizon_days": 5,
+            ...
+        }
+    """
+    return predict_volatility(
+        ticker=request.ticker,
+        model_id=request.model_id,
+        horizon_days=request.horizon_days,
     )
