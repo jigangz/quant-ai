@@ -104,6 +104,9 @@ def run_training_task(request_dict: dict[str, Any]) -> dict[str, Any]:
             feature_groups=request.feature_groups,
             feature_names=result.feature_names,
             n_features=result.n_features,
+            # V4 Pivot: track multi-task target type
+            label_type=request.label_type,
+            horizon_days=request.horizon_days,
             train_samples=result.train_samples,
             val_samples=result.val_samples,
             test_samples=result.test_samples,
