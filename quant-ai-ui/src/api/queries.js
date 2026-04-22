@@ -51,6 +51,30 @@ export const usePredict = () =>
     mutationFn: (payload) => api.predict(payload),
   });
 
+// V4 Pivot · Phase 2 · Volatility target
+export function usePredictedVolatility(ticker, modelId = null, horizonDays = 5) {
+  return useQuery({
+    queryKey: ["predict-volatility", ticker, modelId, horizonDays],
+    queryFn: () => api.predictVolatility({
+      ticker,
+      model_id: modelId,
+      horizon_days: horizonDays,
+    }),
+    enabled: !!ticker,
+    staleTime: 5 * 60 * 1000,
+    retry: false,  // don't retry "no model available"
+  });
+}
+
+export function useModelsForTickerByLabelType(ticker, labelType = null) {
+  return useQuery({
+    queryKey: ["models", "byTicker+label", ticker, labelType],
+    queryFn: () => api.getModelsForTicker(ticker, { labelType }),
+    enabled: !!ticker,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 // ===== Explain =====
 export const useExplain = (ticker) =>
   useQuery({

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ModelingDialog } from "./ModelingDialog";
 
 export function CTARow({ ticker, prediction }) {
   const side = prediction === 1 ? "buy" : prediction === 0 ? "sell" : "buy";
@@ -10,12 +11,14 @@ export function CTARow({ ticker, prediction }) {
       >
         🛒 基于此信号纸上下单
       </Link>
-      <Link
-        to={`/training?ticker=${ticker}&preset=xgboost_default`}
-        className="bg-surface border border-surface-border text-foreground text-sm py-2.5 rounded-md text-center hover:bg-surface-muted transition-colors"
-      >
-        🧪 训练新模型 ({ticker} 专属)
-      </Link>
+      <ModelingDialog ticker={ticker}>
+        <button
+          type="button"
+          className="bg-surface border border-surface-border text-foreground text-sm py-2.5 rounded-md text-center hover:bg-surface-muted transition-colors w-full"
+        >
+          🧪 选模型 / 训练 · 多目标 (V4 P2)
+        </button>
+      </ModelingDialog>
     </div>
   );
 }

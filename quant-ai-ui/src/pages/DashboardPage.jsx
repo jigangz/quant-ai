@@ -13,6 +13,7 @@ import { RelatedStocks } from "@/features/dashboard/RelatedStocks";
 import { NewsGrid } from "@/features/dashboard/NewsGrid";
 import { ModelComparison } from "@/features/dashboard/ModelComparison";
 import { GaugesSection } from "@/features/dashboard/GaugesSection";
+import { VolatilityCard } from "@/features/dashboard/VolatilityCard";
 import { SeasonalityHeatmap } from "@/features/dashboard/SeasonalityHeatmap";
 import { CTARow } from "@/features/dashboard/CTARow";
 import { RightRailWatchlist } from "@/components/layout/RightRailWatchlist";
@@ -114,6 +115,7 @@ export default function DashboardPage() {
             confidence={aiQ.data?.confidence}
             signals={aiQ.data?.signals ?? []}
           />
+          <VolatilityCard ticker={ticker} />
           <SeasonalityHeatmap monthly={seasonalQ.data?.monthly} />
           <CTARow ticker={ticker} prediction={aiQ.data?.prediction} />
         </div>

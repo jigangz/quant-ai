@@ -37,6 +37,9 @@ vi.mock("../src/api/queries", () => ({
   useSeasonalAccuracy: () => ({ data: null, isLoading: false }),
   useRelatedStocksSignals: () => ({ data: null, isLoading: false }),
   useSentiment: () => ({ data: null, isLoading: false }),
+  // V4 P2 hooks
+  usePredictedVolatility: () => ({ data: null, isLoading: false, error: null }),
+  useModelsForTickerByLabelType: () => ({ data: [], isLoading: false }),
 }));
 
 // Mock the live prices hook (named export)

@@ -45,6 +45,14 @@ export function predict(payload) {
   });
 }
 
+// V4 Pivot · Phase 2 · Volatility Prediction
+export function predictVolatility({ ticker, model_id = null, horizon_days = 5 }) {
+  return request(`/predict/volatility`, {
+    method: "POST",
+    body: JSON.stringify({ ticker, model_id, horizon_days }),
+  });
+}
+
 // ===================================
 // SHAP Explain
 // ===================================
@@ -218,11 +226,18 @@ export function ragAnswer({ query, top_k = 5 }) {
   return post("/rag/answer", { query, top_k });
 }
 
-// G3 (docs/backend-gaps.md): /models has no ?ticker= filter yet.
-// MVP: fetch all active, filter client-side.
-export function getModelsForTicker(ticker, { status = "active" } = {}) {
-  return request(`/models?status=${status}&limit=50`).then((allActive) => {
-    const models = Array.isArray(allActive) ? allActive : (allActive.models ?? []);
+// G3 is now implemented backend-side (V4 P2). Pass ticker + optional label_type
+// as query params; backend filters. Falls back to client-side filter if the
+// backend is still on pre-V4 schema.
+export function getModelsForTicker(
+  ticker,
+  { status = "active", labelType = null } = {},
+) {
+  const params = new URLSearchParams({ status, limit: "50", ticker });
+  if (labelType) params.set("label_type", labelType);
+  return request(`/models?${params.toString()}`).then((res) => {
+    const models = Array.isArray(res) ? res : (res.models ?? []);
+    // Defensive: pre-V4 backends ignore `ticker`, so filter locally too.
     return models.filter((m) => (m.tickers ?? []).includes(ticker));
   });
 }
