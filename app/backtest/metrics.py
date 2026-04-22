@@ -57,6 +57,75 @@ def calculate_classification_metrics(
     return metrics
 
 
+def calculate_regression_metrics(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+) -> dict[str, float]:
+    """
+    Calculate regression metrics for V4 Pivot multi-task ML.
+
+    Used for label_type in {"return", "volatility", "meta_label" (when scored as R)}.
+
+    Args:
+        y_true: True target values (continuous).
+        y_pred: Predicted target values.
+
+    Returns:
+        Dict with MAE, RMSE, MAPE, QLIKE (if y_true is positive), and R^2.
+    """
+    from sklearn.metrics import (
+        mean_absolute_error,
+        mean_squared_error,
+        r2_score,
+    )
+
+    y_true = np.asarray(y_true, dtype=float)
+    y_pred = np.asarray(y_pred, dtype=float)
+
+    # Drop rows where either is NaN
+    mask = ~(np.isnan(y_true) | np.isnan(y_pred))
+    y_true, y_pred = y_true[mask], y_pred[mask]
+
+    if len(y_true) == 0:
+        return {"mae": None, "rmse": None, "mape": None, "qlike": None, "r2": None}
+
+    mae = mean_absolute_error(y_true, y_pred)
+    rmse = float(np.sqrt(mean_squared_error(y_true, y_pred)))
+
+    # MAPE — ignore rows where |y_true| < epsilon to avoid div-by-zero blowup
+    eps = 1e-8
+    safe_mask = np.abs(y_true) > eps
+    if safe_mask.sum() > 0:
+        mape = float(
+            np.mean(np.abs((y_true[safe_mask] - y_pred[safe_mask]) / y_true[safe_mask]))
+        )
+    else:
+        mape = None
+
+    # QLIKE — volatility-specific loss (Patton 2011);
+    # only defined when y_true > 0 AND y_pred > 0 (both positive vol estimates).
+    pos_mask = (y_true > eps) & (y_pred > eps)
+    if pos_mask.sum() > 0:
+        ratio = y_true[pos_mask] / y_pred[pos_mask]
+        qlike = float(np.mean(ratio - np.log(ratio) - 1))
+    else:
+        qlike = None
+
+    # R^2 — only meaningful with variance in y_true
+    if np.var(y_true) > eps:
+        r2 = float(r2_score(y_true, y_pred))
+    else:
+        r2 = None
+
+    return {
+        "mae": round(mae, 6),
+        "rmse": round(rmse, 6),
+        "mape": round(mape, 6) if mape is not None else None,
+        "qlike": round(qlike, 6) if qlike is not None else None,
+        "r2": round(r2, 4) if r2 is not None else None,
+    }
+
+
 def calculate_strategy_metrics(
     returns: pd.Series,
     benchmark_returns: pd.Series | None = None,

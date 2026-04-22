@@ -14,11 +14,29 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class LabelConfig(BaseModel):
-    """Configuration for label generation."""
+    """
+    Configuration for label generation.
 
-    label_type: Literal["direction", "return"] = "direction"
+    V4 Pivot (2026-04-22): Extended from 2 types (direction, return) to 4 types
+    to support multi-task ML. Direction/return are production-ready; volatility
+    and meta_label are V4 Phase 2/3 targets (Day 3+ implementation).
+
+    Types:
+    - direction: Binary classification — sign(future_return > threshold).
+    - return:    Regression — raw future_return.
+    - volatility: Regression — realized volatility over next N days. [V4 P2]
+    - meta_label: Binary/regression — signal quality score for rule triggers. [V4 P3]
+    """
+
+    label_type: Literal["direction", "return", "volatility", "meta_label"] = "direction"
     horizon_days: int = Field(default=5, ge=1, le=60)
     threshold: float = Field(default=0.0, description="Threshold for direction labels")
+
+    # V4 Phase 2 · Volatility options (ignored for other label_types)
+    volatility_annualize: bool = Field(
+        default=True,
+        description="Annualize realized vol by sqrt(252). Only used when label_type='volatility'.",
+    )
 
     model_config = ConfigDict(extra="forbid")
 

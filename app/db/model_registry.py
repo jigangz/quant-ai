@@ -37,6 +37,10 @@ class ModelRecord(BaseModel):
     feature_names: list[str] = []
     n_features: int = 0
 
+    # V4 Pivot · Multi-task ML target tracking
+    label_type: str = "direction"  # direction / return / volatility / meta_label
+    horizon_days: int = 5  # forward window used during training
+
     # Data info
     train_samples: int = 0
     val_samples: int = 0
