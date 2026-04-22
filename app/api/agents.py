@@ -53,30 +53,42 @@ class TechnicalSignal(BaseModel):
 
 class TechnicalAnalysisResponse(BaseModel):
     """Response from technical analysis agent."""
-    
+
     # Status
     success: bool
     error: str | None = None
-    
+
     # Ticker info
     ticker: str
     model_id: str | None = None
     timestamp: str
-    
+
+    # V4 P2 · G6 · Model metadata (populated when model_id resolves)
+    # Frontend uses these for Dashboard model source tag + Sub 4 Dialog
+    # "切模型后 refresh" indicator.
+    model_name: str | None = None
+    model_type: str | None = None
+    model_label_type: str | None = None
+    model_horizon_days: int | None = None
+    model_version: int | None = None
+    model_tickers: list[str] = []
+    model_metrics: dict[str, float] = {}
+    model_created_at: str | None = None
+
     # Prediction
     prediction: Literal["up", "down"] | None = None
     probability: float | None = None
     confidence: Literal["high", "medium", "low"] | None = None
-    
+
     # Analysis
     summary: str = ""
     signals: list[TechnicalSignal] = []
     top_features: list[FeatureContribution] = []
-    
+
     # Raw data (for RAG indexing)
     raw_features: dict[str, float] = {}
     shap_values: dict[str, float] = {}
-    
+
     # Metadata
     evidence_type: str = "technical_analysis"
     can_index: bool = True
@@ -140,7 +152,8 @@ def technical_analysis(request: TechnicalAnalysisRequest):
     from datetime import datetime
     from app.services.predict_service import PredictionService
     from app.services.model_cache import get_model_cache
-    
+    from app.db.model_registry import get_model_registry
+
     try:
         # Get model
         cache = get_model_cache()
@@ -148,7 +161,7 @@ def technical_analysis(request: TechnicalAnalysisRequest):
             model_id = request.model_id
         else:
             model_id = cache.get_promoted_id()
-        
+
         if not model_id:
             return TechnicalAnalysisResponse(
                 success=False,
@@ -156,7 +169,10 @@ def technical_analysis(request: TechnicalAnalysisRequest):
                 ticker=request.ticker,
                 timestamp=datetime.utcnow().isoformat(),
             )
-        
+
+        # V4 P2 · G6: resolve model metadata from registry (non-fatal if missing)
+        model_meta = _build_model_metadata(model_id)
+
         # Get prediction
         pred_service = PredictionService()
         pred_result = pred_service.predict(
@@ -171,6 +187,7 @@ def technical_analysis(request: TechnicalAnalysisRequest):
                 ticker=request.ticker,
                 model_id=model_id,
                 timestamp=datetime.utcnow().isoformat(),
+                **model_meta,
             )
         
         # Extract prediction
@@ -223,6 +240,7 @@ def technical_analysis(request: TechnicalAnalysisRequest):
             top_features=top_features,
             raw_features=raw_features,
             shap_values=shap_values,
+            **model_meta,
         )
     
     except Exception as e:
@@ -324,6 +342,38 @@ def portfolio_summary(request: PortfolioSummaryRequest):
 # ===================================
 # Helper Functions
 # ===================================
+def _build_model_metadata(model_id: str) -> dict:
+    """Pull model metadata from registry (V4 P2 · G6).
+
+    Returns a dict of the model_name / model_label_type / etc fields so callers
+    can unpack via **model_meta. Fields are None / empty on failure (non-fatal).
+    """
+    from app.db.model_registry import get_model_registry
+
+    try:
+        registry = get_model_registry()
+        record = registry.get_model(model_id)
+        if not record:
+            return {}
+        return {
+            "model_name": record.name,
+            "model_type": record.model_type,
+            "model_label_type": getattr(record, "label_type", "direction"),
+            "model_horizon_days": getattr(record, "horizon_days", 5),
+            "model_version": record.version,
+            "model_tickers": record.tickers,
+            "model_metrics": record.metrics or {},
+            "model_created_at": (
+                record.created_at.isoformat()
+                if record.created_at
+                else None
+            ),
+        }
+    except Exception as e:
+        logger.warning(f"Failed to load model metadata for {model_id}: {e}")
+        return {}
+
+
 def _get_confidence_level(prob: float) -> Literal["high", "medium", "low"]:
     """Convert probability to confidence level."""
     deviation = abs(prob - 0.5)

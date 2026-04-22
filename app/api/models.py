@@ -92,15 +92,27 @@ class ModelUpdateRequest(BaseModel):
 def list_models(
     status: str | None = Query("active", description="Filter by status"),
     limit: int = Query(50, ge=1, le=200, description="Max results"),
+    ticker: str | None = Query(
+        None,
+        description="Filter to models that were trained on this ticker (V4 P2)",
+    ),
+    label_type: str | None = Query(
+        None,
+        description="Filter by target type: direction / return / volatility / meta_label (V4 P2)",
+    ),
 ):
     """
-    List all models in the registry.
+    List models in the registry.
 
     - status: "active" (default), "archived", or None for all
     - limit: Maximum number of results (default 50)
+    - ticker: (V4 P2) filter to models trained on a specific ticker
+    - label_type: (V4 P2) filter by multi-task target type
     """
     registry = get_model_registry()
-    models = registry.list_models(status=status, limit=limit)
+    models = registry.list_models(
+        status=status, limit=limit, ticker=ticker, label_type=label_type,
+    )
 
     return ModelListResponse(
         models=models,

@@ -180,12 +180,21 @@ class LocalModelRegistry:
         return None
 
     def list_models(
-        self, status: str | None = "active", limit: int = 50
+        self,
+        status: str | None = "active",
+        limit: int = 50,
+        ticker: str | None = None,
+        label_type: str | None = None,
     ) -> list[ModelRecord]:
+        """List models, optionally filtering by status / ticker / label_type (V4 P2)."""
         models = self._load_models()
         result = []
         for data in models.values():
             if status and data.get("status") != status:
+                continue
+            if label_type and data.get("label_type", "direction") != label_type:
+                continue
+            if ticker and ticker not in (data.get("tickers") or []):
                 continue
             result.append(ModelRecord(**data))
         # Sort by created_at desc
@@ -262,11 +271,21 @@ class SupabaseModelRegistry:
         return None
 
     def list_models(
-        self, status: str | None = "active", limit: int = 50
+        self,
+        status: str | None = "active",
+        limit: int = 50,
+        ticker: str | None = None,
+        label_type: str | None = None,
     ) -> list[ModelRecord]:
+        """List models, optionally filtering by status / ticker / label_type (V4 P2)."""
         query = self.client.table(self.models_table).select("*")
         if status:
             query = query.eq("status", status)
+        if label_type:
+            query = query.eq("label_type", label_type)
+        if ticker:
+            # Postgres TEXT[] contains operator via Supabase
+            query = query.contains("tickers", [ticker])
         result = query.order("created_at", desc=True).limit(limit).execute()
         return [ModelRecord(**row) for row in result.data]
 
