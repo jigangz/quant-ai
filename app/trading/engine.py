@@ -371,3 +371,101 @@ def reset_matching_engine() -> MatchingEngine:
     global _matching_engine
     _matching_engine = MatchingEngine()
     return _matching_engine
+
+
+# ---------------------------------------------------------------------------
+# V4 P3: place_order — high-level order entry with optional meta-label gate
+# ---------------------------------------------------------------------------
+
+def _make_order_result(order: Order) -> "OrderResult":
+    from app.trading.models import OrderResult
+    return OrderResult(
+        status=order.status.value,
+        reason=order.reject_reason,
+        order=order,
+    )
+
+
+def _rejected(reason: str) -> "OrderResult":
+    from app.trading.models import OrderResult
+    return OrderResult(status="rejected", reason=reason)
+
+
+def place_order(
+    ticker: str,
+    side: str,
+    qty: float,
+    order_type: str = "market",
+    limit_price: Optional[float] = None,
+    meta_model_id: Optional[str] = None,
+    score_threshold: Optional[float] = None,
+) -> "OrderResult":
+    """Submit an order with an optional meta-label quality gate.
+
+    When meta_model_id is None the behavior is byte-identical to calling
+    submit_order() directly (backward-compatible legacy path).
+
+    Args:
+        ticker: Ticker symbol.
+        side: "buy" or "sell".
+        qty: Number of shares.
+        order_type: "market" or "limit".
+        limit_price: Required for limit orders.
+        meta_model_id: If given, scores the signal via SignalScoringService
+                       before placing. Orders are rejected when score < threshold.
+        score_threshold: Probability cutoff for the meta-label gate. Falls back
+                         to PaperTradingConfig.default_score_threshold if None.
+
+    Returns:
+        OrderResult with status "filled" | "pending" | "rejected".
+    """
+    # V4 P3: Meta-label gating (opt-in — when meta_model_id is given)
+    if meta_model_id is not None:
+        from app.services import signal_scoring_service
+        from app.trading.models import PaperTradingConfig
+
+        threshold = (
+            score_threshold
+            if score_threshold is not None
+            else PaperTradingConfig().default_score_threshold
+        )
+        try:
+            req = signal_scoring_service.SignalScoreRequest(
+                ticker=ticker,
+                meta_model_id=meta_model_id,
+                signal=1 if side == "buy" else -1,
+            )
+            resp = signal_scoring_service.score_signal(req)
+        except ValueError as e:
+            return _rejected(reason=f"meta_model_error:{e}")
+
+        score = resp.get("reliability_score", 0.0)
+        if score < threshold:
+            return _rejected(
+                reason=(
+                    f"meta_score_below_threshold:"
+                    f"score={score:.3f}:threshold={threshold:.3f}"
+                )
+            )
+        # Apply half-Kelly sizing, clamped to at least 1 share
+        hint = resp.get("sizing_hint", {})
+        kelly_frac = hint.get("half_kelly_fraction", 0.25)
+        cap = hint.get("cap", 0.25)
+        qty = max(1, int(qty * kelly_frac / cap))
+
+    # Legacy path: submit via MatchingEngine
+    from app.trading.models import OrderCreate, OrderSide, OrderType
+
+    side_enum = OrderSide.BUY if side.lower() == "buy" else OrderSide.SELL
+    type_enum = OrderType.MARKET if order_type.lower() == "market" else OrderType.LIMIT
+
+    order_create = OrderCreate(
+        symbol=ticker,
+        side=side_enum,
+        order_type=type_enum,
+        quantity=float(qty),
+        limit_price=limit_price,
+    )
+    engine = get_matching_engine()
+    order, _trade = engine.submit_order(order_create)
+    return _make_order_result(order)

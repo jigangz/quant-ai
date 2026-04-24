@@ -237,3 +237,17 @@ class PortfolioHistoryResponse(BaseModel):
     period_end: datetime = Field(..., description="History period end")
     total_return: float = Field(..., description="Total return over period")
     total_return_pct: float = Field(..., description="Total return percentage")
+
+
+class PaperTradingConfig(BaseModel):
+    """Configuration for the paper trading engine (V4 P3: meta-label gate)."""
+    initial_cash: float = Field(default=100_000.0, gt=0)
+    meta_label_enabled: bool = False           # V4 P3: opt-in meta-labeling gate
+    default_score_threshold: float = 0.55      # V4 P3: fallback threshold when not per-order
+
+
+class OrderResult(BaseModel):
+    """Lightweight result from place_order() — returned for both success and rejection."""
+    status: str = Field(..., description="'filled', 'pending', 'rejected'")
+    reason: Optional[str] = Field(None, description="Rejection reason if status=rejected")
+    order: Optional[Order] = Field(None, description="The underlying Order if created")
