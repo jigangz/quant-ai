@@ -53,16 +53,21 @@ USER appuser
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # ============================================================
-# Default stage = production + full ML deps (Render builds the LAST stage)
-# V4 P4 fix: add runtime deps (xgboost/lgbm/catboost/optuna/shap/redis/
-# supabase/sentence-transformers/faiss) that were only in the unused
-# `development` stage. Without this, prod 400s on xgboost model_type and
-# silently degrades RAG/vol features.
+# Default stage = production + trimmed runtime deps (Render free tier friendly)
+# V4 P4 (second iteration): first fix tried requirements-full.txt but that
+# pulled torch/faiss/catboost (~1 GB) and OOM'd on Render free build. This
+# uses requirements-prod.txt — a curated subset with only the runtime deps
+# we actually need: xgboost, lightgbm, optuna, shap, supabase, psycopg, redis.
+#
+# Cut from full: catboost (redundant), sentence-transformers+torch (RAG
+# feature degrades gracefully — prod has never had this anyway), faiss-cpu
+# (ditto), pytest/ruff (dev-only).
 # ============================================================
 FROM production
 
 USER root
-COPY requirements-full.txt .
+COPY requirements-prod.txt .
+COPY requirements.txt .
 # Fail-loud (no `|| true`) so missing deps show in Render build log
-RUN pip install --no-cache-dir -r requirements-full.txt
+RUN pip install --no-cache-dir -r requirements-prod.txt
 USER appuser

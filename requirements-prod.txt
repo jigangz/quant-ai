@@ -1,0 +1,42 @@
+# Production runtime dependencies (Render free tier friendly)
+# ------------------------------------------------------------
+# This is a trimmed subset of requirements-full.txt designed to fit Render
+# free tier build limits (~0.5 GB RAM during pip install). The full dev stack
+# stays in requirements-full.txt for local development + CI.
+#
+# What we keep vs cut:
+#   KEEP: xgboost + lightgbm (gradient boosting — used by P1/P3 meta-labeling),
+#         optuna (hyperparameter search in Sub 4 ModelingDialog + P4 AAPL rescue),
+#         shap (explainability endpoint),
+#         supabase + psycopg (Model Registry persistence in prod),
+#         redis + rq (job queue + cache for distributed training).
+#
+#   CUT:  catboost (~150 MB — redundant with xgboost+lightgbm; factory.py
+#                    degrades gracefully when missing),
+#         sentence-transformers (~50 MB + pulls torch ~800 MB — RAG feature
+#                    has try/except ImportError in app/vector/embedder.py,
+#                    /rag/answer degrades to "unavailable" on prod free tier),
+#         faiss-cpu (~30 MB — RAG vector store, same graceful degrade),
+#         pytest / pytest-cov / ruff (dev-only, never needed in prod container).
+#
+# Total savings vs requirements-full.txt: ~1 GB. Safely under Render free build.
+# If we upgrade to paid, switch Dockerfile back to requirements-full.txt and
+# restore RAG + catboost on prod.
+
+-r requirements.txt
+
+# Database (production)
+supabase>=2.0
+psycopg[binary]>=3.1
+
+# Job Queue
+redis>=4.0
+rq>=1.15
+
+# ML Models (optional — graceful ImportError in factory.py)
+xgboost>=2.0.0
+lightgbm>=4.0.0
+optuna>=3.0.0
+
+# Explainability
+shap>=0.42.0
