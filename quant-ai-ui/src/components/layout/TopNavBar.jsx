@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { label: "市场", to: "/screener" },
   { label: "研究", to: "/dashboard" },
   { label: "模型", to: "/training" },
+  { label: "信号", to: "/signal-console" },
   { label: "更多", to: "#" },
 ];
 
