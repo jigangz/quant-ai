@@ -415,9 +415,10 @@
         "git commit 'feat(p3): event feature builder (lagged features + vol + time-since-last)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-23",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
-      "notes": "See plan Task 5. Used by both training (Task 6) and inference (Task 7) paths — same function = no feature drift."
+      "notes": "3 tests pass. build_event_features already existed as prereq. Created test file with lag/vol/time-since-last coverage."
     },
     {
       "id": "P3-6",
@@ -434,9 +435,10 @@
         "git commit 'feat(p3): MetaLabelTrainingService end-to-end orchestrator (3 integration tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-23",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
-      "notes": "See plan Task 6. Depends on P3-1..P3-5. Largest single task (~200 LOC). Tests use monkeypatch for OHLC fetch and ModelRegistry."
+      "notes": "3 tests pass. meta_label_service.py already existed as prereq. Updated registry.py guard message. Created test file with end-to-end/insufficient/vol-fallback coverage."
     },
     {
       "id": "P3-7",
@@ -453,9 +455,10 @@
         "git commit 'feat(p3): SignalScoringService — 3-mode inference (A/B/C) (3 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-23",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
-      "notes": "See plan Task 7. Depends on P3-5 (shared feature builder) and P3-6 (ModelRegistry access pattern)."
+      "notes": "3 tests pass. signal_scoring_service.py already existed as prereq (created in P3-10 batch). Created test file with mode-A/mode-B-silent/mode-A-wins coverage."
     },
     {
       "id": "P3-8",

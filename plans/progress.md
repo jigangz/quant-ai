@@ -546,6 +546,24 @@
 - Bug fix: plan's `_ohlc(n)` helper always produced 30 items regardless of n — fixed to produce exactly n rows using `n // 2` splits
 - 4/4 tests pass
 
+### Batch (P3-5, P3-6, P3-7) — completed 2026-04-23
+
+**P3-5: Event feature builder**
+- `app/services/meta_label_features.py` already existed as prereq from P3-10 batch
+- Created `tests/test_meta_event_features.py` with 3 tests: lag correctness, vol feature, time-since-last arithmetic
+- 3/3 tests pass
+
+**P3-6: MetaLabel Training Service**
+- `app/services/meta_label_service.py` already existed as prereq from P3-11 batch
+- Updated `app/ml/labels/registry.py` `_not_implemented_meta_label` guard message to point to new service
+- Created `tests/test_meta_label_service.py` with 3 tests: end-to-end w/ rsi_strategy + mocked OHLC, insufficient_events raise, p1_model fallback warning
+- 3/3 tests pass
+
+**P3-7: Signal Scoring Service**
+- `app/services/signal_scoring_service.py` already existed as prereq (full implementation created in P3-10 batch)
+- Created `tests/test_signal_scoring_service.py` with 3 tests: mode A explicit signal, mode B silent strategy, mode A wins with both signal+strategy
+- 3/3 tests pass
+
 ### Batch (P3-1, P3-10, P3-11) — completed 2026-04-24
 
 **P3-1: Triple-barrier label generator + meta-label target**
