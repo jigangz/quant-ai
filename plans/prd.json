@@ -361,9 +361,10 @@
         "git commit 'feat(p3): Purged K-Fold CV splitter with embargo (5 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-23",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
-      "notes": "See plan Task 2. López de Prado Ch.7 methodology — critical for meta-labeling credibility."
+      "notes": "5 tests pass. Implementation already existed as prereq from P3-11. Created test file with fixed _ohlc helper."
     },
     {
       "id": "P3-3",
@@ -377,9 +378,10 @@
         "git commit 'feat(p3): meta-label metrics (precision-at-K, expected_R, hit-rate)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-23",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
-      "notes": "See plan Task 3. Extends existing backtest/metrics.py (matches P1 volatility pattern)."
+      "notes": "3 tests pass. calculate_meta_label_metrics already existed in metrics.py from P3-11 prereq work. Created test file."
     },
     {
       "id": "P3-4",
@@ -395,9 +397,10 @@
         "git commit 'feat(p3): PrimarySignalService — dispatch rules + ML direction primary (4 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-23",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
-      "notes": "See plan Task 4. Depends on P3-1 done. Connects P1 direction model → P3 meta-labeling."
+      "notes": "4 tests pass. primary_signal_service.py already existed as prereq from P3-10. Fixed _ohlc(n) helper to produce exactly n rows."
     },
     {
       "id": "P3-5",

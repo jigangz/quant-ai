@@ -528,6 +528,24 @@
 - GlobalRagButton.jsx already implemented: floating ❓ button, Radix Dialog with input + RAG answer area, uses ragAnswer mutation
 - 2/2 tests pass in __tests__/components/layout/GlobalRagButton.test.jsx
 
+### Batch (P3-2, P3-3, P3-4) — completed 2026-04-23
+
+**P3-2: Purged K-Fold CV splitter with embargo**
+- Implementation already existed in `app/ml/split/purged_kfold.py` (created as prereq in P3-11 batch)
+- Created `tests/test_purged_kfold.py` with 5 tests: n_splits count, purge correctness, embargo, empty, few-events
+- 5/5 tests pass
+
+**P3-3: Meta-label metrics**
+- `calculate_meta_label_metrics` already existed in `app/backtest/metrics.py` (added during P3-11 batch)
+- Created `tests/test_meta_metrics.py` with 3 tests: basic precision/hit_rate, zero-trades, auc-finite
+- 3/3 tests pass
+
+**P3-4: Primary Signal Service**
+- `app/services/primary_signal_service.py` already existed (created as prereq in P3-10 batch)
+- Created `tests/test_primary_signal_service.py` with 4 tests: strategy dispatch, model dispatch w/ monkeypatch, both-source raise, neither-source raise
+- Bug fix: plan's `_ohlc(n)` helper always produced 30 items regardless of n — fixed to produce exactly n rows using `n // 2` splits
+- 4/4 tests pass
+
 ### Batch (P3-1, P3-10, P3-11) — completed 2026-04-24
 
 **P3-1: Triple-barrier label generator + meta-label target**
