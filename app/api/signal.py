@@ -106,3 +106,18 @@ def signal_score(req: SignalScoreRequestAPI):
         if msg.startswith("timestamp_out_of_range"):
             raise HTTPException(status_code=400, detail=msg)
         raise HTTPException(status_code=400, detail=msg)
+
+
+# =====================================
+# GET /api/meta-label/coverage
+# =====================================
+
+@router.get("/api/meta-label/coverage")
+def meta_label_coverage(strategy: str):
+    try:
+        return signal_scoring_service.compute_coverage(strategy)
+    except ValueError as e:
+        msg = str(e)
+        if msg.startswith("strategy_not_found"):
+            raise HTTPException(status_code=404, detail=msg)
+        raise HTTPException(status_code=400, detail=msg)

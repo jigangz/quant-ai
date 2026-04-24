@@ -161,3 +161,82 @@ def score_signal(req: SignalScoreRequest) -> dict[str, Any]:
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+
+# =====================================
+# Coverage aggregation (P4-1)
+# =====================================
+
+KNOWN_STRATEGIES = {"ma_cross", "rsi_strategy", "bollinger_breakout", "sentiment_driven"}
+
+
+def _list_meta_records() -> list[dict]:
+    """Return all registered meta-label model records. Wrapped for monkeypatch in tests."""
+    from app.services.model_cache import get_model_cache
+    cache = get_model_cache()
+    try:
+        all_records = cache.list_all(label_type="meta_label")
+    except AttributeError:
+        # Fallback path: older ModelCache may not expose list_all
+        all_records = []
+        for model_id in getattr(cache, "_index", {}).keys():
+            info = cache.load(model_id)
+            if info and info.metadata.get("label_type") == "meta_label":
+                all_records.append({
+                    "model_id": model_id,
+                    "metadata": info.metadata,
+                    "extras": info.extras or {},
+                })
+    return all_records
+
+
+def compute_coverage(strategy_name: str) -> dict:
+    """Aggregate meta-label coverage for a given primary strategy."""
+    if strategy_name not in KNOWN_STRATEGIES:
+        raise ValueError(f"strategy_not_found:{strategy_name}")
+
+    records = _list_meta_records()
+    models = []
+    for r in records:
+        try:
+            extras = r.get("extras", {}) or {}
+            meta_cfg = extras.get("meta_label") or {}
+            primary_cfg = meta_cfg.get("primary") or {}
+            if primary_cfg.get("source") != "strategy":
+                continue
+            if primary_cfg.get("strategy_name") != strategy_name:
+                continue
+            auc = (
+                meta_cfg.get("cv", {})
+                .get("metrics", {})
+                .get("auc_mean")
+            )
+            if auc is None:
+                continue
+            ticker = r.get("metadata", {}).get("ticker") or "UNKNOWN"
+            models.append({
+                "model_id": r["model_id"],
+                "ticker": ticker,
+                "auc_mean": float(auc),
+                "event_count": int(meta_cfg.get("event_count", 0)),
+            })
+        except (KeyError, TypeError, AttributeError):
+            continue
+
+    if not models:
+        return {
+            "strategy_name": strategy_name,
+            "count": 0, "max_auc": None, "avg_auc": None,
+            "tickers": [], "models": [],
+        }
+
+    aucs = [m["auc_mean"] for m in models]
+    tickers = sorted({m["ticker"] for m in models})
+    return {
+        "strategy_name": strategy_name,
+        "count": len(models),
+        "max_auc": max(aucs),
+        "avg_auc": sum(aucs) / len(aucs),
+        "tickers": tickers,
+        "models": models,
+    }
