@@ -691,3 +691,15 @@
 - Null selection → "Select a cell" placeholder; triggered=false → "Strategy silent" message
 - Created `__tests__/features/signal-console/SignalDetail.test.jsx` with 3 tests — 3/3 pass
 - Build: ✓
+
+### Batch (P4-GATE) — completed 2026-04-24
+
+**P4-GATE: Phase 4 Gate (V4 Pivot Gate 1)**
+- Fixed 4 lint errors: removed unused `screen` import from MetaSparkline.test.jsx; added eslint-disable-next-line comments for `react-hooks/set-state-in-effect` in MetaSparkline.jsx, SignalDetail.jsx, TickerPicker.jsx (same pattern as RightRailWatchlist + StrategyParamsForm from FE-DASH-19)
+- Frontend: 61/61 tests pass, 0 lint errors, build ✓
+- Backend gate tests: 71/71 pass (contract/test_meta_coverage 5 + contract/test_meta_label_train 5 + contract/test_signal_score 5 + test_paper_trading_meta 4 + test_meta_label_barrier 9 + test_purged_kfold 5 + test_labels 25 + test_ensemble_training 5 + contract/test_train_flow 12 = 71)
+- Obsidian ml-pivot-progress.md: Day 14 Sprint entry appended with delivered files, test count, Gate 1 COMPLETE badge
+- Obsidian master-roadmap.md: P4 section rewritten with actual deliverables + Gate 1 line ✅ COMPLETE
+- Tagged v4-p4-complete + v4-gate-1-complete; pushed to origin/main
+- Live smoke: backend on Render deploys from main — version 2.4.0 after push
+- All P4-0..P4-11 + P4-GATE passes: true in prd.json
