@@ -652,6 +652,29 @@
 - Created `__tests__/components/MetaLabelCoverageBadge.test.jsx` with 3 tests — 3/3 pass
 - Build: ✓
 
+### Batch (P4-7, P4-8, P4-9) — completed 2026-04-24
+
+**P4-7: SignalConsolePage + /signal-console route + TopNavBar link**
+- Created `src/pages/SignalConsolePage.jsx`: TickerPicker + StrategyMatrix + SignalDetail layout, useMetaLabelTrain onTrain handler, reads ?strategy= param
+- Added lazy route in `src/app/router.jsx` (routing is there, not App.jsx)
+- Added `信号` link to `NAV_ITEMS` in TopNavBar.jsx
+- 2nd test used `getAllByText` to avoid "multiple elements" from regex matching both heading and filter text
+- 2/2 tests pass
+
+**P4-8: Strategy Card badge integration**
+- Created `src/features/strategy/StrategyCard.jsx` (new file — didn't exist yet)
+- Badge renders when coverage count > 0; hides when count = 0
+- MemoryRouter wrapper needed in test (MetaLabelCoverageBadge uses useNavigate)
+- 2/2 tests pass
+
+**P4-9: Paper Trading modal meta-label filter**
+- Modified `src/features/trading/OrderForm.jsx` (NOT TradingPage — order form is in subcomponent)
+- Added checkbox + meta model select + threshold slider + preview button + score display
+- Added `data-testid="meta-model-select"` for reliable test targeting
+- Added all needed client functions (getPortfolio, getOrders, etc.) to `@/api/client` mock
+- `getByText(/TRADE/i)` matches both "Recent Trades" heading and action "trade" — used `getAllByText` instead
+- 4/4 tests pass. Build ✓
+
 ### Batch (P4-4, P4-5, P4-6) — completed 2026-04-24
 
 **P4-4: TickerPicker component**

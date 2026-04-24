@@ -691,9 +691,10 @@
         "git commit 'feat(p4): SignalConsolePage + /signal-console route + TopNav link (2 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
-      "notes": "See plan Task 7. Depends on P4-4 + P4-5 + P4-6."
+      "notes": "See plan Task 7. Depends on P4-4 + P4-5 + P4-6. 2/2 tests pass."
     },
     {
       "id": "P4-8",
@@ -705,9 +706,10 @@
         "git commit 'feat(p4): embed MetaLabelCoverageBadge in StrategyCard (2 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
-      "notes": "See plan Task 8. Depends on P4-3."
+      "notes": "See plan Task 8. Depends on P4-3. 2/2 tests pass. Created StrategyCard.jsx (new file)."
     },
     {
       "id": "P4-9",
@@ -723,9 +725,10 @@
         "git commit 'feat(p4): Paper Trading modal meta-label filter (checkbox + dropdown + slider + preview) (4 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
-      "notes": "See plan Task 9. Depends on P4-2."
+      "notes": "See plan Task 9. Depends on P4-2. 4/4 tests pass. Meta-label section added to OrderForm.jsx."
     },
     {
       "id": "P4-10",
