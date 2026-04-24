@@ -651,3 +651,20 @@
 - Plan test uses makeQueryWrapper() only but component needs useNavigate — test wraps with both QueryClientProvider + MemoryRouter
 - Created `__tests__/components/MetaLabelCoverageBadge.test.jsx` with 3 tests — 3/3 pass
 - Build: ✓
+
+### Batch (P4-4, P4-5, P4-6) — completed 2026-04-24
+
+**P4-4: TickerPicker component**
+- Created `src/features/signal-console/TickerPicker.jsx`: reads localStorage 'quant-ai:watchlist', renders pills, multi-select with 10-cap
+- Created `__tests__/features/signal-console/TickerPicker.test.jsx` with 3 tests — 3/3 pass
+
+**P4-5: StrategyMatrix component**
+- Created `src/features/signal-console/StrategyMatrix.jsx`: rows=tickers, 4 cols (ma_cross/rsi_strategy/bollinger_breakout/sentiment_driven)
+- Cells show AUC + E[R] with data-variant (good/neutral/warn) when model exists; "— Train meta" CTA button otherwise
+- Created `__tests__/features/signal-console/StrategyMatrix.test.jsx` with 4 tests — 4/4 pass
+
+**P4-6: SignalDetail right panel**
+- Created `src/features/signal-console/SignalDetail.jsx`: uses useSignalScorePreview mutation on mount, displays score/E[R]/action/sizing
+- Null selection → "Select a cell" placeholder; triggered=false → "Strategy silent" message
+- Created `__tests__/features/signal-console/SignalDetail.test.jsx` with 3 tests — 3/3 pass
+- Build: ✓
