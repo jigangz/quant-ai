@@ -602,6 +602,26 @@
 - Benchmark ran live: AAPL 492 events (CV AUC 0.420), MSFT 483 events (CV AUC 0.619), GOOGL 486 events (CV AUC 0.607)
 - Report saved to docs/benchmarks/ and D:/obsidian vault
 
+### Batch (P4-0, P4-1, P4-10) — completed 2026-04-24
+
+**P4-0: Version bump 2.1.0 → 2.4.0**
+- Updated `app/main.py`: FastAPI app version + root endpoint version to "2.4.0"
+- Updated `app/api/health.py`: health endpoint version to "2.4.0"
+- `python -c "from app.main import app; print('ok')"` → ok
+
+**P4-1: GET /api/meta-label/coverage endpoint**
+- Appended `KNOWN_STRATEGIES`, `_list_meta_records()`, `compute_coverage()` to `app/services/signal_scoring_service.py`
+- Appended `@router.get('/api/meta-label/coverage')` to `app/api/signal.py`
+- Created `tests/contract/test_meta_coverage.py` with 5 tests
+- 5/5 contract tests pass
+
+**P4-10: Dashboard VolatilityCard 7d signal-quality sparkline**
+- Created `quant-ai-ui/src/features/signal-console/MetaSparkline.jsx` (inline SVG sparkline, 7-day score series)
+- Embedded `<MetaSparkline ticker={ticker} />` in `VolatilityCard.jsx`
+- Created prerequisites as part of this task: `signalQueries.js` (useMetaLabelModels/useMetaCoverage/useSignalScorePreview/useMetaLabelTrain), `queryWrapper.jsx` helper, P4 client functions in client.js
+- Created `__tests__/features/signal-console/MetaSparkline.test.jsx` with 2 tests
+- 2/2 tests pass. Build ✓
+
 ### Batch (P3-GATE) — completed 2026-04-23
 
 **P3-GATE: Phase 3 gate verification (meta-labeling)**

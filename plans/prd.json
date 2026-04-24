@@ -565,9 +565,10 @@
         "git commit 'fix(p4): version bump 2.1.0 -> 2.4.0 (P3 carryover)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
-      "notes": "See plan Task 0. Small P3 carryover. Verified via prod smoke in P4-GATE."
+      "notes": "See plan Task 0. Bumped version in app/main.py (FastAPI app + root endpoint) and app/api/health.py."
     },
     {
       "id": "P4-1",
@@ -581,9 +582,10 @@
         "git commit 'feat(p4): GET /api/meta-label/coverage endpoint + compute_coverage (5 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
-      "notes": "See plan Task 1. Foundation for Strategy card badges + Signal Console."
+      "notes": "See plan Task 1. 5/5 contract tests pass. Also created queryWrapper helper and signalQueries.js as prerequisites for P4-10."
     },
     {
       "id": "P4-2",
@@ -732,9 +734,10 @@
         "git commit 'feat(p4): Dashboard VolatilityCard 7d signal-quality sparkline (2 tests)'"
       ],
       "priority": "medium",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
-      "notes": "See plan Task 10. Optional polish — keep simple inline SVG (no new deps)."
+      "notes": "See plan Task 10. 2/2 tests pass. Inline SVG sparkline, no new deps. Created signalQueries.js + queryWrapper helper as prereqs."
     },
     {
       "id": "P4-11",
