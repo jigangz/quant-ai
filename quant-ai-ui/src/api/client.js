@@ -272,3 +272,38 @@ export function getSentiment({ ticker, days = 30 }) {
   return request(`/data/sentiment?ticker=${encodeURIComponent(ticker)}&days=${days}`);
 }
 
+// ===================================
+// V4 Phase 4 — Meta-Labeling (P4)
+// ===================================
+
+/** GET /models?label_type=meta_label&ticker=X */
+export function getMetaLabelModels(ticker) {
+  const qs = ticker ? `&ticker=${encodeURIComponent(ticker)}` : "";
+  return request(`/models?label_type=meta_label${qs}`).then(
+    (body) => body.models || body || []
+  );
+}
+
+/** GET /api/meta-label/coverage?strategy=X */
+export function getMetaCoverage(strategyName) {
+  return request(
+    `/api/meta-label/coverage?strategy=${encodeURIComponent(strategyName)}`
+  );
+}
+
+/** POST /api/signal-score */
+export function postSignalScore(payload) {
+  return request(`/api/signal-score`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/** POST /api/meta-label/train */
+export function postMetaLabelTrain(payload) {
+  return request(`/api/meta-label/train`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+

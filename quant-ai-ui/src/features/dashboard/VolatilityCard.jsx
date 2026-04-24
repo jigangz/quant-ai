@@ -1,4 +1,5 @@
 import { usePredictedVolatility, useModelsForTickerByLabelType } from "@/api/queries";
+import MetaSparkline from "@/features/signal-console/MetaSparkline";
 
 // V4 Pivot · Phase 2 · FE-ENH-6
 // Dashboard card showing forward-looking realized volatility prediction.
@@ -61,6 +62,7 @@ export function VolatilityCard({ ticker, horizonDays = 5 }) {
           {predQ.data?.error ?? "预测失败"}
         </div>
       )}
+      <MetaSparkline ticker={ticker} />
     </section>
   );
 }
