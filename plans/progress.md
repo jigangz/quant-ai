@@ -601,3 +601,14 @@
 - Added `calculate_meta_label_metrics` to `app/backtest/metrics.py`
 - Benchmark ran live: AAPL 492 events (CV AUC 0.420), MSFT 483 events (CV AUC 0.619), GOOGL 486 events (CV AUC 0.607)
 - Report saved to docs/benchmarks/ and D:/obsidian vault
+
+### Batch (P3-GATE) — completed 2026-04-23
+
+**P3-GATE: Phase 3 gate verification (meta-labeling)**
+- P1+P2 regression: 66 passed (test_labels, test_ensemble_training, test_train_flow, test_predict_volatility, test_models_filter, test_agents_model_metadata, test_model_registry_label_type)
+- P3 new tests: 44 passed (test_meta_label_barrier 9, test_purged_kfold 5, test_meta_metrics 3, test_primary_signal_service 4, test_meta_event_features 3, test_meta_label_service 3, test_signal_scoring_service 3, contract/test_meta_label_train 5, contract/test_signal_score 5, test_paper_trading_meta 4)
+- Frontend build: ✓ (DashboardPage 63.06 KB gzipped)
+- Obsidian Day 13 Sprint entry appended to ml-pivot-progress.md
+- Plan doc Execution Results section appended
+- Tagged v4-p3-complete + push
+- All P3-1..P3-11 + P3-GATE passes: true in prd.json

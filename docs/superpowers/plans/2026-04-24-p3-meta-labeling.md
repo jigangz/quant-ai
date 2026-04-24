@@ -2976,3 +2976,38 @@ All checks passed.
 2. **Inline Execution** — execute tasks in this session using `superpowers:executing-plans`, batch execution with checkpoints.
 
 Which approach?
+
+---
+
+## Execution Results (2026-04-23–2026-04-24)
+
+**Implementation choice:** Ralph loop (fresh-context subagent-driven mode), batched per logical grouping.
+
+### Delivered files
+- `app/ml/labels/meta_label.py` — triple-barrier generator (TP/SL/timeout, vol-scaled, SL-first ambiguity)
+- `app/ml/split/purged_kfold.py` — Purged K-Fold with embargo (Prado Ch.7)
+- `app/backtest/metrics.py` — `calculate_meta_label_metrics()` added
+- `app/services/primary_signal_service.py` — dual-source dispatch (4 rule strategies + ML)
+- `app/services/meta_label_features.py` — event feature builder (lagged, vol, time-since-last)
+- `app/services/meta_label_service.py` — end-to-end training orchestrator
+- `app/services/signal_scoring_service.py` — 3-mode inference (A: explicit, B: auto-trigger, C: fallback)
+- `app/api/signal.py` — two endpoints: `POST /api/meta-label/train`, `POST /api/signal-score`
+- `app/trading/models.py` — `PaperTradingConfig.meta_label_enabled`, `default_score_threshold`
+- `app/trading/engine.py` — `place_order()` with meta-score gate + half-Kelly sizing
+- `scripts/p3_meta_label_benchmark.py` — live benchmark runner
+- `docs/benchmarks/p3_meta_label_benchmark.md` — honest report with AAPL/MSFT/GOOGL results
+
+### Test results
+- P3 new tests: **44 passed** (9 barrier + 5 purged-kfold + 3 metrics + 4 primary-signal + 3 event-features + 3 meta-label-service + 3 signal-scoring + 5 train-contract + 5 score-contract + 4 paper-trading)
+- P1+P2 regression: **66 passed** (no regressions)
+- Frontend build: ✓ (DashboardPage 63.06 KB gzipped)
+
+### Benchmark numbers (rsi_strategy, 2yr lookback)
+| Ticker | Events | CV AUC | precision@50 | E[R\|trade] | hit_rate |
+|--------|--------|--------|--------------|-------------|---------|
+| AAPL | 492 | 0.420 | — | — | — |
+| MSFT | 483 | 0.619 | — | — | — |
+| GOOGL | 486 | 0.607 | — | — | — |
+
+### Methodology note
+Honest framing: AUC ~0.5 (random) for AAPL suggests RSI primary signals on AAPL are weak with 2yr data. MSFT/GOOGL AUCs ~0.6 are marginally above chance — enough to warrant continued experimentation in P4 Signal Console. No overclaiming.
