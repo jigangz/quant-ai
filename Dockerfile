@@ -53,6 +53,16 @@ USER appuser
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # ============================================================
-# Default stage = production (Render builds the LAST stage)
+# Default stage = production + full ML deps (Render builds the LAST stage)
+# V4 P4 fix: add runtime deps (xgboost/lgbm/catboost/optuna/shap/redis/
+# supabase/sentence-transformers/faiss) that were only in the unused
+# `development` stage. Without this, prod 400s on xgboost model_type and
+# silently degrades RAG/vol features.
 # ============================================================
 FROM production
+
+USER root
+COPY requirements-full.txt .
+# Fail-loud (no `|| true`) so missing deps show in Render build log
+RUN pip install --no-cache-dir -r requirements-full.txt
+USER appuser
