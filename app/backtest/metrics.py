@@ -330,3 +330,60 @@ def generate_report_markdown(
     ])
 
     return "\n".join(lines)
+
+
+def calculate_meta_label_metrics(
+    y_true,
+    y_proba,
+    realized_r,
+    trade_threshold: float = 0.5,
+) -> dict:
+    """Meta-label specific metrics.
+
+    Args:
+        y_true: binary array (1 if primary was correct).
+        y_proba: predicted probabilities from meta-model.
+        realized_r: realized R multiples for each event (in trade's favor frame).
+        trade_threshold: probability cutoff above which the meta-model recommends trading.
+
+    Returns:
+        dict with keys:
+          - auc: ROC AUC (if both classes present; else 0.0)
+          - precision_at_threshold: fraction of "trade" events that were correct
+          - hit_rate_when_trade: identical to precision_at_threshold (alias for readability)
+          - expected_R_when_trade: mean realized_R over traded events
+          - trade_count: number of events where proba >= trade_threshold
+    """
+    import numpy as np
+    from sklearn.metrics import roc_auc_score
+
+    y_true = np.asarray(y_true)
+    y_proba = np.asarray(y_proba)
+    realized_r = np.asarray(realized_r)
+
+    trade_mask = y_proba >= trade_threshold
+    trade_count = int(trade_mask.sum())
+
+    if trade_count == 0:
+        precision = 0.0
+        expected_r = 0.0
+    else:
+        correct_and_trade = (y_true == 1) & trade_mask
+        precision = float(correct_and_trade.sum() / trade_count)
+        expected_r = float(realized_r[trade_mask].mean())
+
+    if len(np.unique(y_true)) < 2:
+        auc = 0.0
+    else:
+        try:
+            auc = float(roc_auc_score(y_true, y_proba))
+        except ValueError:
+            auc = 0.0
+
+    return {
+        "auc": auc,
+        "precision_at_threshold": precision,
+        "hit_rate_when_trade": precision,  # alias
+        "expected_R_when_trade": expected_r,
+        "trade_count": trade_count,
+    }

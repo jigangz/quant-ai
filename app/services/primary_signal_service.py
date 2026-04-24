@@ -146,12 +146,9 @@ def generate_primary_signals(
 
 def _build_features_for_model(ohlc: pd.DataFrame, metadata: dict) -> pd.DataFrame:
     """Reuse the same feature pipeline the model was trained with."""
-    from app.ml.features import get_feature_builders
-    feature_group = metadata.get("feature_group", "ta_basic")
-    builders = get_feature_builders([feature_group])
+    from app.ml.features.technical import add_technical_features
     df = ohlc.copy()
-    for b in builders:
-        df = b(df)
+    df = add_technical_features(df)
     feature_cols = [
         c for c in df.columns
         if c not in {"date", "open", "high", "low", "close", "volume"}
