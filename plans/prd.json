@@ -599,9 +599,10 @@
         "git commit 'feat(p4): api client + signalQueries hooks for meta-label endpoints (3 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
-      "notes": "See plan Task 2. Foundation for all frontend tasks."
+      "notes": "See plan Task 2. Foundation for all frontend tasks. 3/3 tests pass."
     },
     {
       "id": "P4-3",
@@ -616,9 +617,10 @@
         "git commit 'feat(p4): MetaLabelCoverageBadge component (3 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
-      "notes": "See plan Task 3. Reused in Strategy page + Signal Console."
+      "notes": "See plan Task 3. Reused in Strategy page + Signal Console. 3/3 tests pass."
     },
     {
       "id": "P4-4",
@@ -751,9 +753,10 @@
         "git commit 'feat(p4): AAPL Optuna rescue script + findings (success or honest-failure)'"
       ],
       "priority": "medium",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
-      "notes": "See plan Task 11. Either outcome is legitimate — no p-hacking."
+      "notes": "See plan Task 11. Honest failure: AUC=0.417 (<0.5). Wrote docs/benchmarks/p4_aapl_optuna.md + vault rejected note."
     },
     {
       "id": "P4-GATE",

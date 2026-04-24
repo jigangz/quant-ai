@@ -632,3 +632,22 @@
 - Plan doc Execution Results section appended
 - Tagged v4-p3-complete + push
 - All P3-1..P3-11 + P3-GATE passes: true in prd.json
+
+### Batch (P4-11, P4-2, P4-3) — completed 2026-04-24
+
+**P4-11: AAPL Optuna rescue attempt + findings**
+- Created `scripts/p4_aapl_optuna_rescue.py` — runs MetaLabelTrainRequest with search_mode='optuna', 30 trials
+- Result: AUC = 0.417 (honest failure, below 0.5) — Optuna could not lift AAPL × rsi_strategy
+- Wrote `docs/benchmarks/p4_aapl_optuna.md` with baseline vs Optuna comparison + interpretation
+- Wrote `D:/obsidian vault/Quant/03_Rejected/aapl_rsi_meta.md` with failure analysis and next investigations
+
+**P4-2: Frontend api client + signalQueries hooks + shared test wrapper**
+- `queryWrapper.jsx` and `signalQueries.js` were already created as prereqs in P4-10 batch
+- `client.js` already had getMetaLabelModels, getMetaCoverage, postSignalScore, postMetaLabelTrain
+- Created `__tests__/api/signalQueries.test.jsx` with 3 tests — 3/3 pass
+
+**P4-3: MetaLabelCoverageBadge reusable component**
+- Created `src/components/MetaLabelCoverageBadge.jsx`: useMetaCoverage, color variants (good/neutral/warn), clickable nav
+- Plan test uses makeQueryWrapper() only but component needs useNavigate — test wraps with both QueryClientProvider + MemoryRouter
+- Created `__tests__/components/MetaLabelCoverageBadge.test.jsx` with 3 tests — 3/3 pass
+- Build: ✓
