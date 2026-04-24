@@ -329,6 +329,220 @@
       "passes": true,
       "completed_at": "2026-04-20",
       "notes": "Final gate for Sub 1. Runs SOLO, not batched."
+    },
+    {
+      "id": "P3-1",
+      "title": "Triple-barrier label generator + meta-label target (V4 Phase 3)",
+      "acceptanceCriteria": [
+        "app/ml/labels/meta_label.py exists with triple_barrier_events(ohlc, signals, vol_series, tp_k, sl_k, timeout_days, signal_strengths=None) and TripleBarrierEvent dataclass",
+        "Dynamic vol-scaled barriers: tp_price = close × (1 + d × tp_k × vol_at_t0_minus_1); vol lagged by 1 bar for no look-ahead",
+        "realized_R in trade's favor frame (+tp_k at TP, −sl_k at SL, fractional at timeout); primary_direction_correct = (realized_R > 0)",
+        "Same-bar TP+SL ambiguity: conservative SL-first; zero-vol event dropped; NaN OHLC event dropped",
+        "tests/test_meta_label_barrier.py has 9 tests covering TP/SL/timeout/zero-vol/NaN/short-signal-symmetry, all pass",
+        "pytest tests/test_meta_label_barrier.py -v → 9 passed",
+        "git commit 'feat(p3): triple-barrier label generator + meta-label target (9 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 1. Pure function, no DB/model deps. Foundation for all P3 work."
+    },
+    {
+      "id": "P3-2",
+      "title": "Purged K-Fold CV splitter with embargo (V4 Phase 3 · Prado Ch.7)",
+      "acceptanceCriteria": [
+        "app/ml/split/purged_kfold.py exists with PurgedKFold class (n_splits, embargo_pct) and .split(events) → iterator[(train_idx, test_idx)]",
+        "Overlap purging: event_time..t1_hit_time intersecting test window excluded from train",
+        "Embargo: events within embargo_delta after test_t1_max excluded from train",
+        "Empty events raises ValueError with 'empty' in message; n_splits > event count → skip empty folds silently",
+        "tests/test_purged_kfold.py has 5 tests (n_splits count, purge correctness, embargo, empty, few-events), all pass",
+        "pytest tests/test_purged_kfold.py -v → 5 passed",
+        "git commit 'feat(p3): Purged K-Fold CV splitter with embargo (5 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 2. López de Prado Ch.7 methodology — critical for meta-labeling credibility."
+    },
+    {
+      "id": "P3-3",
+      "title": "Meta-label metrics (precision-at-K, expected_R, hit-rate)",
+      "acceptanceCriteria": [
+        "app/backtest/metrics.py has calculate_meta_label_metrics(y_true, y_proba, realized_r, trade_threshold=0.5) returning dict with keys: auc, precision_at_threshold, hit_rate_when_trade, expected_R_when_trade, trade_count",
+        "Zero trades → precision=0.0, expected_R=0.0, hit_rate=0.0, trade_count=0",
+        "Single-class y_true → auc=0.0 (not NaN)",
+        "tests/test_meta_metrics.py has 3 tests (basic, zero-trades, auc-finite), all pass",
+        "pytest tests/test_meta_metrics.py -v → 3 passed",
+        "git commit 'feat(p3): meta-label metrics (precision-at-K, expected_R, hit-rate)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 3. Extends existing backtest/metrics.py (matches P1 volatility pattern)."
+    },
+    {
+      "id": "P3-4",
+      "title": "Primary Signal Service — dual-source dispatch (rules + ML direction)",
+      "acceptanceCriteria": [
+        "app/services/primary_signal_service.py exists with PrimarySignalSpec pydantic model + generate_primary_signals(spec, ohlc) function",
+        "PrimarySignalSpec validates 'exactly one of strategy_name or primary_model_id' — both-given or neither-given raises ValueError",
+        "strategy dispatch: loads one of 4 rule strategies (ma_cross, rsi_strategy, bollinger_breakout, sentiment_driven) lazily",
+        "model dispatch: loads via _load_model_for_inference (wrapped for monkeypatchability); rejects non-classification primary with task/label_type guard",
+        "Returns (signals: Series[-1/0/+1], strengths: Series[0,1]); strengths=1.0 for rules, |proba-0.5|*2 for ML",
+        "tests/test_primary_signal_service.py has 4 tests (strategy dispatch, model dispatch w/ monkeypatch, both-source raise, neither-source raise), all pass",
+        "pytest tests/test_primary_signal_service.py -v → 4 passed",
+        "git commit 'feat(p3): PrimarySignalService — dispatch rules + ML direction primary (4 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 4. Depends on P3-1 done. Connects P1 direction model → P3 meta-labeling."
+    },
+    {
+      "id": "P3-5",
+      "title": "Event feature builder (lagged TA + vol + time-since-last)",
+      "acceptanceCriteria": [
+        "app/services/meta_label_features.py exists with build_event_features(ohlc_ta, events, vol_series, primary_source_key, feature_cols) → DataFrame",
+        "Features sliced at row-index(event_time) − 1 to avoid look-ahead",
+        "Adds signal_time_vol (from vol_series lagged), signal_strength (from events), time_since_last_signal (days since prior trigger; first event gets sentinel = len(ohlc_ta))",
+        "Empty events → empty DataFrame with correct columns",
+        "tests/test_meta_event_features.py has 3 tests (lag correctness, vol feature, time-since-last arithmetic), all pass",
+        "pytest tests/test_meta_event_features.py -v → 3 passed",
+        "git commit 'feat(p3): event feature builder (lagged features + vol + time-since-last)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 5. Used by both training (Task 6) and inference (Task 7) paths — same function = no feature drift."
+    },
+    {
+      "id": "P3-6",
+      "title": "Meta-Label Training Service — end-to-end orchestrator",
+      "acceptanceCriteria": [
+        "app/services/meta_label_service.py exists with MetaLabelTrainRequest pydantic model + train_meta_label_model(req) function",
+        "Pipeline: fetch OHLC → ta_basic features → primary signals → vol_series → triple_barrier_events → build_event_features → PurgedKFold CV → final XGBoost fit on all events → register in ModelRegistry",
+        "vol_source='p1_model' auto-fallback to realized_sigma if no vol model available (with warning added to response)",
+        "Insufficient events (<30) raises ValueError('insufficient_events: ...')",
+        "Returns dict with success, model_id, event_count, class_balance, cv_metrics (auc_mean/std, precision_at_50, expected_R_when_trade, hit_rate_when_trade, folds_used), barrier_config_used, warnings",
+        "app/ml/labels/registry.py _not_implemented_meta_label has updated error message pointing to new service",
+        "tests/test_meta_label_service.py has 3 tests (end-to-end w/ rsi_strategy + mocked OHLC, insufficient_events raise, p1_model fallback warning), all pass",
+        "pytest tests/test_meta_label_service.py -v → 3 passed",
+        "git commit 'feat(p3): MetaLabelTrainingService end-to-end orchestrator (3 integration tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 6. Depends on P3-1..P3-5. Largest single task (~200 LOC). Tests use monkeypatch for OHLC fetch and ModelRegistry."
+    },
+    {
+      "id": "P3-7",
+      "title": "Signal Scoring Service — 3-mode inference (A/B/C)",
+      "acceptanceCriteria": [
+        "app/services/signal_scoring_service.py exists with SignalScoreRequest pydantic model + score_signal(req) function",
+        "Mode A (explicit signal): {signal, timestamp} → features at timestamp → meta_model.predict_proba → reliability_score + expected_R + recommended_action (trade/reduce/skip) + half-Kelly sizing_hint",
+        "Mode B (auto-trigger): {strategy_name or primary_model_id} → run primary → latest non-zero signal → feed into Mode A path; if silent return {triggered: false, signal: 0, reason}",
+        "Mode C fallback: both given → A wins; neither given → triggered=false with reason",
+        "meta_model_not_found raises ValueError('meta_model_not_found:<id>')",
+        "Recommended action: score≥0.65 trade, 0.45≤score<0.65 reduce, <0.45 skip",
+        "tests/test_signal_scoring_service.py has 3 tests (mode A explicit, mode B silent strategy, mode C A-wins with both), all pass",
+        "pytest tests/test_signal_scoring_service.py -v → 3 passed",
+        "git commit 'feat(p3): SignalScoringService — 3-mode inference (A/B/C) (3 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 7. Depends on P3-5 (shared feature builder) and P3-6 (ModelRegistry access pattern)."
+    },
+    {
+      "id": "P3-8",
+      "title": "POST /api/meta-label/train endpoint",
+      "acceptanceCriteria": [
+        "app/api/signal.py exists with MetaLabelTrainRequestAPI pydantic schema (nested primary/barrier/cv/model/window) + @router.post('/api/meta-label/train')",
+        "Maps API request → internal MetaLabelTrainRequest → calls meta_label_service.train_meta_label_model",
+        "ValueError with 'insufficient_' or 'no_usable_folds' → HTTPException 400",
+        "ValueError with 'not found' → HTTPException 404",
+        "Pydantic validation failures → 422 (tp_k<=0, etc.)",
+        "app/main.py imports signal router + app.include_router(signal.router, tags=['Meta-Labeling'])",
+        "tests/contract/test_meta_label_train.py has 5 tests (200 strategy primary, 200 model primary, 422 invalid tp_k, 400 insufficient_events, 422 primary source conflict), all pass",
+        "pytest tests/contract/test_meta_label_train.py -v → 5 passed",
+        "git commit 'feat(p3): POST /api/meta-label/train endpoint (5 contract tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 8. First of 2 new endpoints. Wires router in main.py."
+    },
+    {
+      "id": "P3-9",
+      "title": "POST /api/signal-score endpoint",
+      "acceptanceCriteria": [
+        "app/api/signal.py has SignalScoreRequestAPI pydantic schema + @router.post('/api/signal-score')",
+        "Maps API request → internal SignalScoreRequest → calls signal_scoring_service.score_signal",
+        "meta_model_not_found / primary_model_not_found → 404",
+        "timestamp_out_of_range → 400",
+        "Mode A / Mode B / silent-strategy all return 200 with appropriate triggered flag",
+        "tests/contract/test_signal_score.py has 5 tests (mode A, mode B silent, A wins with both, 404 missing model, 200 ambiguous returns triggered:false), all pass",
+        "pytest tests/contract/test_signal_score.py -v → 5 passed",
+        "git commit 'feat(p3): POST /api/signal-score endpoint with 3-mode logic (5 contract tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 9. Second endpoint, appended to app/api/signal.py."
+    },
+    {
+      "id": "P3-10",
+      "title": "Paper Trading meta-label integration (backend only — UI is P4)",
+      "acceptanceCriteria": [
+        "app/trading/models.py::PaperTradingConfig has new fields: meta_label_enabled (default False) + default_score_threshold (default 0.55)",
+        "app/trading/engine.py place_order accepts optional meta_model_id + score_threshold params",
+        "When meta_model_id=None: byte-identical to pre-P3 behavior (existing backtest_flow tests still pass)",
+        "When meta_model_id given: calls signal_scoring_service.score_signal; score<threshold → OrderRejected(reason='meta_score_below_threshold:...')",
+        "When score>=threshold: qty adjusted by half_kelly_fraction (clamped to >=1)",
+        "meta_model_not_found → OrderRejected(reason='meta_model_error:...')",
+        "tests/test_paper_trading_meta.py has 4 tests (legacy path no-op, reject below threshold, sized order above threshold, missing meta-model clean reject), all pass",
+        "tests/contract/test_backtest_flow.py regression still green (no breaking change)",
+        "pytest tests/test_paper_trading_meta.py tests/contract/test_backtest_flow.py -v → all pass",
+        "git commit 'feat(p3): Paper Trading meta-label gate + half-Kelly sizing (4 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 10. UI (meta_label_enabled toggle + threshold slider + score display) deferred to P4 tomorrow."
+    },
+    {
+      "id": "P3-11",
+      "title": "Live benchmark script + honest report (AAPL+MSFT+GOOGL × rsi)",
+      "acceptanceCriteria": [
+        "scripts/p3_meta_label_benchmark.py exists; runs 3 tickers × rsi_strategy end-to-end via meta_label_service.train_meta_label_model",
+        "Writes docs/benchmarks/p3_meta_label_benchmark.md with: per-ticker table (events, class_balance, cv_auc, precision@50, E[R|trade], hit_rate, folds, time), interpretation section, honest framing paragraph",
+        "Report matches P1 benchmark in tone: methodology-first, no overclaiming numbers",
+        "Failures on individual tickers (e.g. insufficient_events) render as error row in table — don't crash the benchmark",
+        "Copy of report saved to D:/obsidian vault/01-projects/quant-ai/p3-benchmark-2026-04-24.md",
+        "python -m scripts.p3_meta_label_benchmark exits cleanly (0 or reports errors inline)",
+        "git commit 'feat(p3): live benchmark script + honest report (AAPL+MSFT+GOOGL × rsi)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 11. Uses live yfinance data. Run AFTER P3-1..P3-10 all green."
+    },
+    {
+      "id": "P3-GATE",
+      "title": "P3 GATE — full regression + progress log + tag release",
+      "acceptanceCriteria": [
+        "All P3-1..P3-11 tasks have passes: true in prd.json",
+        "pytest tests/test_labels.py tests/test_ensemble_training.py tests/contract/test_train_flow.py tests/contract/test_predict_volatility.py tests/test_models_filter.py tests/test_agents_model_metadata.py tests/test_model_registry_label_type.py -v → all green (P1+P2 regression guard)",
+        "pytest tests/test_meta_label_barrier.py tests/test_purged_kfold.py tests/test_meta_metrics.py tests/test_primary_signal_service.py tests/test_meta_event_features.py tests/test_meta_label_service.py tests/test_signal_scoring_service.py tests/contract/test_meta_label_train.py tests/contract/test_signal_score.py tests/test_paper_trading_meta.py -v → 25-35 passed (new P3 tests)",
+        "D:/obsidian vault/01-projects/quant-ai/ml-pivot-progress.md has Day 13 Sprint entry appended with: delivered files, test count, methodology note, design/plan trace links, P4 preview",
+        "Code repo: git tag -a v4-p3-complete -m 'V4 Pivot P3 Meta-Labeling backend complete' + git push origin main --follow-tags",
+        "curl -s -m 30 -X POST https://quant-ai-qzrg.onrender.com/api/meta-label/train -H 'Content-Type: application/json' -d '{\"ticker\":\"AAPL\",\"primary\":{\"source\":\"strategy\",\"strategy_name\":\"rsi_strategy\"},\"barrier\":{\"tp_k\":2.0,\"sl_k\":1.0,\"timeout_days\":5,\"vol_source\":\"realized_sigma\"},\"cv\":{\"n_splits\":5,\"embargo_pct\":0.01},\"model\":{\"type\":\"xgboost\"},\"window\":{\"lookback_days\":730,\"feature_group\":\"ta_basic\"}}' does NOT return 500 (200 with model_id OR 400 with insufficient_events both acceptable)",
+        "This task is a GATE — ALL criteria must pass before marking passes:true"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
+      "notes": "See plan Task 12. Final gate — runs SOLO after P3-11. Validates full P3 ship."
     }
   ]
 }
