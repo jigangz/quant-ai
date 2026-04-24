@@ -555,6 +555,220 @@
       "completed_at": "2026-04-23",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
       "notes": "44 P3 tests pass + 66 P1/P2 regression tests pass. Frontend build ✓. Obsidian Day 13 Sprint entry appended. Tagged v4-p3-complete."
+    },
+    {
+      "id": "P4-0",
+      "title": "P3 carryover — app/main.py version bump 2.1.0 → 2.4.0",
+      "acceptanceCriteria": [
+        "app/main.py root handler and health response both return version '2.4.0'",
+        "python -c 'from app.main import app; print(\"ok\")' → prints ok",
+        "git commit 'fix(p4): version bump 2.1.0 -> 2.4.0 (P3 carryover)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 0. Small P3 carryover. Verified via prod smoke in P4-GATE."
+    },
+    {
+      "id": "P4-1",
+      "title": "Backend GET /api/meta-label/coverage endpoint + compute_coverage",
+      "acceptanceCriteria": [
+        "app/services/signal_scoring_service.py adds KNOWN_STRATEGIES, _list_meta_records(), compute_coverage(strategy_name) → dict{strategy_name, count, max_auc, avg_auc, tickers, models}",
+        "compute_coverage raises ValueError('strategy_not_found:X') for unknown strategy",
+        "app/api/signal.py adds @router.get('/api/meta-label/coverage') with query param 'strategy'; maps 'strategy_not_found' → 404",
+        "tests/contract/test_meta_coverage.py has 5 tests (200 w/ 3 models · 200 w/ 0 models · 404 unknown · aggregation math · skip malformed), all pass",
+        "pytest tests/contract/test_meta_coverage.py -v → 5 passed",
+        "git commit 'feat(p4): GET /api/meta-label/coverage endpoint + compute_coverage (5 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 1. Foundation for Strategy card badges + Signal Console."
+    },
+    {
+      "id": "P4-2",
+      "title": "Frontend api client + signalQueries hooks + shared test wrapper",
+      "acceptanceCriteria": [
+        "quant-ai-ui/__tests__/_helpers/queryWrapper.jsx exports makeQueryWrapper() with QueryClientProvider",
+        "quant-ai-ui/src/api/client.js adds getMetaLabelModels(ticker), getMetaCoverage(strategyName), postSignalScore(payload), postMetaLabelTrain(payload)",
+        "quant-ai-ui/src/api/signalQueries.js exports useMetaLabelModels, useMetaCoverage (with 404-skip retry), useSignalScorePreview, useMetaLabelTrain",
+        "quant-ai-ui/__tests__/api/signalQueries.test.jsx has 3 tests (models query, coverage query, score mutation), all pass",
+        "npm run test -- --run __tests__/api/signalQueries.test.jsx → 3 passed",
+        "git commit 'feat(p4): api client + signalQueries hooks for meta-label endpoints (3 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 2. Foundation for all frontend tasks."
+    },
+    {
+      "id": "P4-3",
+      "title": "MetaLabelCoverageBadge reusable component",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/components/MetaLabelCoverageBadge.jsx takes {strategyName} prop, uses useMetaCoverage, renders 'Meta ✓ N · AUC 0.XX' with color variants (good/neutral/warn)",
+        "Renders null when count=0 or query 404s (defensive)",
+        "data-variant='warn' when avg_auc<0.5 (amber tint + ⚠)",
+        "Clickable — navigates to /signal-console?strategy=<name>",
+        "quant-ai-ui/__tests__/components/MetaLabelCoverageBadge.test.jsx has 3 tests (renders w/ coverage · hides w/ count:0 · warn variant), all pass",
+        "npm run test -- --run __tests__/components/MetaLabelCoverageBadge.test.jsx → 3 passed",
+        "git commit 'feat(p4): MetaLabelCoverageBadge component (3 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 3. Reused in Strategy page + Signal Console."
+    },
+    {
+      "id": "P4-4",
+      "title": "TickerPicker component — watchlist-scoped selector",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/features/signal-console/TickerPicker.jsx loads tickers from localStorage 'quant-ai:watchlist', renders clickable pill per ticker",
+        "Multi-select: click toggles; capped at 10 tickers max",
+        "Props: {selected: string[], onChange: (tickers) => void}",
+        "quant-ai-ui/__tests__/features/signal-console/TickerPicker.test.jsx has 3 tests (load from localStorage · toggle · 10-cap), all pass",
+        "npm run test -- --run __tests__/features/signal-console/TickerPicker.test.jsx → 3 passed",
+        "git commit 'feat(p4): TickerPicker with 10-ticker cap + localStorage (3 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 4."
+    },
+    {
+      "id": "P4-5",
+      "title": "StrategyMatrix — ticker x strategy grid with CTA cells",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/features/signal-console/StrategyMatrix.jsx renders rows=tickers, 4 cols (ma_cross/rsi_strategy/bollinger_breakout/sentiment_driven)",
+        "Each cell: if model exists → AUC + E[R] display with data-cell + data-variant (good/neutral/warn); else → 'Train meta' CTA button",
+        "onSelect callback fires with {ticker, strategy, model_id} when model cell clicked",
+        "onTrain callback fires with {ticker, strategy} when CTA clicked",
+        "Props: {tickers, onSelect, onTrain}",
+        "quant-ai-ui/__tests__/features/signal-console/StrategyMatrix.test.jsx has 4 tests (4 cols rendered · Train CTA · onSelect callback · warn variant), all pass",
+        "npm run test -- --run __tests__/features/signal-console/StrategyMatrix.test.jsx → 4 passed",
+        "git commit 'feat(p4): StrategyMatrix — ticker x strategy grid (4 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 5. Depends on P4-2 (hooks) + P4-3 (badge uses same variant palette)."
+    },
+    {
+      "id": "P4-6",
+      "title": "SignalDetail right panel",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/features/signal-console/SignalDetail.jsx takes {selection: {ticker, strategy, model_id} | null}",
+        "selection=null → shows 'Select a cell' placeholder",
+        "selection set → calls useSignalScorePreview mutation on mount, displays score/E[R]/action/sizing/primary_source",
+        "triggered=false → shows 'Strategy silent' message with reason",
+        "Action color: trade=emerald, reduce=amber, skip=rose",
+        "quant-ai-ui/__tests__/features/signal-console/SignalDetail.test.jsx has 3 tests (triggered render · silent render · null selection render), all pass",
+        "npm run test -- --run __tests__/features/signal-console/SignalDetail.test.jsx → 3 passed",
+        "git commit 'feat(p4): SignalDetail right panel (3 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 6. Depends on P4-2."
+    },
+    {
+      "id": "P4-7",
+      "title": "SignalConsolePage + /signal-console route + TopNavBar link",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/pages/SignalConsolePage.jsx imports TickerPicker + StrategyMatrix + SignalDetail, manages selectedTickers (default [AAPL, MSFT, GOOGL]) + selection state",
+        "Reads ?strategy= query param for filter display",
+        "onTrain handler calls useMetaLabelTrain with default payload, sets selection to new model_id on success",
+        "quant-ai-ui/src/App.jsx adds <Route path='/signal-console' element={<SignalConsolePage />} />",
+        "quant-ai-ui/src/components/layout/TopNavBar.jsx adds <Link to='/signal-console'>信号</Link>",
+        "quant-ai-ui/__tests__/pages/SignalConsolePage.test.jsx has 2 tests (mounts 3 sections · reads query param without crash), all pass",
+        "npm run test -- --run __tests__/pages/SignalConsolePage.test.jsx → 2 passed",
+        "git commit 'feat(p4): SignalConsolePage + /signal-console route + TopNav link (2 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 7. Depends on P4-4 + P4-5 + P4-6."
+    },
+    {
+      "id": "P4-8",
+      "title": "Strategy Card badge integration",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/features/strategy/StrategyCard.jsx imports and embeds <MetaLabelCoverageBadge strategyName={strategy.name} /> in header",
+        "quant-ai-ui/__tests__/features/strategy/StrategyCard.test.jsx has 2 tests (badge renders w/ coverage · hides w/o coverage), all pass",
+        "npm run test -- --run __tests__/features/strategy/StrategyCard.test.jsx → 2 passed",
+        "git commit 'feat(p4): embed MetaLabelCoverageBadge in StrategyCard (2 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 8. Depends on P4-3."
+    },
+    {
+      "id": "P4-9",
+      "title": "Paper Trading modal meta-label filter (checkbox + dropdown + slider + preview)",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/pages/TradingPage.jsx (or order form sub-component) adds opt-in meta-label section gated by checkbox (aria-label='Use meta-label filter', off by default)",
+        "When checked: shows Meta model dropdown (useMetaLabelModels), Threshold slider (0.45-0.85 step 0.01 default 0.55), '预览 score' button, score+sizing display",
+        "Preview button triggers postSignalScore mutation with {ticker, meta_model_id, signal: +1|-1}",
+        "Order submit payload includes meta_model_id + score_threshold when enabled",
+        "quant-ai-ui/__tests__/pages/TradingPage.meta.test.jsx has 4 tests (checkbox renders off · expand on check · preview triggers API · score displays), all pass",
+        "npm run test -- --run __tests__/pages/TradingPage.meta.test.jsx → 4 passed",
+        "tests/test_paper_trading_meta.py still pass (backend gate unchanged)",
+        "git commit 'feat(p4): Paper Trading modal meta-label filter (checkbox + dropdown + slider + preview) (4 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 9. Depends on P4-2."
+    },
+    {
+      "id": "P4-10",
+      "title": "Dashboard VolatilityCard 7d signal-quality sparkline",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/features/signal-console/MetaSparkline.jsx takes {ticker} prop, uses useMetaLabelModels, postSignalScore for 7 days",
+        "Renders inline SVG polyline when model exists + ≥1 triggered day; returns null when no model",
+        "quant-ai-ui/src/features/dashboard/VolatilityCard.jsx imports and embeds <MetaSparkline ticker={ticker} />",
+        "quant-ai-ui/__tests__/features/signal-console/MetaSparkline.test.jsx has 2 tests (renders when model exists · hidden when absent), all pass",
+        "npm run test -- --run __tests__/features/signal-console/MetaSparkline.test.jsx → 2 passed",
+        "git commit 'feat(p4): Dashboard VolatilityCard 7d signal-quality sparkline (2 tests)'"
+      ],
+      "priority": "medium",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 10. Optional polish — keep simple inline SVG (no new deps)."
+    },
+    {
+      "id": "P4-11",
+      "title": "AAPL Optuna rescue attempt + findings",
+      "acceptanceCriteria": [
+        "scripts/p4_aapl_optuna_rescue.py runs POST /api/meta-label/train on AAPL x rsi_strategy with search_mode='optuna'",
+        "Writes docs/benchmarks/p4_aapl_optuna.md with baseline vs Optuna AUC + interpretation",
+        "If AUC >= 0.5: success interpretation + vault copy p4-aapl-rescue.md",
+        "If AUC < 0.5: honest failure path + D:/obsidian vault/Quant/03_Rejected/aapl_rsi_meta.md note",
+        "python -m scripts.p4_aapl_optuna_rescue exits cleanly (0) reporting final AUC",
+        "git commit 'feat(p4): AAPL Optuna rescue script + findings (success or honest-failure)'"
+      ],
+      "priority": "medium",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 11. Either outcome is legitimate — no p-hacking."
+    },
+    {
+      "id": "P4-GATE",
+      "title": "P4 GATE — regression + progress log + tags + live smoke",
+      "acceptanceCriteria": [
+        "All P4-0..P4-11 tasks have passes: true in prd.json",
+        "cd quant-ai-ui && npm run test -- --run && npm run lint && npm run build — all clean",
+        "pytest tests/contract/test_meta_coverage.py tests/contract/test_meta_label_train.py tests/contract/test_signal_score.py tests/test_paper_trading_meta.py tests/test_meta_label_barrier.py tests/test_purged_kfold.py tests/test_labels.py tests/test_ensemble_training.py tests/contract/test_train_flow.py -v → all green",
+        "D:/obsidian vault/01-projects/quant-ai/ml-pivot-progress.md has Day 14 Sprint entry appended with: delivered files, test count, 'Gate 1 COMPLETE' badge",
+        "D:/obsidian vault/01-projects/quant-ai/master-roadmap.md P4 section + Gate 1 line marked ✅ COMPLETE",
+        "git tag -a v4-p4-complete + v4-gate-1-complete + git push origin main --follow-tags",
+        "Post-deploy live smoke: curl https://quant-ai-qzrg.onrender.com/health returns version 2.4.0 · /api/meta-label/coverage?strategy=rsi_strategy returns 200 · https://quant-ai-ui.vercel.app/signal-console returns HTTP 200",
+        "This task is a GATE — ALL criteria must pass before marking passes:true"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
+      "notes": "See plan Task 12. Final gate for V4 Pivot Gate 1. Runs SOLO after P4-11."
     }
   ]
 }
