@@ -31,6 +31,7 @@ from app.api import (
     trading,
     functions,
     optimize,
+    signal,
 )
 
 # ===================================
@@ -167,6 +168,7 @@ app.include_router(news.router, tags=["News Data"])
 app.include_router(trading.router, tags=["Paper Trading"])
 app.include_router(functions.router, tags=["Functions"])
 app.include_router(optimize.router)
+app.include_router(signal.router, tags=["Meta-Labeling"])
 
 
 # ===================================
