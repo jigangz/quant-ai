@@ -475,9 +475,10 @@
         "git commit 'feat(p3): POST /api/meta-label/train endpoint (5 contract tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-23",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
-      "notes": "See plan Task 8. First of 2 new endpoints. Wires router in main.py."
+      "notes": "5 contract tests pass. Created app/api/signal.py with MetaLabelTrainRequestAPI + router. Wired signal.router in main.py."
     },
     {
       "id": "P3-9",
@@ -493,9 +494,10 @@
         "git commit 'feat(p3): POST /api/signal-score endpoint with 3-mode logic (5 contract tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-23",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
-      "notes": "See plan Task 9. Second endpoint, appended to app/api/signal.py."
+      "notes": "5 contract tests pass. Appended SignalScoreRequestAPI + /api/signal-score endpoint to app/api/signal.py."
     },
     {
       "id": "P3-10",

@@ -546,6 +546,21 @@
 - Bug fix: plan's `_ohlc(n)` helper always produced 30 items regardless of n — fixed to produce exactly n rows using `n // 2` splits
 - 4/4 tests pass
 
+### Batch (P3-8, P3-9) — completed 2026-04-23
+
+**P3-8: POST /api/meta-label/train endpoint**
+- Created `app/api/signal.py` with `MetaLabelTrainRequestAPI` (nested _BarrierIn/_CVIn/_ModelIn/_WindowIn schemas) and `@router.post('/api/meta-label/train')`
+- Maps API request → MetaLabelTrainRequest → calls meta_label_service.train_meta_label_model
+- ValueError with 'insufficient_' or 'no_usable_folds' → 400; 'not found' → 404
+- Wired `signal.router` in `app/main.py` with tags=["Meta-Labeling"]
+- 5/5 contract tests pass
+
+**P3-9: POST /api/signal-score endpoint**
+- Appended `SignalScoreRequestAPI` + `@router.post('/api/signal-score')` to `app/api/signal.py`
+- meta_model_not_found/primary_model_not_found → 404; timestamp_out_of_range → 400
+- Mode A/B/silent-strategy all return 200 with appropriate triggered flag
+- 5/5 contract tests pass
+
 ### Batch (P3-5, P3-6, P3-7) — completed 2026-04-23
 
 **P3-5: Event feature builder**
