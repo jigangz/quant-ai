@@ -27,14 +27,17 @@ import { useModelsForTickerByLabelType } from "@/api/queries";
 // Deferred (polish for post-MVP): Optuna control, progress-bar streaming,
 // preset library expansion, model deletion, search box.
 
+// V4 P4: the prod build (Render free tier) only ships
+// logistic/random_forest/ensemble — xgboost/lightgbm/catboost would OOM on
+// build. Local + paid-tier users can still use xgboost via "自定义训练".
 const PRESETS = {
   direction: [
-    { id: "xgb_dir_default", label: "⚡ 快速 XGBoost", model_type: "xgboost", horizon_days: 5 },
+    { id: "rf_dir_default", label: "🌲 快速 RandomForest", model_type: "random_forest", horizon_days: 5 },
     { id: "logistic_dir", label: "🎯 稳健 Logistic", model_type: "logistic", horizon_days: 5 },
   ],
   volatility: [
-    { id: "xgb_vol_default", label: "⚡ 快速 XGBoost", model_type: "xgboost", horizon_days: 5 },
-    { id: "rf_vol_default", label: "🌲 稳健 RandomForest", model_type: "random_forest", horizon_days: 5 },
+    { id: "rf_vol_default", label: "🌲 快速 RandomForest", model_type: "random_forest", horizon_days: 5 },
+    { id: "logistic_vol", label: "🎯 稳健 Logistic", model_type: "logistic", horizon_days: 5 },
   ],
 };
 
