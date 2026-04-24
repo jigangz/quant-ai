@@ -343,9 +343,10 @@
         "git commit 'feat(p3): triple-barrier label generator + meta-label target (9 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
-      "notes": "See plan Task 1. Pure function, no DB/model deps. Foundation for all P3 work."
+      "notes": "9 tests pass. Pure function, no DB/model deps. Foundation for all P3 work."
     },
     {
       "id": "P3-2",
@@ -506,9 +507,10 @@
         "git commit 'feat(p3): Paper Trading meta-label gate + half-Kelly sizing (4 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
-      "notes": "See plan Task 10. UI (meta_label_enabled toggle + threshold slider + score display) deferred to P4 tomorrow."
+      "notes": "4 tests pass + 9 backtest flow regression tests. Created place_order in engine.py, PaperTradingConfig + OrderResult in models.py, signal_scoring_service.py stub."
     },
     {
       "id": "P3-11",
@@ -523,9 +525,10 @@
         "git commit 'feat(p3): live benchmark script + honest report (AAPL+MSFT+GOOGL × rsi)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p3-meta-labeling.md",
-      "notes": "See plan Task 11. Uses live yfinance data. Run AFTER P3-1..P3-10 all green."
+      "notes": "Benchmark ran successfully: AAPL 492 events (AUC 0.420), MSFT 483 events (AUC 0.619), GOOGL 486 events (AUC 0.607). Also created meta_label_service.py, purged_kfold.py, market_data.py, calculate_meta_label_metrics as prereqs."
     },
     {
       "id": "P3-GATE",

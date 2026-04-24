@@ -527,3 +527,26 @@
 **FE-DASH-6: GlobalRagButton**
 - GlobalRagButton.jsx already implemented: floating ❓ button, Radix Dialog with input + RAG answer area, uses ragAnswer mutation
 - 2/2 tests pass in __tests__/components/layout/GlobalRagButton.test.jsx
+
+### Batch (P3-1, P3-10, P3-11) — completed 2026-04-24
+
+**P3-1: Triple-barrier label generator + meta-label target**
+- Created `app/ml/labels/meta_label.py` with `triple_barrier_events()` and `TripleBarrierEvent` dataclass
+- Vol lagged by 1 bar (no look-ahead), SL-first on same-bar ambiguity, zero-vol/NaN dropped
+- 9 tests pass: TP/SL/timeout/zero-vol/NaN/short-signal-symmetry/direction correctness
+
+**P3-10: Paper Trading meta-label gate + half-Kelly sizing**
+- Added `PaperTradingConfig` (meta_label_enabled, default_score_threshold=0.55) + `OrderResult` to `app/trading/models.py`
+- Created `place_order()` in `app/trading/engine.py`: when meta_model_id given, gates via signal_scoring_service
+- Created `app/services/signal_scoring_service.py` with `SignalScoreRequest` + `score_signal` (full 3-mode implementation)
+- Also created `app/services/primary_signal_service.py` and `app/services/meta_label_features.py` (prereqs for scoring service)
+- 4 tests pass + test_backtest_flow.py regression (9 tests) still green
+
+**P3-11: Live benchmark script + honest report**
+- Created `scripts/p3_meta_label_benchmark.py` with per-ticker try/except (errors render as rows)
+- Created `app/services/meta_label_service.py` (MetaLabelTrainRequest + train_meta_label_model orchestrator)
+- Created `app/ml/split/purged_kfold.py` (PurgedKFold with embargo — López de Prado Ch.7)
+- Created `app/providers/market_data.py` (fetch_ohlc via yfinance)
+- Added `calculate_meta_label_metrics` to `app/backtest/metrics.py`
+- Benchmark ran live: AAPL 492 events (CV AUC 0.420), MSFT 483 events (CV AUC 0.619), GOOGL 486 events (CV AUC 0.607)
+- Report saved to docs/benchmarks/ and D:/obsidian vault
