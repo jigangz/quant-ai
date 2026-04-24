@@ -12,6 +12,7 @@ export default function MetaSparkline({ ticker }) {
   useEffect(() => {
     if (!model?.model_id) return;
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     (async () => {
       const now = new Date();

@@ -9,6 +9,7 @@ export default function TickerPicker({ selected = [], onChange }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAvailable(raw ? JSON.parse(raw) : []);
     } catch {
       setAvailable([]);

@@ -6,6 +6,7 @@ export default function SignalDetail({ selection }) {
   const [resp, setResp] = useState(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setResp(null);
     if (!selection?.model_id) return;
     preview.mutate(
