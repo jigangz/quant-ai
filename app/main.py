@@ -75,7 +75,7 @@ async def lifespan(app: FastAPI):
 # ===================================
 app = FastAPI(
     title="Quant AI Backend",
-    version="2.0.0",
+    version="2.4.0",
     description="Quantitative research and prediction platform",
     lifespan=lifespan,
 )
@@ -179,7 +179,7 @@ async def root():
     """Root endpoint with API info."""
     return {
         "name": "Quant AI Backend",
-        "version": "2.0.0",
+        "version": "2.4.0",
         "docs": "/docs",
         "health": "/health",
     }
