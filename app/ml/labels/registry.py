@@ -28,8 +28,10 @@ if TYPE_CHECKING:
 
 def _not_implemented_meta_label(df: pd.DataFrame, cfg: "LabelConfig") -> pd.DataFrame:
     raise NotImplementedError(
-        "meta_label generator is a V4 Phase 3 target (López de Prado triple-barrier). "
-        "Tracking: ml-pivot-task-plan.md Phase 3."
+        "meta_label is not produced by DatasetBuilder's uniform pipeline. "
+        "Meta-labeling is event-indexed (one row per primary signal), not "
+        "time-indexed. Use POST /api/meta-label/train or call "
+        "app.services.meta_label_service.train_meta_label_model() directly."
     )
 
 
