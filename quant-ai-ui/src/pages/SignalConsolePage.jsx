@@ -19,9 +19,10 @@ export default function SignalConsolePage() {
         primary: { source: "strategy", strategy_name: strategy },
         barrier: { tp_k: 2.0, sl_k: 1.0, timeout_days: 5, vol_source: "realized_sigma" },
         cv: { n_splits: 5, embargo_pct: 0.01 },
-        // V4 P4: random_forest is the prod-safe default (Render free tier
-        // build doesn't ship xgboost). Users can override via Custom Train.
-        model: { type: "random_forest" },
+        // /api/meta-label/train schema accepts: xgboost | lightgbm | ensemble.
+        // xgboost is the default per spec — works on Render after the
+        // libgomp1 install (Dockerfile c305be0).
+        model: { type: "xgboost" },
         window: { lookback_days: 730, feature_group: "ta_basic" },
       },
       {
