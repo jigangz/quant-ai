@@ -21,6 +21,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Production stage
 FROM base as production
 
+# System libs needed at runtime by ML wheels:
+#   libgomp1 — OpenMP runtime required by lightgbm's native binary.
+#              Without it: `OSError: libgomp.so.1: cannot open shared object file`
+#              the moment `import lightgbm` runs at app startup.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
