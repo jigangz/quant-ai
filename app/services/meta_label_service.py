@@ -165,6 +165,21 @@ def _register_meta_model(
             "cv_auc_mean": cv_metrics.get("auc_mean", 0.0),
             "precision_at_50": cv_metrics.get("precision_at_50", 0.0),
         },
+        # V4 P4: persist meta-label config so /api/meta-label/coverage can
+        # filter+aggregate by primary strategy. Without this, registered
+        # meta-models show up under list_models() but coverage can't tell
+        # which primary strategy they belong to.
+        extras={
+            "meta_label": {
+                "primary": primary.model_dump() if hasattr(primary, "model_dump") else dict(primary),
+                "barrier": barrier_cfg,
+                "cv": cv_cfg,
+                "event_count": event_count,
+                "class_balance": class_balance,
+                "feature_set": feature_cols,
+                "p1_vol_model_id_used": p1_vol_model_id,
+            }
+        },
         artifact_path=str(model_path),
         status="active",
     )

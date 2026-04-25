@@ -50,6 +50,12 @@ class ModelRecord(BaseModel):
     # Metrics
     metrics: dict[str, float] = {}
 
+    # Free-form extras (V4 P3/P4): meta-label specific config
+    # ({primary: {source, strategy_name, ...}, barrier: {...}, cv: {...},
+    #   feature_set: [...], event_count, class_balance})
+    # Preserved on read; persists through JSON / Supabase round-trips.
+    extras: dict[str, Any] = {}
+
     # Storage
     artifact_path: str | None = None
     storage_backend: str = "local"

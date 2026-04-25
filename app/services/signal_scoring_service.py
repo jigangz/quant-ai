@@ -171,23 +171,35 @@ KNOWN_STRATEGIES = {"ma_cross", "rsi_strategy", "bollinger_breakout", "sentiment
 
 
 def _list_meta_records() -> list[dict]:
-    """Return all registered meta-label model records. Wrapped for monkeypatch in tests."""
-    from app.services.model_cache import get_model_cache
-    cache = get_model_cache()
+    """Return all registered meta-label model records.
+
+    Reads from the actual ModelRegistry (LocalModelRegistry or
+    SupabaseModelRegistry) — the same place `_register_meta_model` writes
+    to. Each entry is shaped {model_id, metadata{ticker, label_type, ...},
+    extras{meta_label: {...}}, metrics} so coverage can filter by primary
+    strategy. Wrapped as a function so contract tests can monkeypatch.
+    """
     try:
-        all_records = cache.list_all(label_type="meta_label")
-    except AttributeError:
-        # Fallback path: older ModelCache may not expose list_all
-        all_records = []
-        for model_id in getattr(cache, "_index", {}).keys():
-            info = cache.load(model_id)
-            if info and info.metadata.get("label_type") == "meta_label":
-                all_records.append({
-                    "model_id": model_id,
-                    "metadata": info.metadata,
-                    "extras": info.extras or {},
-                })
-    return all_records
+        from app.db.model_registry import get_model_registry
+        registry = get_model_registry()
+        records = registry.list_models(label_type="meta_label", limit=200)
+    except Exception:
+        return []
+
+    out: list[dict] = []
+    for rec in records:
+        ticker = rec.tickers[0] if rec.tickers else None
+        out.append({
+            "model_id": rec.id,
+            "metadata": {
+                "ticker": ticker,
+                "label_type": rec.label_type,
+                "model_type": rec.model_type,
+            },
+            "extras": rec.extras or {},
+            "metrics": rec.metrics or {},
+        })
+    return out
 
 
 def compute_coverage(strategy_name: str) -> dict:
@@ -206,11 +218,16 @@ def compute_coverage(strategy_name: str) -> dict:
                 continue
             if primary_cfg.get("strategy_name") != strategy_name:
                 continue
+            # Prefer extras.meta_label.cv.metrics.auc_mean if present;
+            # fall back to top-level metrics["cv_auc_mean"] (older records
+            # written before extras was added).
             auc = (
                 meta_cfg.get("cv", {})
                 .get("metrics", {})
                 .get("auc_mean")
             )
+            if auc is None:
+                auc = r.get("metrics", {}).get("cv_auc_mean")
             if auc is None:
                 continue
             ticker = r.get("metadata", {}).get("ticker") or "UNKNOWN"
