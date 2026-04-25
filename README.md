@@ -1,20 +1,25 @@
 # Quant AI
 
-Production-grade ML platform for stock direction prediction, strategy backtesting, and paper trading. Full-stack (FastAPI + React), containerized, observable, deployable to Kubernetes.
+Production-grade **multi-task ML platform** for financial markets: direction baseline + volatility forecasting + meta-labeling signal quality. Full-stack (FastAPI + React), containerized, observable, deployable to Kubernetes.
 
 **Live:** Frontend [quant-ai-ui.vercel.app](https://quant-ai-ui.vercel.app) · Backend [quant-ai-qzrg.onrender.com](https://quant-ai-qzrg.onrender.com) · [API docs](https://quant-ai-qzrg.onrender.com/docs)
+
+**V4 Gate 1 ship date:** 2026-04-24 — `v4-gate-1-complete` tag.
 
 ---
 
 ## What it does
 
-- **Predicts** stock direction with 6 model types (logistic, random forest, XGBoost, LightGBM, CatBoost, ensemble voting/stacking)
-- **Optimizes** hyperparameters multi-objectively (NSGA-II via Optuna) and strategy parameters (TPE)
-- **Backtests** both ML models and rule-based strategies with transaction costs and position sizing
-- **Explains** predictions via SHAP feature importance and vector search across historical cases
-- **Paper-trades** live with WebSocket price feed, order book, portfolio tracking
-- **Observable**: Prometheus metrics, Grafana dashboard, Kafka event stream for per-ticker real-time stats
-- **Handles time-series properly** — no look-ahead bias, deterministic train/val/test splits by date
+- **Predicts** stock direction with 6 model types (logistic, random forest, XGBoost, LightGBM, CatBoost, ensemble voting/stacking) — kept as a baseline.
+- **Forecasts realized volatility** (V4 P1) with regression head sharing the same 6-model architecture (MAE / RMSE / MAPE / QLIKE / R²); dynamic-vol-aware barriers feed P3.
+- **Scores signal reliability** (V4 P3 — López de Prado Ch.3) — primary signal (4 rule strategies OR P1 direction model) → triple-barrier with vol-scaled TP/SL → meta-classifier predicts "is this signal trade-worthy?". Purged K-Fold CV with embargo (Ch.7).
+- **Gates Paper Trading orders** — opt-in meta-score threshold + half-Kelly sizing before any order is placed.
+- **Optimizes** hyperparameters multi-objectively (NSGA-II via Optuna) and strategy parameters (TPE).
+- **Backtests** both ML models and rule-based strategies with transaction costs and position sizing.
+- **Explains** predictions via SHAP feature importance and vector search across historical cases.
+- **Paper-trades** live with WebSocket price feed, order book, portfolio tracking.
+- **Observable**: Prometheus metrics, Grafana dashboard, Kafka event stream for per-ticker real-time stats.
+- **Handles time-series properly** — no look-ahead bias, deterministic train/val/test splits by date, Purged K-Fold for event-indexed meta-labels.
 
 ---
 
@@ -23,34 +28,36 @@ Production-grade ML platform for stock direction prediction, strategy backtestin
 | Page | Route | What you can do |
 |------|-------|-----------------|
 | Screener | `/screener` | 10 hot tickers with real Supabase prices, sort by change% or volume, click-through to Dashboard |
-| Dashboard | `/dashboard?ticker=AAPL` | Lightweight Charts K-line + volume, 5-day prediction, SHAP explain panel |
+| Dashboard | `/dashboard?ticker=AAPL` | Lightweight Charts K-line + volume, 5-day prediction, Volatility Gauge (V4 P2) + 7d signal-quality sparkline (V4 P4), SHAP explain panel, model selector dialog (V4 P2) |
+| Signal Console (V4 P4) | `/signal-console` | Watchlist × 4-strategy matrix of meta-models with AUC + E[R] cells; click a cell to preview latest reliability score, expected R, recommended action and half-Kelly sizing; one-click "Train meta" CTA fires `POST /api/meta-label/train` |
 | Training | `/training` | Train any of 6 model types, Auto-Optimize (Optuna), 3-tab layout (Train / Runs / Models promote) |
-| Strategy | `/strategy` | 4 strategies (MA cross, RSI, Bollinger, Sentiment) with schema-driven params, signal viz, backtest, Optimize params |
-| Trading | `/trading` | Paper-trade with market/limit orders, live WebSocket prices (Zustand store), portfolio P&L, order book |
+| Strategy | `/strategy` | 4 strategies (MA cross, RSI, Bollinger, Sentiment) with schema-driven params, signal viz, backtest, Optimize params, **Meta-Label Coverage badge** showing per-strategy meta-model count + best AUC (V4 P4) |
+| Trading | `/trading` | Paper-trade with market/limit orders, live WebSocket prices (Zustand store), portfolio P&L, order book; **opt-in meta-label gate** (model dropdown + threshold slider + score preview) blocks low-quality signals and sizes orders by half-Kelly (V4 P4) |
 | Explain | `/explain` | SHAP top features + similar historical cases via vector search, graceful fallback when optional deps missing |
 
 Frontend stack: **React 19 + Vite + Tailwind v3 + Tremor** (charts/KPI) **+ shadcn/ui** (Radix primitives) **+ Lightweight Charts v4 + TanStack Query v5 + Zustand + react-hook-form + zod + Geist fonts + Vitest**. Page-level code splitting via `React.lazy()` keeps first-screen JS under 340KB.
 
 ---
 
-## Backend API surface (~55 endpoints)
+## Backend API surface (~58 endpoints)
 
 | Category | Representative endpoints |
 |----------|-------------------------|
 | **Health & Observability** | `/health`, `/health/ready`, `/metrics` (Prometheus) |
 | **Market Data** | `/data/market`, `/data/sentiment`, `/data/news` |
 | **ML Training** | `/train`, `/runs`, `/runs/{id}`, `/runs/{id}/reproduce` |
-| **Models** | `/models`, `/models/{id}`, `/models/{id}/promote`, `/models/types` |
-| **Prediction** | `/predict` (GET legacy + POST) |
+| **Models** | `/models?label_type=&ticker=`, `/models/{id}`, `/models/{id}/promote`, `/models/types` |
+| **Prediction** | `/predict` (GET legacy + POST), **`POST /predict/volatility`** (V4 P1) |
+| **Meta-Labeling (V4 P3/P4)** | **`POST /api/meta-label/train`** (event-indexed labels via triple-barrier + Purged K-Fold), **`POST /api/signal-score`** (3-mode inference: explicit signal / auto-trigger / fallback), **`GET /api/meta-label/coverage?strategy=`** (per-strategy coverage + best AUC) |
 | **Backtest** | `/backtest`, `/backtest/report` |
 | **Features** | `/features/groups`, `/features/groups/{name}` |
 | **Strategies** | `/api/strategies`, `/api/strategies/{name}/signals`, `/api/strategies/{name}/backtest` |
-| **Paper Trading** | `/api/trading/orders`, `/api/trading/portfolio`, `/api/trading/trades`, `/api/trading/ws/prices` |
+| **Paper Trading** | `/api/trading/orders` (now accepts optional `meta_model_id` + `score_threshold` for opt-in meta gate), `/api/trading/portfolio`, `/api/trading/trades`, `/api/trading/ws/prices` |
 | **Hyperparameter Optimization** | `/api/optimize/model`, `/api/optimize/strategy`, `/api/optimize/runs` |
 | **Explainability** | `/explain`, `/search` |
 | **News** | `/news/{ticker}`, `/news/{ticker}/sentiment-summary`, `/news/{ticker}/similar-days` |
 | **RAG** | `/rag/answer`, `/rag/search`, `/rag/index` |
-| **Agents** | `/agents/technical`, `/agents/summary` |
+| **Agents** | `/agents/technical` (returns 8 model-metadata fields per V4 P2), `/agents/summary` |
 | **Serverless Functions** | `/api/functions`, `/api/functions/{name}/invoke` |
 
 Full OpenAPI docs: [https://quant-ai-qzrg.onrender.com/docs](https://quant-ai-qzrg.onrender.com/docs)
