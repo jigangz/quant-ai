@@ -778,3 +778,15 @@
 - Added 榜单 and 消融 nav items to TopNavBar NAV_ITEMS array
 - Extended TopNavBar test with 2 new tests (leaderboard link + ablation link visible)
 - 5/5 TopNavBar tests pass (3 existing + 2 new). Build ✓
+
+### Batch (P5-GATE) — completed 2026-04-26
+
+**P5-GATE: Phase 5 gate verification (Prediction Log + Leaderboard + Ablation)**
+- Backend regression: 465 passed, 0 failures (unit + contract)
+- Frontend: 75/75 tests pass, 0 lint errors, build ✓ (vite 7.3.0)
+- Obsidian ml-pivot-progress.md: Day 15 Sprint entry appended with all delivered files + P5 ✅ marker
+- Obsidian master-roadmap.md: P5 section rewritten with actual deliverables + ✅ COMPLETE 2026-04-26 + changelog entry
+- Tagged v4-p5-complete + pushed to origin/main (git push origin main --follow-tags)
+- Live smoke: /models/{model_id}/accuracy + /api/ablation/run present in Render openapi.json (version 2.4.0)
+- Live smoke: https://quant-ai-ui.vercel.app/leaderboard → 200, /ablation → 200
+- All P5-0..P5-11 + P5-GATE passes: true in prd.json
