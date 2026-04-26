@@ -55,7 +55,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          # V4 P5 fix: install requirements-prod.txt (was requirements.txt)
+          # so CI tests run with the same xgboost/lightgbm/optuna/shap/redis
+          # stack that prod ships. Without xgboost in CI, P3+P5 meta-label
+          # tests fail with "Unknown model type: xgboost" while passing
+          # locally + prod.
+          pip install -r requirements-prod.txt
           pip install pytest pytest-cov pytest-asyncio httpx
 
       - name: Create directories
