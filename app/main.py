@@ -32,6 +32,8 @@ from app.api import (
     functions,
     optimize,
     signal,
+    accuracy as accuracy_api,
+    ablation as ablation_api,
 )
 
 # ===================================
@@ -169,6 +171,8 @@ app.include_router(trading.router, tags=["Paper Trading"])
 app.include_router(functions.router, tags=["Functions"])
 app.include_router(optimize.router)
 app.include_router(signal.router, tags=["Meta-Labeling"])
+app.include_router(accuracy_api.router, tags=["Accuracy"])
+app.include_router(ablation_api.router, tags=["Ablation"])
 
 
 # ===================================
