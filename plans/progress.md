@@ -743,6 +743,23 @@
 - Ran demo, generated `docs/benchmarks/p5_ablation_demo.md` + vault copy
 - Exits cleanly (0 exit code)
 
+### Batch (P5-7, P5-8, P5-9) — completed 2026-04-26
+
+**P5-7: Frontend api/client + leaderboardQueries hooks**
+- Appended getModels, getModelAccuracy, postAblationRun to client.js (using existing `request()` helper)
+- Created src/api/leaderboardQueries.js: useLeaderboard, useModelAccuracy (retry skips 404), useAblationRun
+- 3/3 tests pass
+
+**P5-8: LeaderboardPage with 3 tabs + LeaderboardTable component**
+- Created src/features/leaderboard/LeaderboardTable.jsx: sorts by primary metric (QLIKE asc, others desc), AccuracyCell uses useModelAccuracy for live hit rate
+- Rewrote stub LeaderboardPage.jsx: 3 tabs (Direction/Volatility/Meta-Label), tab click triggers re-query
+- 4/4 tests pass
+
+**P5-9: AblationPage + AblationMatrix heatmap**
+- Created src/features/ablation/AblationMatrix.jsx: rows=targets, cols=feature_sets, green/amber/rose cell coloring (QLIKE inverted — lower is better)
+- Rewrote stub AblationPage.jsx: ticker input + Run ablation button, defaults 3 targets + 2 feature sets, displays matrix + summary on success
+- 5/5 tests pass (1 AblationMatrix + 4 AblationPage). Build ✓
+
 ### Batch (P5-0, P5-1, P5-10) — completed 2026-04-26
 
 **P5-0: Supabase migration SQL for prediction_log table**
