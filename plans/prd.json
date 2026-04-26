@@ -831,9 +831,10 @@
         "git commit 'feat(p5): wire prediction_log writes in 3 predict services (4 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-26",
       "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
-      "notes": "See plan Task 2. Depends on P5-1."
+      "notes": "See plan Task 2. 4/4 tests pass + existing regression green. Added _run_legacy_predict stub to predict_service.py for monkeypatch compatibility."
     },
     {
       "id": "P5-3",
@@ -849,9 +850,10 @@
         "git commit 'feat(p5): AccuracyService — resolve_pending + aggregate + by_ticker (8 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-26",
       "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
-      "notes": "See plan Task 3. Lazy resolve — no cron needed."
+      "notes": "8/8 tests pass. Fixed timezone comparison via _normalize_dates helper. Used indirected _get_repo() for monkeypatch compatibility."
     },
     {
       "id": "P5-4",
@@ -990,9 +992,10 @@
         "git commit 'feat(p5): ablation demo script + benchmark report'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-26",
       "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
-      "notes": "See plan Task 11. Live data demo. Run AFTER P5-1..P5-10."
+      "notes": "Demo ran on AAPL+MSFT+GOOGL × 3 targets × 2 feature sets. Created ablation_service.py + meta_label_service feature_group str|list extension as prerequisites. Vault copy done. Exits cleanly."
     },
     {
       "id": "P5-GATE",

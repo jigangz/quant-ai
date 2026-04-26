@@ -704,6 +704,27 @@
 - Live smoke: backend on Render deploys from main — version 2.4.0 after push
 - All P4-0..P4-11 + P4-GATE passes: true in prd.json
 
+### Batch (P5-11, P5-2, P5-3) — completed 2026-04-26
+
+**P5-2: Wire 3 predict services to write prediction_log non-blocking**
+- Added `_write_prediction_log` helper to `app/services/predict_service.py`, `volatility_predict_service.py`, `signal_scoring_service.py`
+- Also added `_run_legacy_predict` stub to predict_service.py for monkeypatch compatibility in tests
+- All 3 helpers wrapped in try/except — non-blocking on repo failure
+- 4/4 tests pass + existing predict-flow, predict-volatility, signal-score regressions all pass
+
+**P5-3: AccuracyService**
+- Created `app/services/accuracy_service.py` with resolve_pending, aggregate, by_ticker, last_predictions
+- Fixed pandas timezone comparison issue via `_normalize_dates` helper
+- Used indirected `_get_repo()` pattern for monkeypatch compatibility
+- 8/8 tests pass
+
+**P5-11: Ablation demo script + benchmark report**
+- Created `app/services/ablation_service.py` (prerequisite for demo)
+- Extended `MetaLabelTrainRequest.feature_group` from `str` to `str | list[str]` in meta_label_service.py
+- Created `scripts/p5_ablation_demo.py` — runs AAPL+MSFT+GOOGL × 3 targets × 2 feature sets
+- Ran demo, generated `docs/benchmarks/p5_ablation_demo.md` + vault copy
+- Exits cleanly (0 exit code)
+
 ### Batch (P5-0, P5-1, P5-10) — completed 2026-04-26
 
 **P5-0: Supabase migration SQL for prediction_log table**
