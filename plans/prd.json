@@ -792,7 +792,8 @@
         "git commit 'feat(p5): Supabase migration for prediction_log table'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-26",
       "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
       "notes": "See plan Task 0. Harry runs this in Supabase SQL Editor when prod is deployed (and after old extras migration too)."
     },
@@ -811,9 +812,10 @@
         "git commit 'feat(p5): PredictionLogRecord + Local/Supabase repos + factory (5 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-26",
       "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
-      "notes": "See plan Task 1. Foundation for everything else."
+      "notes": "See plan Task 1. Foundation for everything else. 5/5 tests pass."
     },
     {
       "id": "P5-2",
@@ -970,9 +972,10 @@
         "git commit 'feat(p5): wire /leaderboard + /ablation routes + TopNav links (2 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-26",
       "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
-      "notes": "See plan Task 10."
+      "notes": "See plan Task 10. Routes in router.jsx (not App.jsx — router pattern from P4-7). Stub LeaderboardPage + AblationPage created. 5/5 TopNavBar tests pass (3 existing + 2 new)."
     },
     {
       "id": "P5-11",

@@ -703,3 +703,22 @@
 - Tagged v4-p4-complete + v4-gate-1-complete; pushed to origin/main
 - Live smoke: backend on Render deploys from main — version 2.4.0 after push
 - All P4-0..P4-11 + P4-GATE passes: true in prd.json
+
+### Batch (P5-0, P5-1, P5-10) — completed 2026-04-26
+
+**P5-0: Supabase migration SQL for prediction_log table**
+- Created `scripts/migrate_create_prediction_log.sql` with CREATE TABLE IF NOT EXISTS + 3 indexes (model_id, resolve_pending partial, ticker+label_type)
+- Idempotent; Harry runs in Supabase SQL Editor on prod deploy
+
+**P5-1: PredictionLogRecord + Local/Supabase repos + factory**
+- Created `app/db/prediction_log.py` with PredictionLogRecord (Pydantic), LocalPredictionLogRepo (JSON on disk), SupabasePredictionLogRepo, get_prediction_log_repo() factory
+- LocalRepo: thread-safe with lock, insert/list_unresolved/list_by_model_id(since)/update_resolution
+- Factory returns SupabasePredictionLogRepo if SUPABASE_URL+SUPABASE_KEY set, else LocalPredictionLogRepo
+- 5/5 tests pass (insert+get, unresolved filter, update_resolution, since window, factory)
+
+**P5-10: Wire /leaderboard + /ablation routes + TopNavBar links**
+- Routes added in `src/app/router.jsx` (lazy-loaded, consistent with P4-7 pattern — not App.jsx)
+- Created stub `LeaderboardPage.jsx` and `AblationPage.jsx` (full implementations are P5-8/P5-9)
+- Added 榜单 and 消融 nav items to TopNavBar NAV_ITEMS array
+- Extended TopNavBar test with 2 new tests (leaderboard link + ablation link visible)
+- 5/5 TopNavBar tests pass (3 existing + 2 new). Build ✓
