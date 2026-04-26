@@ -5,6 +5,7 @@ Production-grade **multi-task ML platform** for financial markets: direction bas
 **Live:** Frontend [quant-ai-ui.vercel.app](https://quant-ai-ui.vercel.app) · Backend [quant-ai-qzrg.onrender.com](https://quant-ai-qzrg.onrender.com) · [API docs](https://quant-ai-qzrg.onrender.com/docs)
 
 **V4 Gate 1 ship date:** 2026-04-24 — `v4-gate-1-complete` tag.
+**V4 Phase 5 (Gate 2 starter) ship date:** 2026-04-26 — `v4-p5-complete` tag.
 
 ---
 
@@ -14,6 +15,8 @@ Production-grade **multi-task ML platform** for financial markets: direction bas
 - **Forecasts realized volatility** (V4 P1) with regression head sharing the same 6-model architecture (MAE / RMSE / MAPE / QLIKE / R²); dynamic-vol-aware barriers feed P3.
 - **Scores signal reliability** (V4 P3 — López de Prado Ch.3) — primary signal (4 rule strategies OR P1 direction model) → triple-barrier with vol-scaled TP/SL → meta-classifier predicts "is this signal trade-worthy?". Purged K-Fold CV with embargo (Ch.7).
 - **Gates Paper Trading orders** — opt-in meta-score threshold + half-Kelly sizing before any order is placed.
+- **Tracks live accuracy** (V4 P5) — every `/predict*` and `/api/signal-score` call writes a row to `prediction_log` (Supabase). `GET /models/{id}/accuracy` lazily resolves rows past their horizon by fetching market closes, returns 30-day hit-rate / realized R / vol MAE.
+- **Quantifies feature contribution** (V4 P5) — `POST /api/ablation/run` trains 6 models (3 targets × 2 feature sets) with default params and returns a delta matrix. Frontend `/ablation` renders the heatmap; honest reporting when sentiment doesn't help.
 - **Optimizes** hyperparameters multi-objectively (NSGA-II via Optuna) and strategy parameters (TPE).
 - **Backtests** both ML models and rule-based strategies with transaction costs and position sizing.
 - **Explains** predictions via SHAP feature importance and vector search across historical cases.
@@ -30,6 +33,8 @@ Production-grade **multi-task ML platform** for financial markets: direction bas
 | Screener | `/screener` | 10 hot tickers with real Supabase prices, sort by change% or volume, click-through to Dashboard |
 | Dashboard | `/dashboard?ticker=AAPL` | Lightweight Charts K-line + volume, 5-day prediction, Volatility Gauge (V4 P2) + 7d signal-quality sparkline (V4 P4), SHAP explain panel, model selector dialog (V4 P2) |
 | Signal Console (V4 P4) | `/signal-console` | Watchlist × 4-strategy matrix of meta-models with AUC + E[R] cells; click a cell to preview latest reliability score, expected R, recommended action and half-Kelly sizing; one-click "Train meta" CTA fires `POST /api/meta-label/train` |
+| Leaderboard (V4 P5) | `/leaderboard` | 3 tabs (direction / volatility / meta-label), each a sortable table of active models with primary metric + live 30-day hit rate from `prediction_log` |
+| Ablation (V4 P5) | `/ablation` | Run 3 targets × 2 feature sets (ta_basic vs ta_basic + sentiment) with default params, render delta matrix heatmap, summary identifies which target sentiment helps most |
 | Training | `/training` | Train any of 6 model types, Auto-Optimize (Optuna), 3-tab layout (Train / Runs / Models promote) |
 | Strategy | `/strategy` | 4 strategies (MA cross, RSI, Bollinger, Sentiment) with schema-driven params, signal viz, backtest, Optimize params, **Meta-Label Coverage badge** showing per-strategy meta-model count + best AUC (V4 P4) |
 | Trading | `/trading` | Paper-trade with market/limit orders, live WebSocket prices (Zustand store), portfolio P&L, order book; **opt-in meta-label gate** (model dropdown + threshold slider + score preview) blocks low-quality signals and sizes orders by half-Kelly (V4 P4) |
@@ -49,6 +54,7 @@ Frontend stack: **React 19 + Vite + Tailwind v3 + Tremor** (charts/KPI) **+ shad
 | **Models** | `/models?label_type=&ticker=`, `/models/{id}`, `/models/{id}/promote`, `/models/types` |
 | **Prediction** | `/predict` (GET legacy + POST), **`POST /predict/volatility`** (V4 P1) |
 | **Meta-Labeling (V4 P3/P4)** | **`POST /api/meta-label/train`** (event-indexed labels via triple-barrier + Purged K-Fold), **`POST /api/signal-score`** (3-mode inference: explicit signal / auto-trigger / fallback), **`GET /api/meta-label/coverage?strategy=`** (per-strategy coverage + best AUC) |
+| **Live Accuracy + Ablation (V4 P5)** | **`GET /models/{id}/accuracy?window_days=30`** (lazy-resolves prediction_log rows past horizon, returns hit-rate / realized R / vol MAE), **`POST /api/ablation/run`** (synchronous 3-target × N-feature-set trainer with delta matrix + summary) |
 | **Backtest** | `/backtest`, `/backtest/report` |
 | **Features** | `/features/groups`, `/features/groups/{name}` |
 | **Strategies** | `/api/strategies`, `/api/strategies/{name}/signals`, `/api/strategies/{name}/backtest` |
