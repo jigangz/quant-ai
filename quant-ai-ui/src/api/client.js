@@ -307,3 +307,31 @@ export function postMetaLabelTrain(payload) {
   });
 }
 
+
+
+// ===================================
+// V4 P5 — Leaderboard / Accuracy / Ablation
+// ===================================
+
+/** GET /models?label_type=&status=&ticker= */
+export function getModels({ label_type, status = "active", ticker } = {}) {
+  const qs = new URLSearchParams();
+  if (label_type) qs.set("label_type", label_type);
+  if (status) qs.set("status", status);
+  if (ticker) qs.set("ticker", ticker);
+  return request(`/models?${qs}`).then((body) => body.models || body || []);
+}
+
+/** GET /models/{id}/accuracy?window_days=&resolve= */
+export function getModelAccuracy(modelId, { window_days = 30, resolve = true } = {}) {
+  const qs = new URLSearchParams({ window_days, resolve });
+  return request(`/models/${encodeURIComponent(modelId)}/accuracy?${qs}`);
+}
+
+/** POST /api/ablation/run */
+export function postAblationRun(payload) {
+  return request(`/api/ablation/run`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
