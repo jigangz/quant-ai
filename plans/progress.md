@@ -704,6 +704,24 @@
 - Live smoke: backend on Render deploys from main — version 2.4.0 after push
 - All P4-0..P4-11 + P4-GATE passes: true in prd.json
 
+### Batch (P5-4, P5-5, P5-6) — completed 2026-04-26
+
+**P5-4: GET /models/{id}/accuracy endpoint**
+- Created `app/api/accuracy.py` with `_get_model_record` helper + `@router.get('/models/{model_id}/accuracy')`
+- Wired `accuracy_api.router` in `app/main.py` with tags=['Accuracy']
+- 5/5 contract tests pass
+
+**P5-5: AblationService tests**
+- `app/services/ablation_service.py` and `meta_label_service.py` feature_group extension were already done in P5-11
+- Created `tests/test_ablation_service.py` with 4 tests (matrix shape, sentiment lift, unknown_feature_set raises, meta_label list passthrough)
+- 4/4 tests pass
+
+**P5-6: POST /api/ablation/run endpoint**
+- Created `app/api/ablation.py` with `AblationRunRequest` (Pydantic validation: min 2 feature_sets, horizon 1-60, model_type Literal)
+- Wired `ablation_api.router` in `app/main.py` with tags=['Ablation']
+- Fixed contract test: plan had only 1 feature_set but Pydantic requires min_length=2 → added second feature_set to `test_400_unknown_feature_set`
+- 4/4 contract tests pass. Build ✓
+
 ### Batch (P5-11, P5-2, P5-3) — completed 2026-04-26
 
 **P5-2: Wire 3 predict services to write prediction_log non-blocking**

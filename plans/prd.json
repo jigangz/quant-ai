@@ -869,9 +869,10 @@
         "git commit 'feat(p5): GET /models/{id}/accuracy endpoint (5 contract tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-26",
       "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
-      "notes": "See plan Task 4. Depends on P5-3."
+      "notes": "5/5 contract tests pass. Created app/api/accuracy.py, wired in app/main.py."
     },
     {
       "id": "P5-5",
@@ -891,9 +892,10 @@
         "git commit 'feat(p5): AblationService + meta_label feature_group str|list extension (4 tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-26",
       "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
-      "notes": "See plan Task 5. Depends on P5-1 (technically not, but order matters in commits). meta_label feature_group bw-compat is a small but critical sub-fix."
+      "notes": "4/4 tests pass. ablation_service.py + meta_label_service.py feature_group str|list[str] already done in P5-11. Created tests/test_ablation_service.py."
     },
     {
       "id": "P5-6",
@@ -908,9 +910,10 @@
         "git commit 'feat(p5): POST /api/ablation/run endpoint (4 contract tests)'"
       ],
       "priority": "high",
-      "passes": false,
+      "passes": true,
+      "completed_at": "2026-04-26",
       "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
-      "notes": "See plan Task 6. Depends on P5-5."
+      "notes": "4/4 contract tests pass. Created app/api/ablation.py, wired in app/main.py. Fixed test to use 2 feature_sets (min_length=2 Pydantic constraint)."
     },
     {
       "id": "P5-7",
