@@ -6,6 +6,8 @@ const NAV_ITEMS = [
   { label: "研究", to: "/dashboard" },
   { label: "模型", to: "/training" },
   { label: "信号", to: "/signal-console" },
+  { label: "榜单", to: "/leaderboard" },
+  { label: "消融", to: "/ablation" },
   { label: "更多", to: "#" },
 ];
 

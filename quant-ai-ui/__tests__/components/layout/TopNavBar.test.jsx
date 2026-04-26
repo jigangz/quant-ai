@@ -27,4 +27,14 @@ describe("TopNavBar", () => {
     expect(screen.getByText("研究")).toBeInTheDocument();
     expect(screen.getByText("模型")).toBeInTheDocument();
   });
+
+  it("renders Leaderboard link", () => {
+    renderNav();
+    expect(screen.getByText(/榜单/)).toBeInTheDocument();
+  });
+
+  it("renders Ablation link", () => {
+    renderNav();
+    expect(screen.getByText(/消融/)).toBeInTheDocument();
+  });
 });
