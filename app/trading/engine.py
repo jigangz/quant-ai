@@ -16,6 +16,7 @@ from uuid import UUID
 from app.trading.models import (
     Order,
     OrderCreate,
+    OrderResult,
     OrderSide,
     OrderStatus,
     OrderType,
