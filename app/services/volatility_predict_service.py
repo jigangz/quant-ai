@@ -99,3 +99,39 @@ def predict_volatility(
             "error": str(e),
             "ticker": ticker,
         }
+
+
+# V4 P5: prediction_log write helper. Non-blocking — log failures must
+# not break a prediction response.
+def _write_prediction_log(
+    *,
+    ticker: str,
+    model_id: str,
+    model_type: str,
+    horizon_days: int,
+    predicted_value: float,
+    feature_group: str,
+) -> None:
+    try:
+        from datetime import datetime, timedelta, timezone
+        from app.db.prediction_log import PredictionLogRecord, get_prediction_log_repo
+
+        repo = get_prediction_log_repo()
+        now = datetime.now(timezone.utc)
+        repo.insert(
+            PredictionLogRecord(
+                model_id=model_id,
+                ticker=ticker,
+                label_type="volatility",
+                horizon_days=horizon_days,
+                predicted_value=float(predicted_value),
+                predicted_signal=None,
+                predicted_extras={"feature_group": feature_group, "model_type": model_type},
+                resolve_at=now + timedelta(days=horizon_days),
+            )
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(
+            "prediction_log write failed (non-blocking): %s", e
+        )

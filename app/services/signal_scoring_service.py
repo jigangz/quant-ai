@@ -202,6 +202,49 @@ def _list_meta_records() -> list[dict]:
     return out
 
 
+# V4 P5: prediction_log write helper for meta-label Mode A path.
+def _write_prediction_log(
+    *,
+    ticker: str,
+    model_id: str,
+    model_type: str,
+    horizon_days: int,
+    predicted_value: float,
+    predicted_signal: int,
+    primary_source: str,
+    expected_R: float,
+    feature_group: str,
+) -> None:
+    try:
+        from datetime import datetime, timedelta, timezone
+        from app.db.prediction_log import PredictionLogRecord, get_prediction_log_repo
+
+        repo = get_prediction_log_repo()
+        now = datetime.now(timezone.utc)
+        repo.insert(
+            PredictionLogRecord(
+                model_id=model_id,
+                ticker=ticker,
+                label_type="meta_label",
+                horizon_days=horizon_days,
+                predicted_value=float(predicted_value),
+                predicted_signal=predicted_signal,
+                predicted_extras={
+                    "feature_group": feature_group,
+                    "model_type": model_type,
+                    "primary_source": primary_source,
+                    "expected_R": float(expected_R),
+                },
+                resolve_at=now + timedelta(days=horizon_days),
+            )
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(
+            "prediction_log write failed (non-blocking): %s", e
+        )
+
+
 def compute_coverage(strategy_name: str) -> dict:
     """Aggregate meta-label coverage for a given primary strategy."""
     if strategy_name not in KNOWN_STRATEGIES:

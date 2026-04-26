@@ -198,8 +198,51 @@ class PredictionService:
             return None
 
 
+# Stub for monkeypatching in tests (V4 P5)
+def _run_legacy_predict(**kwargs) -> dict:
+    return {}
+
+
 # Convenience function
 def predict(ticker: str, model_id: Optional[str] = None, **kwargs) -> dict:
     """Make a prediction (convenience function)."""
     service = PredictionService()
     return service.predict(ticker=ticker, model_id=model_id)
+
+
+# V4 P5: prediction_log write helper. Non-blocking — log failures must
+# not break a prediction response.
+def _write_prediction_log(
+    *,
+    ticker: str,
+    model_id: str,
+    model_type: str,
+    label_type: str,
+    horizon_days: int,
+    predicted_value: float,
+    predicted_signal: Optional[int],
+    feature_group: str,
+) -> None:
+    try:
+        from datetime import datetime, timedelta, timezone
+        from app.db.prediction_log import PredictionLogRecord, get_prediction_log_repo
+
+        repo = get_prediction_log_repo()
+        now = datetime.now(timezone.utc)
+        repo.insert(
+            PredictionLogRecord(
+                model_id=model_id,
+                ticker=ticker,
+                label_type=label_type,
+                horizon_days=horizon_days,
+                predicted_value=float(predicted_value),
+                predicted_signal=predicted_signal,
+                predicted_extras={"feature_group": feature_group, "model_type": model_type},
+                resolve_at=now + timedelta(days=horizon_days),
+            )
+        )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(
+            "prediction_log write failed (non-blocking): %s", e
+        )
