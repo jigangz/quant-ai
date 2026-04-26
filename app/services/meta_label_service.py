@@ -51,7 +51,7 @@ class MetaLabelTrainRequest(BaseModel):
     ensemble_mode: Optional[str] = None
     search_mode: Literal["default", "optuna"] = "default"
     lookback_days: int = Field(default=730, ge=60)
-    feature_group: str = "ta_basic"
+    feature_group: str | list[str] = "ta_basic"
 
 
 # ---- External dependencies, wrapped for monkeypatchability ----
@@ -62,7 +62,7 @@ def _fetch_ohlc(ticker: str, lookback_days: int) -> pd.DataFrame:
     return fetch_ohlc(ticker=ticker, lookback_days=lookback_days)
 
 
-def _apply_ta_features(ohlc: pd.DataFrame, feature_group: str) -> pd.DataFrame:
+def _apply_ta_features(ohlc: pd.DataFrame, feature_group: str | list[str]) -> pd.DataFrame:
     from app.ml.features.technical import add_technical_features
     df = ohlc.copy()
     df = add_technical_features(df)
