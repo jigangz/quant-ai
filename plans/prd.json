@@ -782,6 +782,233 @@
       "completed_at": "2026-04-24",
       "plan_file": "docs/superpowers/plans/2026-04-24-p4-signal-console.md",
       "notes": "See plan Task 12. Final gate for V4 Pivot Gate 1. Runs SOLO after P4-11. 61/61 frontend tests, 71/71 backend gate tests. 0 lint errors. Build ✓. Obsidian Day 14 + master-roadmap Gate 1 ✅. Tagged v4-p4-complete + v4-gate-1-complete."
+    },
+    {
+      "id": "P5-0",
+      "title": "Supabase migration SQL for prediction_log table",
+      "acceptanceCriteria": [
+        "scripts/migrate_create_prediction_log.sql exists with CREATE TABLE IF NOT EXISTS prediction_log + 3 indexes",
+        "Idempotent (uses IF NOT EXISTS)",
+        "git commit 'feat(p5): Supabase migration for prediction_log table'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 0. Harry runs this in Supabase SQL Editor when prod is deployed (and after old extras migration too)."
+    },
+    {
+      "id": "P5-1",
+      "title": "PredictionLogRecord + Local/Supabase repos + factory",
+      "acceptanceCriteria": [
+        "app/db/prediction_log.py exists with PredictionLogRecord pydantic model + LocalPredictionLogRepo + SupabasePredictionLogRepo + get_prediction_log_repo()",
+        "LocalPredictionLogRepo serializes to artifacts/registry/prediction_log.json keyed by id",
+        "list_unresolved filters by model_id + resolve_at < now + resolved_at IS NULL",
+        "list_by_model_id supports since=datetime + limit",
+        "update_resolution sets actual_value/actual_return/is_correct/realized_R + resolved_at=now",
+        "Factory returns Supabase if SUPABASE_URL+SUPABASE_KEY env set, else Local",
+        "tests/test_prediction_log_repo.py has 5 tests (insert+get · list_unresolved · update_resolution · since window · factory), all pass",
+        "pytest tests/test_prediction_log_repo.py -v → 5 passed",
+        "git commit 'feat(p5): PredictionLogRecord + Local/Supabase repos + factory (5 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 1. Foundation for everything else."
+    },
+    {
+      "id": "P5-2",
+      "title": "Wire 3 predict services to write prediction_log non-blocking",
+      "acceptanceCriteria": [
+        "app/services/predict_service.py adds _write_prediction_log helper + calls it after publish_prediction_event with label_type='direction'",
+        "app/services/volatility_predict_service.py adds same helper + calls with label_type='volatility' (predicted_signal=None)",
+        "app/services/signal_scoring_service.py adds same helper + calls with label_type='meta_label' + extras={primary_source, expected_R}",
+        "All 3 helpers wrapped in try/except — registry failure logs warning, never raises",
+        "tests/test_predict_log_writes.py has 4 tests (each service writes correct row + non-blocking on broken repo), all pass",
+        "Existing tests/contract/test_predict_flow.py + test_predict_volatility.py + test_signal_score.py still pass",
+        "pytest tests/test_predict_log_writes.py tests/contract/test_predict_flow.py tests/contract/test_predict_volatility.py tests/contract/test_signal_score.py -v → all pass",
+        "git commit 'feat(p5): wire prediction_log writes in 3 predict services (4 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 2. Depends on P5-1."
+    },
+    {
+      "id": "P5-3",
+      "title": "AccuracyService — resolve_pending + aggregate + by_ticker + last_predictions",
+      "acceptanceCriteria": [
+        "app/services/accuracy_service.py exposes resolve_pending(model_id, limit), aggregate(model_id, window_days), by_ticker(model_id, window_days), last_predictions(model_id, limit)",
+        "_fetch_ohlc_slice wraps market_provider.fetch with caching-friendly slice [predicted_at-30d, resolve_at+2d]",
+        "resolve direction/meta: is_correct = (signal == sign(actual_return)); realized_R = signal * actual_return / vol_at_predict (rolling 20d annualized vol; fallback 0.02)",
+        "resolve volatility: actual_value = realized_vol(closes between predicted_at and resolve_at) annualized × sqrt(252); is_correct=NULL; realized_R=NULL",
+        "Skip rows where close_predict or close_resolve is NaN",
+        "tests/test_accuracy_service.py has 8 tests (direction correct/wrong · vol resolve · meta resolve · hit_rate · avg_R · pending count · empty model), all pass",
+        "pytest tests/test_accuracy_service.py -v → 8 passed",
+        "git commit 'feat(p5): AccuracyService — resolve_pending + aggregate + by_ticker (8 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 3. Lazy resolve — no cron needed."
+    },
+    {
+      "id": "P5-4",
+      "title": "GET /models/{id}/accuracy endpoint",
+      "acceptanceCriteria": [
+        "app/api/accuracy.py exposes @router.get('/models/{model_id}/accuracy') with window_days (1-365) + resolve (default true) query params",
+        "Returns 404 with detail 'model_not_found:<id>' when model_id not in registry",
+        "Calls accuracy_service.resolve_pending only when resolve=true",
+        "Response includes: model_id, label_type, window_days, resolve_run, stats, by_ticker, last_predictions",
+        "app/main.py imports + includes accuracy router with tags=['Accuracy']",
+        "tests/contract/test_models_accuracy.py has 5 tests (200 with data · 404 not found · resolve=true triggers · window>365 → 422 · resolve=false skips), all pass",
+        "pytest tests/contract/test_models_accuracy.py -v → 5 passed",
+        "git commit 'feat(p5): GET /models/{id}/accuracy endpoint (5 contract tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 4. Depends on P5-3."
+    },
+    {
+      "id": "P5-5",
+      "title": "AblationService + meta_label feature_group str|list[str] extension",
+      "acceptanceCriteria": [
+        "app/services/meta_label_service.py: MetaLabelTrainRequest.feature_group is now str | list[str]; _apply_ta_features handles both",
+        "app/services/ablation_service.py exposes run_ablation(ticker, targets, feature_sets, horizon_days, model_type)",
+        "Validates feature_groups via get_feature_builders, raises ValueError 'unknown_feature_set:...' for unknown",
+        "For each (target, feature_set): direction/volatility via training_service.train, meta_label via meta_label_service.train_meta_label_model",
+        "search_mode='none' (no Optuna — fair comparison)",
+        "Computes deltas relative to feature_sets[0] for primary metric (auc/qlike/auc_mean)",
+        "Returns {ticker, matrix, summary{sentiment_helps_most, interpretation}, feature_sets_used, model_type, horizon_days, elapsed_seconds}",
+        "Cell errors don't crash the ablation — wrapped as {error: msg, model_id: null}",
+        "tests/test_ablation_service.py has 4 tests (3×2 matrix shape · sentiment lift · unknown_feature_set raises · meta_label uses extended feature_group), all pass",
+        "tests/test_meta_label_service.py still passes (3 tests, backwards-compat)",
+        "pytest tests/test_ablation_service.py tests/test_meta_label_service.py -v → all pass",
+        "git commit 'feat(p5): AblationService + meta_label feature_group str|list extension (4 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 5. Depends on P5-1 (technically not, but order matters in commits). meta_label feature_group bw-compat is a small but critical sub-fix."
+    },
+    {
+      "id": "P5-6",
+      "title": "POST /api/ablation/run endpoint",
+      "acceptanceCriteria": [
+        "app/api/ablation.py exposes @router.post('/api/ablation/run')",
+        "Pydantic AblationRunRequest: ticker, targets (Literal direction/volatility/meta_label, min 1), feature_sets (min 2 max 4 with name+groups), horizon_days (1-60 default 5), model_type (xgboost|lightgbm|ensemble default xgboost)",
+        "Maps request → ablation_service.run_ablation, ValueError → 400, other Exception → 500 'ablation_failed:<msg>'",
+        "app/main.py imports + includes ablation router with tags=['Ablation']",
+        "tests/contract/test_ablation_run.py has 4 tests (200 happy · 422 horizon=999 · 400 unknown_feature_set · response includes summary), all pass",
+        "pytest tests/contract/test_ablation_run.py -v → 4 passed",
+        "git commit 'feat(p5): POST /api/ablation/run endpoint (4 contract tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 6. Depends on P5-5."
+    },
+    {
+      "id": "P5-7",
+      "title": "Frontend api/client + leaderboardQueries hooks",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/api/client.js adds getModels({label_type, status, ticker}), getModelAccuracy(modelId, {window_days, resolve}), postAblationRun(payload)",
+        "quant-ai-ui/src/api/leaderboardQueries.js exports useLeaderboard(labelType), useModelAccuracy(modelId), useAblationRun()",
+        "useModelAccuracy retry skips on 404",
+        "quant-ai-ui/__tests__/api/leaderboardQueries.test.jsx has 3 tests (each hook), all pass",
+        "npm run test -- --run __tests__/api/leaderboardQueries.test.jsx → 3 passed",
+        "git commit 'feat(p5): api client + leaderboardQueries hooks (3 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 7. Depends on P5-4 + P5-6 endpoints existing."
+    },
+    {
+      "id": "P5-8",
+      "title": "LeaderboardPage with 3 tabs + LeaderboardTable component",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/pages/LeaderboardPage.jsx renders 3 tabs (direction/volatility/meta-label), uses useLeaderboard(active)",
+        "quant-ai-ui/src/features/leaderboard/LeaderboardTable.jsx renders rows sorted by primary metric desc (qlike asc since lower is better), with live hit_rate column from useModelAccuracy",
+        "Empty tab shows 'No active <type> models trained yet' placeholder",
+        "quant-ai-ui/__tests__/pages/LeaderboardPage.test.jsx has 4 tests (3 tabs render · model rows render · sort by metric desc · tab switch re-queries), all pass",
+        "npm run test -- --run __tests__/pages/LeaderboardPage.test.jsx → 4 passed",
+        "git commit 'feat(p5): LeaderboardPage with 3 tabs + LeaderboardTable (4 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 8."
+    },
+    {
+      "id": "P5-9",
+      "title": "AblationPage with form + AblationMatrix heatmap",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/pages/AblationPage.jsx renders ticker input + 'Run ablation' button + matrix view + summary panel + elapsed time",
+        "Default: 3 targets + 2 feature sets [ta_basic, ta_basic + sentiment] + horizon 5 + model_type xgboost",
+        "Submits via useAblationRun mutation, displays result on success",
+        "quant-ai-ui/src/features/ablation/AblationMatrix.jsx renders rows=targets cols=feature_sets, colors by improvement vs baseline (green=better, amber=worse, rose=error)",
+        "QLIKE inverted (lower is better) for color logic",
+        "Cell shows primary metric + delta if delta_<metric> field present",
+        "Tests: __tests__/features/ablation/AblationMatrix.test.jsx (1 — cells render) + __tests__/pages/AblationPage.test.jsx (4 — form + run + matrix render + summary), all pass",
+        "npm run test -- --run __tests__/features/ablation/AblationMatrix.test.jsx __tests__/pages/AblationPage.test.jsx → 5 passed",
+        "git commit 'feat(p5): AblationPage + AblationMatrix component (5 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 9."
+    },
+    {
+      "id": "P5-10",
+      "title": "Wire /leaderboard + /ablation routes + TopNavBar links",
+      "acceptanceCriteria": [
+        "quant-ai-ui/src/App.jsx imports + adds <Route path='/leaderboard' /> and <Route path='/ablation' />",
+        "quant-ai-ui/src/components/layout/TopNavBar.jsx adds <Link to='/leaderboard'>榜单</Link> and <Link to='/ablation'>消融</Link>",
+        "TopNavBar test extended with 2 new tests (leaderboard link + ablation link visible)",
+        "npm run test -- --run __tests__/components/layout/TopNavBar.test.jsx → existing + 2 new pass",
+        "git commit 'feat(p5): wire /leaderboard + /ablation routes + TopNav links (2 tests)'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 10."
+    },
+    {
+      "id": "P5-11",
+      "title": "Ablation demo benchmark script + report",
+      "acceptanceCriteria": [
+        "scripts/p5_ablation_demo.py runs ablation_service.run_ablation on AAPL+MSFT+GOOGL × 3 targets × 2 feature sets",
+        "Writes docs/benchmarks/p5_ablation_demo.md with per-ticker matrix table (ta_basic | + sentiment | Δ) for each target",
+        "Per-ticker errors render as FAILED row, don't crash the demo",
+        "Honest framing paragraph at end (Optuna intentionally off for fair comparison)",
+        "Vault copy at D:/obsidian vault/01-projects/quant-ai/p5-ablation-demo-2026-04-25.md",
+        "python -m scripts.p5_ablation_demo exits cleanly",
+        "git commit 'feat(p5): ablation demo script + benchmark report'"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 11. Live data demo. Run AFTER P5-1..P5-10."
+    },
+    {
+      "id": "P5-GATE",
+      "title": "P5 GATE — full regression + tags + live smoke + progress log",
+      "acceptanceCriteria": [
+        "All P5-0..P5-11 tasks have passes:true in prd.json",
+        "Backend regression: pytest covers all P5 + P3 + P4 + P1+P2 test files, all green",
+        "Frontend: cd quant-ai-ui && npm run test -- --run && npm run lint && npm run build — clean",
+        "D:/obsidian vault/01-projects/quant-ai/ml-pivot-progress.md has Day 15 Sprint entry with delivered files + P5 ✅ marker",
+        "D:/obsidian vault/01-projects/quant-ai/master-roadmap.md P5 section marked ✅ COMPLETE 2026-04-25",
+        "git tag -a v4-p5-complete + git push origin main --follow-tags",
+        "Live smoke: curl /openapi.json includes /models/{model_id}/accuracy + /api/ablation/run paths",
+        "Live smoke: https://quant-ai-ui.vercel.app/leaderboard returns HTTP 200, /ablation returns HTTP 200",
+        "This task is a GATE — ALL criteria must pass before marking passes:true"
+      ],
+      "priority": "high",
+      "passes": false,
+      "plan_file": "docs/superpowers/plans/2026-04-25-p5-prediction-log-leaderboard-ablation.md",
+      "notes": "See plan Task 12. Final gate. Runs SOLO after P5-11."
     }
   ]
 }
