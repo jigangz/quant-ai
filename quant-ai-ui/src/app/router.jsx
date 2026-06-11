@@ -13,6 +13,7 @@ const ExplainPage = lazy(() => import("../pages/ExplainPage"));
 const SignalConsolePage = lazy(() => import("../pages/SignalConsolePage"));
 const LeaderboardPage = lazy(() => import("../pages/LeaderboardPage"));
 const AblationPage = lazy(() => import("../pages/AblationPage"));
+const PortfolioPage = lazy(() => import("../pages/PortfolioPage"));
 
 function PageSuspense({ children }) {
   return (
@@ -36,6 +37,7 @@ export default function AppRouter() {
         <Route path="signal-console" element={<PageSuspense><SignalConsolePage /></PageSuspense>} />
         <Route path="leaderboard" element={<PageSuspense><LeaderboardPage /></PageSuspense>} />
         <Route path="ablation" element={<PageSuspense><AblationPage /></PageSuspense>} />
+        <Route path="portfolio" element={<PageSuspense><PortfolioPage /></PageSuspense>} />
       </Route>
     </Routes>
   );

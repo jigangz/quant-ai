@@ -6,6 +6,7 @@ import {
   TrendingUp,
   LineChart,
   Lightbulb,
+  Briefcase,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "../components/ui/tooltip";
 import { cn } from "../lib/utils";
@@ -13,6 +14,7 @@ import { cn } from "../lib/utils";
 const NAV_ITEMS = [
   { to: "/screener", label: "Screener", icon: BarChart2 },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/portfolio", label: "Portfolio", icon: Briefcase },
   { to: "/training", label: "Training", icon: Brain },
   { to: "/strategy", label: "Strategy", icon: TrendingUp },
   { to: "/trading", label: "Trading", icon: LineChart },
