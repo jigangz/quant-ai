@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLeaderboard } from "@/api/leaderboardQueries";
 import LeaderboardTable from "@/features/leaderboard/LeaderboardTable";
+import { LoadingOverlay } from "@/components/LoadingSpinner";
 
 const TABS = [
   { id: "direction", label: "Direction" },
@@ -16,13 +17,13 @@ export default function LeaderboardPage() {
     <div className="p-6 space-y-4 max-w-7xl mx-auto">
       <header>
         <h1 className="text-2xl font-semibold">Leaderboard</h1>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-muted">
           Active models per V4 multi-task target, sorted by primary metric. Live hit rate from prediction_log
           (30-day window).
         </p>
       </header>
 
-      <nav className="flex gap-2 border-b border-slate-800">
+      <nav className="flex gap-2 border-b border-surface-border">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -30,8 +31,8 @@ export default function LeaderboardPage() {
             onClick={() => setActive(t.id)}
             className={`px-3 py-2 text-sm border-b-2 transition-colors ${
               active === t.id
-                ? "border-emerald-500 text-emerald-300"
-                : "border-transparent text-slate-400 hover:text-slate-200"
+                ? "border-accent text-accent"
+                : "border-transparent text-muted hover:text-foreground"
             }`}
           >
             {t.label}
@@ -40,7 +41,7 @@ export default function LeaderboardPage() {
       </nav>
 
       {isLoading ? (
-        <div className="p-8 text-sm text-slate-500 text-center">Loading...</div>
+        <LoadingOverlay label="Loading models..." />
       ) : (
         <LeaderboardTable models={models} labelType={active} />
       )}

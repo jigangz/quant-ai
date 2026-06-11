@@ -6,10 +6,10 @@ const PRIMARY_METRIC = {
 
 function cellColor(target, value, baseline) {
   // null = metric absent (backend reports honest n/a, never a fake 0.0)
-  if (value == null || baseline == null) return "bg-slate-700/30";
+  if (value == null || baseline == null) return "bg-surface-muted";
   const isLowerBetter = target === "volatility";
   const better = isLowerBetter ? value < baseline : value > baseline;
-  return better ? "bg-emerald-500/15" : "bg-amber-500/15";
+  return better ? "bg-up/15" : "bg-down/10";
 }
 
 const MOCK_SENTIMENT_HINT =
@@ -18,7 +18,7 @@ const MOCK_SENTIMENT_HINT =
 export default function AblationMatrix({ matrix }) {
   if (!matrix || Object.keys(matrix).length === 0) {
     return (
-      <div className="p-8 text-center text-sm text-slate-500 bg-slate-900/40 rounded-lg">
+      <div className="p-8 text-center text-sm text-muted bg-surface-card rounded-lg">
         Run an ablation to see the matrix.
       </div>
     );
@@ -27,10 +27,10 @@ export default function AblationMatrix({ matrix }) {
   const featureSetNames = Object.keys(matrix[targets[0]] || {});
 
   return (
-    <div className="overflow-x-auto bg-slate-900/40 rounded-lg">
+    <div className="overflow-x-auto bg-surface-card rounded-lg">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-[10px] uppercase tracking-wide text-slate-400 border-b border-slate-800">
+          <tr className="text-[10px] uppercase tracking-wide text-muted border-b border-surface-border">
             <th className="px-3 py-2 text-left">Target</th>
             {featureSetNames.map((fs) => (
               <th key={fs} className="px-3 py-2 text-left">
@@ -49,14 +49,14 @@ export default function AblationMatrix({ matrix }) {
             const primary = PRIMARY_METRIC[target];
             const baseline = matrix[target][featureSetNames[0]]?.[primary];
             return (
-              <tr key={target} className="border-b border-slate-800/50">
+              <tr key={target} className="border-b border-surface-border/50">
                 <td className="px-3 py-2 font-medium uppercase">{target}</td>
                 {featureSetNames.map((fs) => {
                   const cell = matrix[target][fs] || {};
                   if (cell.error) {
                     return (
-                      <td key={fs} className="px-3 py-2 bg-rose-500/15">
-                        <div className="text-xs text-rose-300">{cell.error}</div>
+                      <td key={fs} className="px-3 py-2 bg-down/10">
+                        <div className="text-xs text-down">{cell.error}</div>
                       </td>
                     );
                   }
@@ -64,10 +64,10 @@ export default function AblationMatrix({ matrix }) {
                   return (
                     <td key={fs} className={`px-3 py-2 ${cellColor(target, v, baseline)}`}>
                       <div className="font-semibold tabular-nums">
-                        {v != null ? v.toFixed(3) : <span className="text-slate-500">n/a</span>}
+                        {v != null ? v.toFixed(3) : <span className="text-muted">n/a</span>}
                       </div>
                       {cell[`delta_${primary}`] != null && (
-                        <div className="text-[10px] text-slate-400">
+                        <div className="text-[10px] text-muted">
                           Δ {cell[`delta_${primary}`] >= 0 ? "+" : ""}
                           {cell[`delta_${primary}`].toFixed(3)}
                         </div>
