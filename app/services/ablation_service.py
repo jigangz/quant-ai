@@ -64,25 +64,32 @@ def _train_meta(ticker, feature_groups, horizon_days, model_type):
 _PRIMARY_METRIC = {"direction": "auc", "volatility": "qlike", "meta_label": "auc_mean"}
 
 
-def _extract_metrics(target: str, result) -> dict[str, float]:
+def _opt_float(metrics: dict, key: str) -> float | None:
+    """float(value) when present, None when absent — an absent metric must
+    never masquerade as a real 0.0 score (P6-1 honest-ablation fix)."""
+    v = metrics.get(key)
+    return float(v) if v is not None else None
+
+
+def _extract_metrics(target: str, result) -> dict[str, float | None]:
     """Pull the relevant metrics from a training result into a flat dict."""
     if target == "meta_label":
         cv = result.get("cv_metrics", {}) if isinstance(result, dict) else {}
         return {
-            "auc_mean": float(cv.get("auc_mean", 0.0)),
-            "precision_at_50": float(cv.get("precision_at_50", 0.0)),
+            "auc_mean": _opt_float(cv, "auc_mean"),
+            "precision_at_50": _opt_float(cv, "precision_at_50"),
         }
     metrics = getattr(result, "metrics", None) or {}
     if target == "direction":
         return {
-            "auc": float(metrics.get("test_auc", 0.0)),
-            "f1": float(metrics.get("test_f1", 0.0)),
+            "auc": _opt_float(metrics, "test_auc"),
+            "f1": _opt_float(metrics, "test_f1"),
         }
     if target == "volatility":
         return {
-            "qlike": float(metrics.get("test_qlike", 0.0)),
-            "r2": float(metrics.get("test_r2", 0.0)),
-            "mae": float(metrics.get("test_mae", 0.0)),
+            "qlike": _opt_float(metrics, "test_qlike"),
+            "r2": _opt_float(metrics, "test_r2"),
+            "mae": _opt_float(metrics, "test_mae"),
         }
     return {}
 
@@ -136,11 +143,14 @@ def run_ablation(
             continue
         for fs in feature_sets[1:]:
             cell = matrix[target].get(fs["name"], {})
-            if "error" in cell or primary_metric not in cell:
+            if "error" in cell or cell.get(primary_metric) is None:
                 continue
             cell[f"delta_{primary_metric}"] = cell[primary_metric] - baseline_val
 
     summary = _build_summary(matrix, targets, feature_sets)
+    note = _sentiment_note(feature_sets)
+    if note:
+        summary["sentiment_note"] = note
 
     return {
         "ticker": ticker,
@@ -151,6 +161,24 @@ def run_ablation(
         "horizon_days": horizon_days,
         "elapsed_seconds": round(time.time() - t0, 2),
     }
+
+
+def _sentiment_note(feature_sets) -> str | None:
+    """Honest labeling: when sentiment features are in play but the provider is
+    the mock, say so — the delta measures pipeline wiring, not real news signal."""
+    if not any("sentiment" in fs.get("groups", []) for fs in feature_sets):
+        return None
+    try:
+        from app.providers import get_sentiment_provider
+        from app.providers.sentiment.mock import MockSentimentProvider
+        if isinstance(get_sentiment_provider(), MockSentimentProvider):
+            return (
+                "sentiment features come from a mock provider in this build — "
+                "deltas reflect pipeline wiring, not real news signal"
+            )
+    except Exception:  # provider wiring must never break an ablation run
+        return None
+    return None
 
 
 def _build_summary(matrix, targets, feature_sets) -> dict[str, Any]:

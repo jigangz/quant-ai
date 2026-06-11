@@ -21,4 +21,21 @@ describe("AblationMatrix", () => {
     expect(screen.getByText(/0\.171/)).toBeInTheDocument();
     expect(screen.getByText(/0\.142/)).toBeInTheDocument();
   });
+
+  it("renders n/a (not a crash, not 0.000) when a metric is null", () => {
+    const withNull = {
+      direction: {
+        "ta_basic":             { model_id: "x", auc: null, f1: null },
+        "ta_basic + sentiment": { model_id: "y", auc: 0.591, f1: 0.42 },
+      },
+    };
+    render(<AblationMatrix matrix={withNull} />);
+    expect(screen.getByText("n/a")).toBeInTheDocument();
+    expect(screen.queryByText(/0\.000/)).not.toBeInTheDocument();
+  });
+
+  it("shows the mock-sentiment hint on sentiment columns", () => {
+    render(<AblationMatrix matrix={MATRIX} />);
+    expect(screen.getByLabelText("mock sentiment note")).toBeInTheDocument();
+  });
 });

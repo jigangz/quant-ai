@@ -5,11 +5,15 @@ const PRIMARY_METRIC = {
 };
 
 function cellColor(target, value, baseline) {
-  if (value === undefined || baseline === undefined) return "bg-slate-700/30";
+  // null = metric absent (backend reports honest n/a, never a fake 0.0)
+  if (value == null || baseline == null) return "bg-slate-700/30";
   const isLowerBetter = target === "volatility";
   const better = isLowerBetter ? value < baseline : value > baseline;
   return better ? "bg-emerald-500/15" : "bg-amber-500/15";
 }
+
+const MOCK_SENTIMENT_HINT =
+  "Sentiment features come from a mock provider in this build — deltas reflect pipeline wiring, not real news signal.";
 
 export default function AblationMatrix({ matrix }) {
   if (!matrix || Object.keys(matrix).length === 0) {
@@ -29,7 +33,14 @@ export default function AblationMatrix({ matrix }) {
           <tr className="text-[10px] uppercase tracking-wide text-slate-400 border-b border-slate-800">
             <th className="px-3 py-2 text-left">Target</th>
             {featureSetNames.map((fs) => (
-              <th key={fs} className="px-3 py-2 text-left">{fs}</th>
+              <th key={fs} className="px-3 py-2 text-left">
+                {fs}
+                {/sentiment/i.test(fs) && (
+                  <span title={MOCK_SENTIMENT_HINT} aria-label="mock sentiment note" className="ml-1 cursor-help">
+                    ℹ️
+                  </span>
+                )}
+              </th>
             ))}
           </tr>
         </thead>
@@ -53,9 +64,9 @@ export default function AblationMatrix({ matrix }) {
                   return (
                     <td key={fs} className={`px-3 py-2 ${cellColor(target, v, baseline)}`}>
                       <div className="font-semibold tabular-nums">
-                        {v !== undefined ? v.toFixed(3) : "—"}
+                        {v != null ? v.toFixed(3) : <span className="text-slate-500">n/a</span>}
                       </div>
-                      {cell[`delta_${primary}`] !== undefined && (
+                      {cell[`delta_${primary}`] != null && (
                         <div className="text-[10px] text-slate-400">
                           Δ {cell[`delta_${primary}`] >= 0 ? "+" : ""}
                           {cell[`delta_${primary}`].toFixed(3)}

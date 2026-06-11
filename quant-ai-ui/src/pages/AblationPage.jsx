@@ -76,6 +76,11 @@ export default function AblationPage() {
               {result.summary.interpretation}
             </div>
           )}
+          {result.summary?.sentiment_note && (
+            <div className="p-3 bg-amber-500/10 text-amber-200/90 text-xs rounded">
+              ℹ️ {result.summary.sentiment_note}
+            </div>
+          )}
           <div className="text-[10px] text-slate-500">
             Elapsed {result.elapsed_seconds}s · model_type {result.model_type}
           </div>
