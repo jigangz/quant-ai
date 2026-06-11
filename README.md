@@ -1,8 +1,18 @@
 # Quant AI
 
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://quant-ai-ui.vercel.app)
+[![API Docs](https://img.shields.io/badge/API-OpenAPI%20docs-blue)](https://quant-ai-qzrg.onrender.com/docs)
+[![Python](https://img.shields.io/badge/python-3.11-3776AB?logo=python&logoColor=white)](#tech-stack)
+[![React](https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=black)](#tech-stack)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
+
 Production-grade **multi-task ML platform** for financial markets: direction baseline + volatility forecasting + meta-labeling signal quality. Full-stack (FastAPI + React), containerized, observable, deployable to Kubernetes.
 
 **Live:** Frontend [quant-ai-ui.vercel.app](https://quant-ai-ui.vercel.app) · Backend [quant-ai-qzrg.onrender.com](https://quant-ai-qzrg.onrender.com) · [API docs](https://quant-ai-qzrg.onrender.com/docs)
+
+> ⚠️ Research & education platform — **not investment advice**. Direction probabilities are deliberately treated as a baseline; the interesting ML is the volatility forecasting and meta-labeling stack layered on top.
+
+**First visit?** The live demo runs on free tiers — the first API call can take ~30s while the backend wakes (the UI tells you). A 4-step tour walks you through Screener → Dashboard → Portfolio → Leaderboard on first load.
 
 **V4 Gate 1 ship date:** 2026-04-24 — `v4-gate-1-complete` tag.
 **V4 Phase 5 (Gate 2 starter) ship date:** 2026-04-26 — `v4-p5-complete` tag.
@@ -16,7 +26,7 @@ Production-grade **multi-task ML platform** for financial markets: direction bas
 - **Scores signal reliability** (V4 P3 — López de Prado Ch.3) — primary signal (4 rule strategies OR P1 direction model) → triple-barrier with vol-scaled TP/SL → meta-classifier predicts "is this signal trade-worthy?". Purged K-Fold CV with embargo (Ch.7).
 - **Gates Paper Trading orders** — opt-in meta-score threshold + half-Kelly sizing before any order is placed.
 - **Tracks live accuracy** (V4 P5) — every `/predict*` and `/api/signal-score` call writes a row to `prediction_log` (Supabase). `GET /models/{id}/accuracy` lazily resolves rows past their horizon by fetching market closes, returns 30-day hit-rate / realized R / vol MAE.
-- **Quantifies feature contribution** (V4 P5) — `POST /api/ablation/run` trains 6 models (3 targets × 2 feature sets) with default params and returns a delta matrix. Frontend `/ablation` renders the heatmap; honest reporting when sentiment doesn't help.
+- **Quantifies feature contribution** (V4 P5) — `POST /api/ablation/run` trains 6 models (3 targets × 2 feature sets) with default params and returns a delta matrix. Frontend `/ablation` renders the heatmap; honest reporting when sentiment doesn't help — absent metrics render as `n/a`, never a fake `0.0`, and mock-provider sentiment columns are labeled ℹ️ in the UI (P6).
 - **Optimizes** hyperparameters multi-objectively (NSGA-II via Optuna) and strategy parameters (TPE).
 - **Backtests** both ML models and rule-based strategies with transaction costs and position sizing.
 - **Explains** predictions via SHAP feature importance and vector search across historical cases.
@@ -32,6 +42,7 @@ Production-grade **multi-task ML platform** for financial markets: direction bas
 |------|-------|-----------------|
 | Screener | `/screener` | 10 hot tickers with real Supabase prices, sort by change% or volume, click-through to Dashboard |
 | Dashboard | `/dashboard?ticker=AAPL` | Lightweight Charts K-line + volume, 5-day prediction, Volatility Gauge (V4 P2) + 7d signal-quality sparkline (V4 P4), SHAP explain panel, model selector dialog (V4 P2) |
+| Portfolio (P6) | `/portfolio` | Whole watchlist scored in one call via the portfolio agent — bullish/neutral/bearish distribution bar, per-ticker P(up), add/remove tickers, one-click into Dashboard |
 | Signal Console (V4 P4) | `/signal-console` | Watchlist × 4-strategy matrix of meta-models with AUC + E[R] cells; click a cell to preview latest reliability score, expected R, recommended action and half-Kelly sizing; one-click "Train meta" CTA fires `POST /api/meta-label/train` |
 | Leaderboard (V4 P5) | `/leaderboard` | 3 tabs (direction / volatility / meta-label), each a sortable table of active models with primary metric + live 30-day hit rate from `prediction_log` |
 | Ablation (V4 P5) | `/ablation` | Run 3 targets × 2 feature sets (ta_basic vs ta_basic + sentiment) with default params, render delta matrix heatmap, summary identifies which target sentiment helps most |
@@ -41,6 +52,19 @@ Production-grade **multi-task ML platform** for financial markets: direction bas
 | Explain | `/explain` | SHAP top features + similar historical cases via vector search, graceful fallback when optional deps missing |
 
 Frontend stack: **React 19 + Vite + Tailwind v3 + Tremor** (charts/KPI) **+ shadcn/ui** (Radix primitives) **+ Lightweight Charts v4 + TanStack Query v5 + Zustand + react-hook-form + zod + Geist fonts + Vitest**. Page-level code splitting via `React.lazy()` keeps first-screen JS under 340KB.
+
+---
+
+## Honest by design — what's real vs what's demo
+
+| Piece | Status |
+|-------|--------|
+| Market prices | **Real** — Supabase price store, daily candles |
+| Live accuracy | **Real** — every `/predict*` call writes to `prediction_log`; `GET /models/{id}/accuracy` resolves outcomes once the horizon passes |
+| Training & CV | **Real** — chronological splits (no look-ahead), Purged K-Fold + embargo for event-indexed meta-labels |
+| News sentiment | **Mock provider in this build** — labeled ℹ️ in the Ablation UI; its deltas measure pipeline wiring, not news alpha |
+| Paper trading | Virtual money only |
+| Hosting | Free tiers (Render + Vercel + Supabase) — first request after idle takes ~30s to wake; the UI says so instead of looking broken |
 
 ---
 
@@ -87,7 +111,7 @@ Full OpenAPI docs: [https://quant-ai-qzrg.onrender.com/docs](https://quant-ai-qz
 | Frontend state | TanStack Query v5 (server state) + Zustand (WebSocket live store) |
 | Frontend forms | react-hook-form + zod |
 | Frontend fonts | Geist + Geist Mono (@font-face woff2) |
-| Frontend tests | Vitest + @testing-library/react (6 smoke tests) |
+| Frontend tests | Vitest + @testing-library/react (90 tests: pages, features, api hooks) |
 | Container | Docker (multi-stage, separate api + consumer images) |
 | Orchestration | Kubernetes (manifests in `k8s/`) + Horizontal Pod Autoscaler |
 | CI | GitHub Actions (unit + contract + frontend test + docker build + post-deploy health check + keep-alive cron) |
