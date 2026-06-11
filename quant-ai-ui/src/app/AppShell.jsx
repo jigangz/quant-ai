@@ -5,11 +5,14 @@ import ErrorBoundary from "../components/ErrorBoundary";
 import { TopNavBar } from "@/components/layout/TopNavBar";
 import { MigrationBanner } from "@/theme/MigrationBanner";
 import { GlobalRagButton } from "@/components/layout/GlobalRagButton";
+import DemoBanner from "@/components/DemoBanner";
+import Tour from "@/features/onboarding/Tour";
 
-const MIGRATED_PATHS = ["/dashboard"];
+const MIGRATED_PATHS = ["/dashboard", "/portfolio"];
 const ALL_PATHS = [
   { path: "/dashboard", label: "Dashboard" },
   { path: "/screener", label: "Screener" },
+  { path: "/portfolio", label: "Portfolio" },
   { path: "/training", label: "Training" },
   { path: "/strategy", label: "Strategy" },
   { path: "/trading", label: "Paper Trading" },
@@ -32,6 +35,7 @@ export default function AppShell() {
       <Sidebar />
       <div className="flex-1 flex flex-col md:ml-16">
         <TopNavBar />
+        <DemoBanner />
         <MigrationBanner currentPath={pathname} migratedPaths={MIGRATED_PATHS} allPaths={ALL_PATHS} />
         <main className="flex-1 overflow-y-auto">
           <ErrorBoundary>
@@ -40,6 +44,7 @@ export default function AppShell() {
         </main>
       </div>
       <GlobalRagButton bottom={24} right={onDashboard ? 304 : 24} />
+      <Tour />
     </div>
   );
 }
