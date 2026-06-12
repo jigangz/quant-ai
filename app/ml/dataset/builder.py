@@ -100,7 +100,12 @@ class DatasetBuilder:
                             df["date"].min().isoformat(),
                             df["date"].max().isoformat(),
                         ),
-                        label_distribution=df["label"].value_counts().to_dict(),
+                        # str() keys: pydantic 2.12+ no longer coerces int keys
+                        # for dict[str, int] — raw value_counts() keys are int64
+                        label_distribution={
+                            str(k): int(v)
+                            for k, v in df["label"].value_counts().items()
+                        },
                     )
                 )
 
