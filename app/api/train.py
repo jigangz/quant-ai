@@ -244,6 +244,17 @@ def _train_sync(request: TrainRequest) -> TrainSyncResponse:
     registry.insert_model(model_record)
     logger.info(f"Model registered: {model_record.id}")
 
+    # Persist the artifact into the DB so it survives stateless restarts
+    # (Render free tier wipes local disk). Best-effort: the local artifact
+    # still exists this process, so a failure here doesn't break the response.
+    if hasattr(registry, "save_blob") and result.model_path:
+        try:
+            from app.ml.models.base import zip_model_dir
+            registry.save_blob(model_record.id, zip_model_dir(result.model_path))
+            logger.info(f"Model blob persisted to DB: {model_record.id}")
+        except Exception as e:
+            logger.warning(f"Failed to persist model blob {model_record.id}: {e}")
+
     # 5. Update run record
     run_record.success = True
     run_record.model_id = model_record.id

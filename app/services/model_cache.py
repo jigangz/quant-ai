@@ -101,29 +101,33 @@ class ModelCache:
             logger.warning(f"Model not found in registry: {model_id}")
             return None
         
-        model_path = record.artifact_path
         model_type = model_type or record.model_type
-        
-        if not model_path:
-            logger.warning(f"No artifact path for model: {model_id}")
+        model_class = ModelFactory._registry.get(model_type)
+        if not model_class:
+            logger.error(f"Unknown model type: {model_type}")
             return None
-        
-        path = Path(model_path)
-        if not path.exists():
-            logger.warning(f"Model path does not exist: {model_path}")
+
+        # 1) Prefer the DB-persisted blob — survives stateless restarts
+        #    (Render free tier wipes local disk on spin-down).
+        if hasattr(registry, "load_blob"):
+            try:
+                blob = registry.load_blob(model_id)
+                if blob:
+                    model = model_class.from_zip_bytes(blob)
+                    logger.info(f"Loaded model from DB blob: {model_id}")
+                    return model
+            except Exception as e:
+                logger.warning(f"DB blob load failed for {model_id}: {e}")
+
+        # 2) Fallback: local artifact dir (dev models / pre-migration rows)
+        model_path = record.artifact_path
+        if not model_path or not Path(model_path).exists():
+            logger.warning(f"No usable artifact for model: {model_id}")
             return None
-        
         try:
-            # Get model class and load
-            model_class = ModelFactory._registry.get(model_type)
-            if not model_class:
-                logger.error(f"Unknown model type: {model_type}")
-                return None
-            
-            model = model_class.load(path)
+            model = model_class.load(Path(model_path))
             logger.info(f"Loaded model from disk: {model_id}")
             return model
-            
         except Exception as e:
             logger.error(f"Failed to load model {model_id}: {e}")
             return None
@@ -224,18 +228,29 @@ class ModelCache:
         return self._promoted_id
     
     def _save_promotion(self, model_id: str | None):
-        """Persist promotion to disk."""
+        """Persist promotion. DB-backed registry → model_registry.is_promoted
+        (survives restarts + shared across replicas); else local file."""
+        from app.db.model_registry import get_model_registry
+        registry = get_model_registry()
+        if hasattr(registry, "set_promoted"):
+            registry.set_promoted(model_id)
+            return
+
         promotion_file = Path(settings.STORAGE_LOCAL_PATH) / ".promoted_model"
-        
         if model_id:
             promotion_file.write_text(model_id)
         elif promotion_file.exists():
             promotion_file.unlink()
-    
+
     def _load_promotion(self) -> str | None:
-        """Load promotion from disk."""
+        """Load promotion. DB-backed registry → model_registry.is_promoted;
+        else local file."""
+        from app.db.model_registry import get_model_registry
+        registry = get_model_registry()
+        if hasattr(registry, "get_promoted_id"):
+            return registry.get_promoted_id()
+
         promotion_file = Path(settings.STORAGE_LOCAL_PATH) / ".promoted_model"
-        
         if promotion_file.exists():
             return promotion_file.read_text().strip()
         return None

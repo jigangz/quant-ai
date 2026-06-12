@@ -251,6 +251,17 @@ class SupabaseModelRegistry:
         self.client = client
         self.models_table = "model_registry"
         self.runs_table = "training_runs"
+        self._engine = None  # lazy DATABASE_URL engine for bytea + promotion
+
+    def _direct(self):
+        """Lazy SQLAlchemy engine on DATABASE_URL. postgrest handles bytea
+        poorly, so artifact blobs + the promotion flag use a direct connection
+        (same Supabase Postgres, just not over REST)."""
+        if self._engine is None:
+            from sqlalchemy import create_engine
+            from app.core.settings import settings
+            self._engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
+        return self._engine
 
     def insert_model(self, record: ModelRecord) -> ModelRecord:
         data = record.model_dump(mode="json")
@@ -264,6 +275,47 @@ class SupabaseModelRegistry:
         if result.data:
             return ModelRecord(**result.data[0])
         raise Exception("Failed to insert model")
+
+    # --- artifact blob persistence (model_artifacts table) ---
+    def save_blob(self, model_id: str, blob: bytes) -> None:
+        from sqlalchemy import text
+        with self._direct().begin() as c:
+            c.execute(
+                text(
+                    "INSERT INTO model_artifacts (model_id, blob) VALUES (:i, :b) "
+                    "ON CONFLICT (model_id) DO UPDATE SET blob = EXCLUDED.blob"
+                ),
+                {"i": model_id, "b": blob},
+            )
+
+    def load_blob(self, model_id: str) -> bytes | None:
+        from sqlalchemy import text
+        with self._direct().connect() as c:
+            row = c.execute(
+                text("SELECT blob FROM model_artifacts WHERE model_id = :i"),
+                {"i": model_id},
+            ).fetchone()
+        return bytes(row[0]) if row else None
+
+    # --- promotion pointer (model_registry.is_promoted) ---
+    def set_promoted(self, model_id: str | None) -> None:
+        """Promote one model (clears any previous). None clears all."""
+        from sqlalchemy import text
+        with self._direct().begin() as c:
+            c.execute(text("UPDATE model_registry SET is_promoted = false WHERE is_promoted = true"))
+            if model_id:
+                c.execute(
+                    text("UPDATE model_registry SET is_promoted = true WHERE id = :i"),
+                    {"i": model_id},
+                )
+
+    def get_promoted_id(self) -> str | None:
+        from sqlalchemy import text
+        with self._direct().connect() as c:
+            row = c.execute(
+                text("SELECT id FROM model_registry WHERE is_promoted = true LIMIT 1")
+            ).fetchone()
+        return row[0] if row else None
 
     def get_model(self, model_id: str) -> ModelRecord | None:
         result = (

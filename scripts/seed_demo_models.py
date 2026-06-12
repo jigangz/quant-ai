@@ -88,6 +88,17 @@ def main() -> None:
         with engine.begin() as c:
             c.execute(text("DELETE FROM model_registry WHERE id=:id"), {"id": res.model_id})
             c.execute(_INSERT, row)
+        # Persist the artifact blob so prod (stateless) can load + predict
+        from app.ml.models.base import zip_model_dir
+        blob = zip_model_dir(res.model_path)
+        with engine.begin() as c:
+            c.execute(
+                text(
+                    "INSERT INTO model_artifacts (model_id, blob) VALUES (:i,:b) "
+                    "ON CONFLICT (model_id) DO UPDATE SET blob = EXCLUDED.blob"
+                ),
+                {"i": res.model_id, "b": blob},
+            )
         primary = res.metrics.get("test_auc") if label_type != "volatility" else res.metrics.get("test_qlike")
         print(f"  seeded {label_type:11} {model_type:9} {res.model_id}  primary={primary}")
         seeded.append(res.model_id)

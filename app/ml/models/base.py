@@ -10,12 +10,26 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+import io
 import json
+import tempfile
+import zipfile
 
 import numpy as np
 import pandas as pd
 import joblib
 from pydantic import BaseModel as PydanticModel, ConfigDict, Field
+
+
+def zip_model_dir(path: str | Path) -> bytes:
+    """Zip the files of an already-saved model directory into bytes (no
+    re-save). Used to persist artifacts to the DB after training."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for f in Path(path).iterdir():
+            if f.is_file():
+                zf.write(f, arcname=f.name)
+    return buf.getvalue()
 
 
 class ModelMetadata(PydanticModel):
@@ -132,6 +146,23 @@ class BaseModel(ABC):
         params_path = path / "params.json"
         with open(params_path, "w") as f:
             json.dump(self.params, f, indent=2)
+
+    def to_zip_bytes(self) -> bytes:
+        """Serialize the whole saved-model directory (model.joblib + metadata
+        + params) into a single in-memory zip — for DB/object-store
+        persistence so the model survives a stateless restart (Render free
+        tier wipes local disk on spin-down)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            self.save(tmp)
+            return zip_model_dir(tmp)
+
+    @classmethod
+    def from_zip_bytes(cls, data: bytes) -> "BaseModel":
+        """Inverse of to_zip_bytes(): unzip into a temp dir and load()."""
+        with tempfile.TemporaryDirectory() as tmp:
+            with zipfile.ZipFile(io.BytesIO(data), "r") as zf:
+                zf.extractall(tmp)
+            return cls.load(tmp)
 
     @classmethod
     def load(cls, path: str | Path) -> "BaseModel":
