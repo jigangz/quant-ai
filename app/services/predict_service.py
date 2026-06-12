@@ -176,12 +176,15 @@ class PredictionService:
     def _build_features(self, ticker: str) -> Optional[pd.DataFrame]:
         """Build features from market data."""
         try:
-            # Get recent price data
-            df = get_prices(ticker, limit=100)
+            # Get recent price data — get_prices returns list[RowMapping]
+            rows = get_prices(ticker, limit=100)
 
-            if df is None or len(df) < 50:
+            if not rows or len(rows) < 50:
                 logger.warning(f"Insufficient data for {ticker}")
                 return None
+
+            # Technical features need a DataFrame, not the raw row list
+            df = pd.DataFrame([dict(r) for r in rows])
 
             # Add technical features
             df = add_technical_features(df)
