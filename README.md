@@ -14,19 +14,38 @@ Production-grade **multi-task ML platform** for financial markets: direction bas
 
 **First visit?** The live demo runs on free tiers — the first API call can take ~30s while the backend wakes (the UI tells you). A 4-step tour walks you through Screener → Dashboard → Portfolio → Leaderboard on first load.
 
-**V4 Gate 1 ship date:** 2026-04-24 — `v4-gate-1-complete` tag.
-**V4 Phase 5 (Gate 2 starter) ship date:** 2026-04-26 — `v4-p5-complete` tag.
+---
+
+## How you use it
+
+**👀 Visitor — 2 minutes, zero setup**
+
+1. Open the [live demo](https://quant-ai-ui.vercel.app) — a 4-step tour points the way
+2. **Screener** — market overview, pick a ticker
+3. **Dashboard** — one screen: price chart, 5-day direction probability, volatility gauge, SHAP "why", AI-written summary
+4. **Portfolio** — your whole watchlist scored bullish / neutral / bearish in one call
+5. **Paper Trading** — place a virtual order; an optional meta-label gate blocks low-quality signals and sizes the position (half-Kelly)
+6. **Leaderboard** — come back later: every prediction was logged, and gets scored against reality once its horizon passes
+
+**🔬 Operator — the ML loop behind it**
+
+1. **Seed data** — `python -m scripts.backfill_prices` (10 tickers × 2 years of daily OHLCV → Postgres)
+2. **Train** — pick a target (direction / volatility / meta-label), one of 6 model types, feature groups; Optuna multi-objective search optional
+3. **Promote** — the winner becomes the serving model (registry + artifact store)
+4. **Serve & log** — every `/predict*` call writes a row to `prediction_log`
+5. **Score honestly** — accuracy resolves automatically once each prediction's horizon passes; ablation quantifies what each feature group really contributes
+6. **Iterate** — the Leaderboard shows which models survive contact with live data
 
 ---
 
 ## What it does
 
 - **Predicts** stock direction with 6 model types (logistic, random forest, XGBoost, LightGBM, CatBoost, ensemble voting/stacking) — kept as a baseline.
-- **Forecasts realized volatility** (V4 P1) with regression head sharing the same 6-model architecture (MAE / RMSE / MAPE / QLIKE / R²); dynamic-vol-aware barriers feed P3.
-- **Scores signal reliability** (V4 P3 — López de Prado Ch.3) — primary signal (4 rule strategies OR P1 direction model) → triple-barrier with vol-scaled TP/SL → meta-classifier predicts "is this signal trade-worthy?". Purged K-Fold CV with embargo (Ch.7).
+- **Forecasts realized volatility** with regression head sharing the same 6-model architecture (MAE / RMSE / MAPE / QLIKE / R²); dynamic-vol-aware barriers feed the meta-labeling stage.
+- **Scores signal reliability** (López de Prado Ch.3) — primary signal (4 rule strategies OR the direction model) → triple-barrier with vol-scaled TP/SL → meta-classifier predicts "is this signal trade-worthy?". Purged K-Fold CV with embargo (Ch.7).
 - **Gates Paper Trading orders** — opt-in meta-score threshold + half-Kelly sizing before any order is placed.
-- **Tracks live accuracy** (V4 P5) — every `/predict*` and `/api/signal-score` call writes a row to `prediction_log` (Supabase). `GET /models/{id}/accuracy` lazily resolves rows past their horizon by fetching market closes, returns 30-day hit-rate / realized R / vol MAE.
-- **Quantifies feature contribution** (V4 P5) — `POST /api/ablation/run` trains 6 models (3 targets × 2 feature sets) with default params and returns a delta matrix. Frontend `/ablation` renders the heatmap; honest reporting when sentiment doesn't help — absent metrics render as `n/a`, never a fake `0.0`, and mock-provider sentiment columns are labeled ℹ️ in the UI (P6).
+- **Tracks live accuracy** — every `/predict*` and `/api/signal-score` call writes a row to `prediction_log` (Supabase). `GET /models/{id}/accuracy` lazily resolves rows past their horizon by fetching market closes, returns 30-day hit-rate / realized R / vol MAE.
+- **Quantifies feature contribution** — `POST /api/ablation/run` trains 6 models (3 targets × 2 feature sets) with default params and returns a delta matrix. Frontend `/ablation` renders the heatmap; honest reporting when sentiment doesn't help — absent metrics render as `n/a`, never a fake `0.0`, and mock-provider sentiment columns are labeled ℹ️ in the UI.
 - **Optimizes** hyperparameters multi-objectively (NSGA-II via Optuna) and strategy parameters (TPE).
 - **Backtests** both ML models and rule-based strategies with transaction costs and position sizing.
 - **Explains** predictions via SHAP feature importance and vector search across historical cases.
@@ -41,14 +60,14 @@ Production-grade **multi-task ML platform** for financial markets: direction bas
 | Page | Route | What you can do |
 |------|-------|-----------------|
 | Screener | `/screener` | 10 hot tickers with real Supabase prices, sort by change% or volume, click-through to Dashboard |
-| Dashboard | `/dashboard?ticker=AAPL` | Lightweight Charts K-line + volume, 5-day prediction, Volatility Gauge (V4 P2) + 7d signal-quality sparkline (V4 P4), SHAP explain panel, model selector dialog (V4 P2) |
-| Portfolio (P6) | `/portfolio` | Whole watchlist scored in one call via the portfolio agent — bullish/neutral/bearish distribution bar, per-ticker P(up), add/remove tickers, one-click into Dashboard |
-| Signal Console (V4 P4) | `/signal-console` | Watchlist × 4-strategy matrix of meta-models with AUC + E[R] cells; click a cell to preview latest reliability score, expected R, recommended action and half-Kelly sizing; one-click "Train meta" CTA fires `POST /api/meta-label/train` |
-| Leaderboard (V4 P5) | `/leaderboard` | 3 tabs (direction / volatility / meta-label), each a sortable table of active models with primary metric + live 30-day hit rate from `prediction_log` |
-| Ablation (V4 P5) | `/ablation` | Run 3 targets × 2 feature sets (ta_basic vs ta_basic + sentiment) with default params, render delta matrix heatmap, summary identifies which target sentiment helps most |
+| Dashboard | `/dashboard?ticker=AAPL` | Lightweight Charts K-line + volume, 5-day prediction, Volatility Gauge + 7d signal-quality sparkline, SHAP explain panel, model selector dialog |
+| Portfolio | `/portfolio` | Whole watchlist scored in one call via the portfolio agent — bullish/neutral/bearish distribution bar, per-ticker P(up), add/remove tickers, one-click into Dashboard |
+| Signal Console | `/signal-console` | Watchlist × 4-strategy matrix of meta-models with AUC + E[R] cells; click a cell to preview latest reliability score, expected R, recommended action and half-Kelly sizing; one-click "Train meta" CTA fires `POST /api/meta-label/train` |
+| Leaderboard | `/leaderboard` | 3 tabs (direction / volatility / meta-label), each a sortable table of active models with primary metric + live 30-day hit rate from `prediction_log` |
+| Ablation | `/ablation` | Run 3 targets × 2 feature sets (ta_basic vs ta_basic + sentiment) with default params, render delta matrix heatmap, summary identifies which target sentiment helps most |
 | Training | `/training` | Train any of 6 model types, Auto-Optimize (Optuna), 3-tab layout (Train / Runs / Models promote) |
-| Strategy | `/strategy` | 4 strategies (MA cross, RSI, Bollinger, Sentiment) with schema-driven params, signal viz, backtest, Optimize params, **Meta-Label Coverage badge** showing per-strategy meta-model count + best AUC (V4 P4) |
-| Trading | `/trading` | Paper-trade with market/limit orders, live WebSocket prices (Zustand store), portfolio P&L, order book; **opt-in meta-label gate** (model dropdown + threshold slider + score preview) blocks low-quality signals and sizes orders by half-Kelly (V4 P4) |
+| Strategy | `/strategy` | 4 strategies (MA cross, RSI, Bollinger, Sentiment) with schema-driven params, signal viz, backtest, Optimize params, **Meta-Label Coverage badge** showing per-strategy meta-model count + best AUC |
+| Trading | `/trading` | Paper-trade with market/limit orders, live WebSocket prices (Zustand store), portfolio P&L, order book; **opt-in meta-label gate** (model dropdown + threshold slider + score preview) blocks low-quality signals and sizes orders by half-Kelly |
 | Explain | `/explain` | SHAP top features + similar historical cases via vector search, graceful fallback when optional deps missing |
 
 Frontend stack: **React 19 + Vite + Tailwind v3 + Tremor** (charts/KPI) **+ shadcn/ui** (Radix primitives) **+ Lightweight Charts v4 + TanStack Query v5 + Zustand + react-hook-form + zod + Geist fonts + Vitest**. Page-level code splitting via `React.lazy()` keeps first-screen JS under 340KB.
@@ -76,9 +95,9 @@ Frontend stack: **React 19 + Vite + Tailwind v3 + Tremor** (charts/KPI) **+ shad
 | **Market Data** | `/data/market`, `/data/sentiment`, `/data/news` |
 | **ML Training** | `/train`, `/runs`, `/runs/{id}`, `/runs/{id}/reproduce` |
 | **Models** | `/models?label_type=&ticker=`, `/models/{id}`, `/models/{id}/promote`, `/models/types` |
-| **Prediction** | `/predict` (GET legacy + POST), **`POST /predict/volatility`** (V4 P1) |
-| **Meta-Labeling (V4 P3/P4)** | **`POST /api/meta-label/train`** (event-indexed labels via triple-barrier + Purged K-Fold), **`POST /api/signal-score`** (3-mode inference: explicit signal / auto-trigger / fallback), **`GET /api/meta-label/coverage?strategy=`** (per-strategy coverage + best AUC) |
-| **Live Accuracy + Ablation (V4 P5)** | **`GET /models/{id}/accuracy?window_days=30`** (lazy-resolves prediction_log rows past horizon, returns hit-rate / realized R / vol MAE), **`POST /api/ablation/run`** (synchronous 3-target × N-feature-set trainer with delta matrix + summary) |
+| **Prediction** | `/predict` (GET legacy + POST), **`POST /predict/volatility`** |
+| **Meta-Labeling** | **`POST /api/meta-label/train`** (event-indexed labels via triple-barrier + Purged K-Fold), **`POST /api/signal-score`** (3-mode inference: explicit signal / auto-trigger / fallback), **`GET /api/meta-label/coverage?strategy=`** (per-strategy coverage + best AUC) |
+| **Live Accuracy + Ablation** | **`GET /models/{id}/accuracy?window_days=30`** (lazy-resolves prediction_log rows past horizon, returns hit-rate / realized R / vol MAE), **`POST /api/ablation/run`** (synchronous 3-target × N-feature-set trainer with delta matrix + summary) |
 | **Backtest** | `/backtest`, `/backtest/report` |
 | **Features** | `/features/groups`, `/features/groups/{name}` |
 | **Strategies** | `/api/strategies`, `/api/strategies/{name}/signals`, `/api/strategies/{name}/backtest` |
@@ -87,7 +106,7 @@ Frontend stack: **React 19 + Vite + Tailwind v3 + Tremor** (charts/KPI) **+ shad
 | **Explainability** | `/explain`, `/search` |
 | **News** | `/news/{ticker}`, `/news/{ticker}/sentiment-summary`, `/news/{ticker}/similar-days` |
 | **RAG** | `/rag/answer`, `/rag/search`, `/rag/index` |
-| **Agents** | `/agents/technical` (returns 8 model-metadata fields per V4 P2), `/agents/summary` |
+| **Agents** | `/agents/technical` (returns 8 model-metadata fields), `/agents/summary` |
 | **Serverless Functions** | `/api/functions`, `/api/functions/{name}/invoke` |
 
 Full OpenAPI docs: [https://quant-ai-qzrg.onrender.com/docs](https://quant-ai-qzrg.onrender.com/docs)
@@ -236,13 +255,13 @@ The `DatasetBuilder` enforces this via `SplitConfig` with `train_ratio`/`val_rat
 
 ## Data pipeline
 
-Live frontend is backed by real market data, not mocks:
+The frontend is designed to run on real market data — one idempotent script seeds it:
 
 | Component | Detail |
 |-----------|--------|
 | Source | yfinance (free, no API key needed) |
 | Loader | `scripts/backfill_prices.py` — idempotent (`ON CONFLICT DO NOTHING`) |
-| Target | Supabase `prices` table (5010 rows = 10 tickers × 501 trading days × 2 years) |
+| Target | Supabase `prices` table (10 tickers × 2 years of daily candles) |
 | Tickers | AAPL, MSFT, GOOGL, AMZN, NVDA, TSLA, META, JPM, V, WMT |
 | RLS | `service_role` full access + public read via anon key |
 | Schema | `scripts/create_prices_table.sql` (declarative, programmatic creation via SQLAlchemy) |
@@ -272,11 +291,11 @@ See `quant-ai-ui/src/api/queries.js` (`normalizeMarket` + `useScreenerTickers`) 
 ## Testing
 
 ```bash
-# 274 unit + integration tests
-pytest tests/ -v --ignore=tests/contract
+# Backend — 472 tests (unit + integration + contract)
+pytest tests/
 
-# 45 contract tests
-pytest tests/contract/ -v
+# Frontend — 90 tests
+cd quant-ai-ui && npx vitest run
 
 # Ruff lint
 ruff check app/ --ignore F401,F841,E501,F541,E402
@@ -343,7 +362,7 @@ quant-ai/
 ├── observability/            # Prometheus + Grafana configs + dashboard
 ├── docs/                     # Architecture + specs + implementation plans
 ├── scripts/                  # Helper scripts
-├── tests/                    # 274 unit + 45 contract tests
+├── tests/                    # 472 backend tests (unit + integration + contract)
 ├── docker-compose.yml        # Full local stack
 ├── Dockerfile                # Multi-stage API image
 ├── Dockerfile.consumer       # Events consumer image
