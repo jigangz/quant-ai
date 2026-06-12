@@ -8,14 +8,14 @@ function fmtVolume(v) {
 
 export function KeyDataGrid({ latestCandle, prevClose }) {
   const items = [
-    { label: "成交量", value: fmtVolume(latestCandle?.volume) },
-    { label: "前一次收盘", value: prevClose?.toFixed(2) ?? "—" },
-    { label: "开盘价", value: latestCandle?.open?.toFixed(2) ?? "—" },
-    { label: "当日价格范围", value: latestCandle ? `${latestCandle.low?.toFixed(2)} — ${latestCandle.high?.toFixed(2)}` : "—" },
+    { label: "Volume", value: fmtVolume(latestCandle?.volume) },
+    { label: "Previous Close", value: prevClose?.toFixed(2) ?? "—" },
+    { label: "Open", value: latestCandle?.open?.toFixed(2) ?? "—" },
+    { label: "Day's Range", value: latestCandle ? `${latestCandle.low?.toFixed(2)} — ${latestCandle.high?.toFixed(2)}` : "—" },
   ];
   return (
     <div className="mb-4">
-      <h3 className="text-sm font-bold text-foreground mb-2">关键数据点</h3>
+      <h3 className="text-sm font-bold text-foreground mb-2">Key Stats</h3>
       <div className="grid grid-cols-4 gap-3">
         {items.map((i) => (
           <div key={i.label}>

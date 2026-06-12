@@ -18,15 +18,15 @@ const mockTechnical = {
 describe("AIInsightBand", () => {
   it("renders 3 cards", () => {
     render(<AIInsightBand data={mockTechnical} />);
-    expect(screen.getByText(/AI 预测/)).toBeInTheDocument();
-    expect(screen.getByText(/为什么这么说/)).toBeInTheDocument();
+    expect(screen.getByText(/AI Prediction/)).toBeInTheDocument();
+    expect(screen.getByText(/Why this call/)).toBeInTheDocument();
     expect(screen.getByText(/SHAP Top 3/)).toBeInTheDocument();
   });
 
   it("renders bullish direction and high confidence", () => {
     render(<AIInsightBand data={mockTechnical} />);
-    expect(screen.getByText(/看涨/)).toBeInTheDocument();
-    expect(screen.getByText(/高/)).toBeInTheDocument();
+    expect(screen.getByText(/Bullish/)).toBeInTheDocument();
+    expect(screen.getByText(/High/)).toBeInTheDocument();
   });
 
   it("renders top 3 features", () => {

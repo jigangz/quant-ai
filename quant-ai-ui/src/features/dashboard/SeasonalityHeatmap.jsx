@@ -1,4 +1,4 @@
-const MONTH_LABELS = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+const MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 function bandColor(acc) {
   if (acc == null) return "bg-surface-muted text-muted";
@@ -11,18 +11,18 @@ export function SeasonalityHeatmap({ monthly = null }) {
   if (monthly == null) {
     return (
       <section className="mb-4">
-        <h3 className="text-sm font-bold text-foreground">季节性 ›</h3>
-        <p className="text-[10px] text-muted mb-2">过去模型在这个月份的预测准确率</p>
+        <h3 className="text-sm font-bold text-foreground">Seasonality ›</h3>
+        <p className="text-[10px] text-muted mb-2">Historical model prediction accuracy by month</p>
         <div className="border border-surface-border rounded-md p-6 text-center text-xs text-muted">
-          数据积累中 — 首次预测落实后开启
+          Collecting data — unlocks once the first predictions resolve
         </div>
       </section>
     );
   }
   return (
     <section className="mb-4">
-      <h3 className="text-sm font-bold text-foreground">季节性 ›</h3>
-      <p className="text-[10px] text-muted mb-2">过去模型在这个月份的预测准确率</p>
+      <h3 className="text-sm font-bold text-foreground">Seasonality ›</h3>
+      <p className="text-[10px] text-muted mb-2">Historical model prediction accuracy by month</p>
       <div className="grid grid-cols-12 gap-0.5 text-[9px] text-center">
         {MONTH_LABELS.map((label, i) => {
           const entry = monthly.find((m) => m.month === i + 1);

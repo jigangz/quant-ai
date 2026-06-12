@@ -22,11 +22,11 @@ function aggregateSignals(signals, matchers) {
 }
 
 function scoreToLabel(score) {
-  if (score >= 1.5) return "强烈买入";
-  if (score >= 0.5) return "买入";
-  if (score <= -1.5) return "强烈卖出";
-  if (score <= -0.5) return "卖出";
-  return "中立";
+  if (score >= 1.5) return "Strong Buy";
+  if (score >= 0.5) return "Buy";
+  if (score <= -1.5) return "Strong Sell";
+  if (score <= -0.5) return "Sell";
+  return "Neutral";
 }
 
 function aiScore(prediction, probability, confidence) {
@@ -49,12 +49,12 @@ export function GaugesSection({ prediction, probability, confidence, signals = [
 
   return (
     <section className="mb-4">
-      <h3 className="text-sm font-bold text-foreground">技术指标 ›</h3>
-      <p className="text-[10px] text-muted mb-2">总结指标的建议</p>
+      <h3 className="text-sm font-bold text-foreground">Technicals ›</h3>
+      <p className="text-[10px] text-muted mb-2">Summary of indicator signals</p>
       <div className="grid grid-cols-3 gap-4">
-        <Gauge label="震荡指标 (RSI/MACD)" score={oscScore} scoreLabel={scoreToLabel(oscScore)} />
-        <Gauge label="🤖 AI 模型总结" score={ai} scoreLabel={scoreToLabel(ai)} emphasized />
-        <Gauge label="移动平均线" score={maScore} scoreLabel={scoreToLabel(maScore)} />
+        <Gauge label="Oscillators (RSI/MACD)" score={oscScore} scoreLabel={scoreToLabel(oscScore)} />
+        <Gauge label="🤖 AI Model Summary" score={ai} scoreLabel={scoreToLabel(ai)} emphasized />
+        <Gauge label="Moving Averages" score={maScore} scoreLabel={scoreToLabel(maScore)} />
       </div>
     </section>
   );

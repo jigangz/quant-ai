@@ -18,7 +18,7 @@ export function SymbolHeader({ ticker, name, exchange, price, change = 0, change
             {sign}{change?.toFixed(2)} {sign}{changePct?.toFixed(2)}%
           </span>
         </div>
-        {lastUpdate && <div className="text-[10px] text-muted mt-1">在 {lastUpdate} 收盘</div>}
+        {lastUpdate && <div className="text-[10px] text-muted mt-1">At close {lastUpdate}</div>}
         {modelSource && (
           <div className="text-[10px] text-muted mt-1">
             🔁 Model: <a href={`/training?tab=runs&id=${modelSource.runId}`} className="hover:underline">run #{modelSource.runId} · git {modelSource.gitSha}</a>

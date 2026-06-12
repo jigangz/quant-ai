@@ -23,6 +23,6 @@ describe("GlobalRagButton", () => {
     const user = userEvent.setup();
     renderWithClient();
     await user.click(screen.getByRole("button", { name: /RAG/ }));
-    expect(screen.getByPlaceholderText(/问问题/)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Ask a question/)).toBeInTheDocument();
   });
 });

@@ -14,10 +14,10 @@ function formatPct(x) {
 function bandForVol(vol) {
   // Rough bands for annualized realized vol (equities).
   if (vol == null) return { label: "—", color: "text-muted" };
-  if (vol < 0.15) return { label: "低波动", color: "text-up" };
-  if (vol < 0.30) return { label: "中等波动", color: "text-foreground" };
-  if (vol < 0.50) return { label: "高波动", color: "text-amber-600" };
-  return { label: "极高波动", color: "text-down" };
+  if (vol < 0.15) return { label: "Low volatility", color: "text-up" };
+  if (vol < 0.30) return { label: "Moderate volatility", color: "text-foreground" };
+  if (vol < 0.50) return { label: "High volatility", color: "text-amber-600" };
+  return { label: "Very high volatility", color: "text-down" };
 }
 
 export function VolatilityCard({ ticker, horizonDays = 5 }) {
@@ -41,7 +41,7 @@ export function VolatilityCard({ ticker, horizonDays = 5 }) {
     <section className="rounded-lg border border-border bg-white p-4 mb-4">
       <div className="flex items-baseline justify-between mb-2">
         <h3 className="text-sm font-bold text-foreground">
-          📊 预测波动率 · {horizonDays} 日年化
+          📊 Predicted Volatility · {horizonDays}D annualized
         </h3>
         <span className="text-[10px] text-muted">V4 Phase 2</span>
       </div>
@@ -49,7 +49,7 @@ export function VolatilityCard({ ticker, horizonDays = 5 }) {
       {!hasVolModel ? (
         <EmptyState ticker={ticker} />
       ) : predQ.isLoading ? (
-        <div className="text-sm text-muted py-4">加载中…</div>
+        <div className="text-sm text-muted py-4">Loading…</div>
       ) : predQ.data?.success ? (
         <ResultView
           vol={vol}
@@ -59,7 +59,7 @@ export function VolatilityCard({ ticker, horizonDays = 5 }) {
         />
       ) : (
         <div className="text-xs text-down py-2">
-          {predQ.data?.error ?? "预测失败"}
+          {predQ.data?.error ?? "Prediction failed"}
         </div>
       )}
       <MetaSparkline ticker={ticker} />
@@ -70,9 +70,9 @@ export function VolatilityCard({ ticker, horizonDays = 5 }) {
 function EmptyState({ ticker }) {
   return (
     <div className="text-xs text-muted py-3 border border-dashed border-border rounded px-3">
-      还没有训练过 {ticker} 的波动率模型 (label_type=volatility)。
+      No volatility model trained yet for {ticker} (label_type=volatility).
       <br />
-      去 <span className="font-medium">🧪 建模</span> 选"预测目标 → 波动率"训练一个。
+      Open <span className="font-medium">🧪 Modeling</span> and select "Prediction target → Volatility" to train one.
     </div>
   );
 }
@@ -88,7 +88,7 @@ function ResultView({ vol, band, modelName, modelMetrics }) {
       <div className="text-[11px] text-muted mt-2 flex items-center gap-2 flex-wrap">
         {modelName && (
           <span>
-            来源: <span className="font-mono">{modelName}</span>
+            Source: <span className="font-mono">{modelName}</span>
           </span>
         )}
         {mae != null && (

@@ -9,14 +9,14 @@ export function CTARow({ ticker, prediction }) {
         to={`/trading?ticker=${ticker}&side=${side}&suggestion_source=dashboard`}
         className="bg-accent text-accent-foreground text-sm font-bold py-2.5 rounded-md text-center hover:bg-accent-hover transition-colors"
       >
-        🛒 基于此信号纸上下单
+        🛒 Paper trade on this signal
       </Link>
       <ModelingDialog ticker={ticker}>
         <button
           type="button"
           className="bg-surface border border-surface-border text-foreground text-sm py-2.5 rounded-md text-center hover:bg-surface-muted transition-colors w-full"
         >
-          🧪 选模型 / 训练 · 多目标 (V4 P2)
+          🧪 Select model / Train · Multi-target (V4 P2)
         </button>
       </ModelingDialog>
     </div>

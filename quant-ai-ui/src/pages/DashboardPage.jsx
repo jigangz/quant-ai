@@ -85,7 +85,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-[1fr_280px]">
         <div className="p-5 max-w-[1200px]">
           <nav className="text-[11px] text-muted mb-2">
-            市场 / 美国 / 股票 / {ticker}
+            Markets / US / Stocks / {ticker}
           </nav>
           <SymbolHeader
             ticker={ticker}
@@ -101,7 +101,7 @@ export default function DashboardPage() {
                 : null
             }
           />
-          <SymbolTabs active="概览" />
+          <SymbolTabs active="Overview" />
           <AIInsightBand data={aiQ.data} isLoading={aiQ.isLoading} error={aiQ.error} />
           <ChartSection candles={candles} isLoading={marketQ.isLoading} />
           <KeyDataGrid latestCandle={latest} prevClose={prev?.close} />

@@ -4,11 +4,11 @@ function timeLabel(iso) {
   if (!iso) return "";
   const diff = Date.now() - new Date(iso).getTime();
   const days = Math.floor(diff / (24 * 3600 * 1000));
-  if (days === 0) return "今天";
-  if (days === 1) return "昨天";
-  if (days === 2) return "前天";
-  if (days < 30) return `${days} 天前`;
-  return new Date(iso).toLocaleDateString("zh-CN");
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days === 2) return "2 days ago";
+  if (days < 30) return `${days} days ago`;
+  return new Date(iso).toLocaleDateString("en-US");
 }
 
 export function NewsGrid({ items = [] }) {
@@ -16,15 +16,15 @@ export function NewsGrid({ items = [] }) {
   if (!items.length) {
     return (
       <section className="mb-4">
-        <h3 className="text-sm font-bold text-foreground">新闻 ›</h3>
-        <p className="text-xs text-muted mt-2">新闻暂不可用</p>
+        <h3 className="text-sm font-bold text-foreground">News ›</h3>
+        <p className="text-xs text-muted mt-2">News unavailable</p>
       </section>
     );
   }
   const visible = expanded ? items : items.slice(0, 8);
   return (
     <section className="mb-4">
-      <h3 className="text-sm font-bold text-foreground mb-2">新闻 ›</h3>
+      <h3 className="text-sm font-bold text-foreground mb-2">News ›</h3>
       <div className="grid grid-cols-4 gap-2.5">
         {visible.map((n, i) => (
           <a
@@ -41,7 +41,7 @@ export function NewsGrid({ items = [] }) {
       </div>
       {items.length > 8 && !expanded && (
         <button onClick={() => setExpanded(true)} className="text-xs text-accent mt-2 hover:underline">
-          继续阅读
+          Read more
         </button>
       )}
     </section>

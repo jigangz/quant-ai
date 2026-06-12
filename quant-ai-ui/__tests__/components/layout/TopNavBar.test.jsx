@@ -18,23 +18,23 @@ describe("TopNavBar", () => {
 
   it("shows search input with Ctrl+K placeholder", () => {
     renderNav();
-    expect(screen.getByPlaceholderText(/搜索/)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Search/)).toBeInTheDocument();
   });
 
   it("shows navigation links", () => {
     renderNav();
-    expect(screen.getByText("市场")).toBeInTheDocument();
-    expect(screen.getByText("研究")).toBeInTheDocument();
-    expect(screen.getByText("模型")).toBeInTheDocument();
+    expect(screen.getByText("Markets")).toBeInTheDocument();
+    expect(screen.getByText("Research")).toBeInTheDocument();
+    expect(screen.getByText("Models")).toBeInTheDocument();
   });
 
   it("renders Leaderboard link", () => {
     renderNav();
-    expect(screen.getByText(/榜单/)).toBeInTheDocument();
+    expect(screen.getByText(/Leaderboard/)).toBeInTheDocument();
   });
 
   it("renders Ablation link", () => {
     renderNav();
-    expect(screen.getByText(/消融/)).toBeInTheDocument();
+    expect(screen.getByText(/Ablation/)).toBeInTheDocument();
   });
 });

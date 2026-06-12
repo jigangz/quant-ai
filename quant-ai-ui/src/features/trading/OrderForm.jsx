@@ -137,7 +137,7 @@ export default function OrderForm() {
               disabled={!metaModelId}
               className="px-3 py-1 text-sm bg-emerald-600/20 border border-emerald-600/40 rounded hover:bg-emerald-600/30 disabled:opacity-50"
             >
-              预览 score
+              Preview score
             </button>
             {metaScore?.triggered && (
               <div className="p-3 bg-slate-800/50 rounded text-xs space-y-1">

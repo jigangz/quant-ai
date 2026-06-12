@@ -3,7 +3,7 @@ export function ShapMiniCard({ features }) {
     return (
       <div className="bg-surface border border-surface-border rounded-md p-3">
         <div className="text-[9px] uppercase tracking-wide text-muted">📊 SHAP Top 3</div>
-        <div className="text-xs text-muted mt-2">SHAP 未安装或不可用</div>
+        <div className="text-xs text-muted mt-2">SHAP not installed or unavailable</div>
       </div>
     );
   }

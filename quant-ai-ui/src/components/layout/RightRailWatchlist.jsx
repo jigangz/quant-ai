@@ -44,7 +44,7 @@ export function RightRailWatchlist({ currentTicker }) {
   };
 
   const aiData = aiForCurrent.data;
-  const direction = aiData?.prediction === 1 ? "看涨" : aiData?.prediction === 0 ? "看跌" : "中性";
+  const direction = aiData?.prediction === 1 ? "Bullish" : aiData?.prediction === 0 ? "Bearish" : "Neutral";
   const confidence = aiData?.confidence ?? "—";
 
   return (
@@ -86,14 +86,14 @@ export function RightRailWatchlist({ currentTicker }) {
 
       {currentTicker && (
         <div className="border-t border-surface-border pt-3">
-          <div className="text-xs font-bold text-foreground">🎯 {currentTicker} · 当前</div>
+          <div className="text-xs font-bold text-foreground">🎯 {currentTicker} · Current</div>
           {aiForCurrent.isLoading ? (
             <div className="text-xs text-muted mt-1">Loading...</div>
           ) : (
             <>
-              <div className="text-[9px] text-muted mt-2">AI 预测（5 天）</div>
+              <div className="text-[9px] text-muted mt-2">AI Forecast (5D)</div>
               <div className={`text-xs font-bold ${aiData?.prediction === 1 ? "text-up" : "text-down"}`}>
-                {aiData?.prediction === 1 ? "↗" : "↘"} {direction} · {confidence === "high" ? "高置信度" : confidence === "medium" ? "中置信度" : "低置信度"}
+                {aiData?.prediction === 1 ? "↗" : "↘"} {direction} · {confidence === "high" ? "High confidence" : confidence === "medium" ? "Medium confidence" : "Low confidence"}
               </div>
             </>
           )}

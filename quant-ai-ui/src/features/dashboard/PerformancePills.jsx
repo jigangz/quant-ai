@@ -1,13 +1,13 @@
 const RANGES = [
-  { key: "1D", label: "1天", days: 1 },
-  { key: "5D", label: "5天", days: 5 },
-  { key: "1M", label: "1月", days: 30 },
-  { key: "6M", label: "6月", days: 180 },
+  { key: "1D", label: "1D", days: 1 },
+  { key: "5D", label: "5D", days: 5 },
+  { key: "1M", label: "1M", days: 30 },
+  { key: "6M", label: "6M", days: 180 },
   { key: "YTD", label: "YTD", days: null },
-  { key: "1Y", label: "1年", days: 365 },
-  { key: "5Y", label: "5年", days: 5 * 365 },
-  { key: "10Y", label: "10年", days: 10 * 365 },
-  { key: "ALL", label: "全部", days: null },
+  { key: "1Y", label: "1Y", days: 365 },
+  { key: "5Y", label: "5Y", days: 5 * 365 },
+  { key: "10Y", label: "10Y", days: 10 * 365 },
+  { key: "ALL", label: "All", days: null },
 ];
 
 function computePerf(candles, range) {

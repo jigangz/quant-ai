@@ -18,8 +18,8 @@ describe("RelatedStocks", () => {
     expect(screen.getByText("MSFT")).toBeInTheDocument();
     expect(screen.getByText("Microsoft")).toBeInTheDocument();
     expect(screen.getByText(/465.12/)).toBeInTheDocument();
-    expect(screen.getByText(/看涨/)).toBeInTheDocument();
-    expect(screen.getByText(/看跌/)).toBeInTheDocument();
+    expect(screen.getByText(/Bullish/)).toBeInTheDocument();
+    expect(screen.getByText(/Bearish/)).toBeInTheDocument();
   });
 
   it("hides section when no peers", () => {

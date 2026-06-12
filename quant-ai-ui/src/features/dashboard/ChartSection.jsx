@@ -98,8 +98,8 @@ export function ChartSection({ candles = [], isLoading = false }) {
   return (
     <div className="bg-surface border border-surface-border rounded-md p-3 mb-4">
       <div className="flex justify-between items-center mb-2">
-        <div className="text-sm font-bold text-foreground">图表 ›</div>
-        <div className="text-[10px] text-muted">完整图表 · &lt;/&gt;</div>
+        <div className="text-sm font-bold text-foreground">Chart ›</div>
+        <div className="text-[10px] text-muted">Full Chart · &lt;/&gt;</div>
       </div>
       {isLoading ? (
         <div className="h-[380px] bg-surface-muted rounded animate-pulse" />

@@ -63,7 +63,7 @@ describe("TradingPage meta-label integration", () => {
     await waitFor(() => expect(screen.getByLabelText(/threshold/i)).toBeInTheDocument());
     const metaSelect = await screen.findByTestId("meta-model-select");
     fireEvent.change(metaSelect, { target: { value: "meta_a" } });
-    const previewBtn = await screen.findByRole("button", { name: /预览 score|preview score/i });
+    const previewBtn = await screen.findByRole("button", { name: /preview score/i });
     fireEvent.click(previewBtn);
     await waitFor(() => expect(client.postSignalScore).toHaveBeenCalled());
   });
@@ -86,7 +86,7 @@ describe("TradingPage meta-label integration", () => {
     await waitFor(() => expect(screen.getByLabelText(/threshold/i)).toBeInTheDocument());
     const metaSelect = await screen.findByTestId("meta-model-select");
     fireEvent.change(metaSelect, { target: { value: "meta_a" } });
-    fireEvent.click(await screen.findByRole("button", { name: /预览 score|preview score/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /preview score/i }));
     await waitFor(() => expect(screen.getByText(/0\.71/)).toBeInTheDocument());
     expect(screen.getAllByText(/trade/i).length).toBeGreaterThan(0);
   });

@@ -15,7 +15,7 @@ export function AIInsightBand({ data, isLoading = false, error = null }) {
   if (error) {
     return (
       <div className="bg-down/10 border border-down/30 rounded p-4 mb-4 text-sm">
-        AI 分析暂不可用。<button className="text-accent underline ml-2" onClick={() => window.location.reload()}>重试</button>
+        AI analysis is temporarily unavailable.<button className="text-accent underline ml-2" onClick={() => window.location.reload()}>Retry</button>
       </div>
     );
   }

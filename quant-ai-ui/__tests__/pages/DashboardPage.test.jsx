@@ -54,17 +54,17 @@ describe("DashboardPage", () => {
   it("renders 14 sections on happy path", async () => {
     renderPage();
     // Wait for AI data to load (appears after agentTechnical query resolves)
-    await waitFor(() => expect(screen.getAllByText(/AI 预测/).length).toBeGreaterThan(0), { timeout: 5000 });
-    expect(screen.getAllByText(/为什么这么说/).length).toBeGreaterThan(0);
+    await waitFor(() => expect(screen.getAllByText(/AI Prediction/).length).toBeGreaterThan(0), { timeout: 5000 });
+    expect(screen.getAllByText(/Why this call/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/SHAP Top 3/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/图表/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("关键数据点").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("相关股票").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/新闻/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/历史模型对此股的预测/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/技术指标/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/季节性/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/纸上下单/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Chart/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Key Stats").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Related Stocks").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/News/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Model Predictions for This Stock/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Technicals/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Seasonality/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Paper trade on this signal/).length).toBeGreaterThan(0);
   });
 
   it("wraps content in ThemeScope light", async () => {

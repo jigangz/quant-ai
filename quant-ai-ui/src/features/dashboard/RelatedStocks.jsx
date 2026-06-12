@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 
 function signalLabel(signal) {
   if (!signal) return { text: "—", color: "text-muted" };
-  const dir = signal.direction === "bullish" ? "看涨" : signal.direction === "bearish" ? "看跌" : "中性";
-  const conf = signal.confidence === "high" ? "高" : signal.confidence === "medium" ? "中" : signal.confidence === "low" ? "低" : "";
+  const dir = signal.direction === "bullish" ? "Bullish" : signal.direction === "bearish" ? "Bearish" : "Neutral";
+  const conf = signal.confidence === "high" ? "High" : signal.confidence === "medium" ? "Med" : signal.confidence === "low" ? "Low" : "";
   const color = signal.direction === "bullish" ? "text-up" : signal.direction === "bearish" ? "text-down" : "text-muted";
   return { text: `🤖 ${dir}${conf ? " · " + conf : ""}`, color };
 }
@@ -12,8 +12,8 @@ export function RelatedStocks({ peers = [] }) {
   if (!peers.length) return null;
   return (
     <section className="mb-4">
-      <h3 className="text-sm font-bold text-foreground">相关股票</h3>
-      <p className="text-[10px] text-muted mb-2">同行业 + AI 预测信号</p>
+      <h3 className="text-sm font-bold text-foreground">Related Stocks</h3>
+      <p className="text-[10px] text-muted mb-2">Sector peers + AI prediction signals</p>
       <div className="grid grid-cols-6 gap-2">
         {peers.map((p) => {
           const sig = signalLabel(p.signal);

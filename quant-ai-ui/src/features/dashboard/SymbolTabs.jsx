@@ -1,6 +1,6 @@
-const TABS = ["概览", "新闻", "社区", "技术指标", "模型历史", "预测记录"];
+const TABS = ["Overview", "News", "Community", "Technicals", "Model History", "Prediction Log"];
 
-export function SymbolTabs({ active = "概览", onChange = () => {} }) {
+export function SymbolTabs({ active = "Overview", onChange = () => {} }) {
   return (
     <div className="border-b border-surface-border flex gap-5 mb-4">
       {TABS.map((t) => (

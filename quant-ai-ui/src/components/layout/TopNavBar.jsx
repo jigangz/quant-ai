@@ -2,13 +2,13 @@ import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 
 const NAV_ITEMS = [
-  { label: "市场", to: "/screener" },
-  { label: "研究", to: "/dashboard" },
-  { label: "模型", to: "/training" },
-  { label: "信号", to: "/signal-console" },
-  { label: "榜单", to: "/leaderboard" },
-  { label: "消融", to: "/ablation" },
-  { label: "更多", to: "#" },
+  { label: "Markets", to: "/screener" },
+  { label: "Research", to: "/dashboard" },
+  { label: "Models", to: "/training" },
+  { label: "Signals", to: "/signal-console" },
+  { label: "Leaderboard", to: "/leaderboard" },
+  { label: "Ablation", to: "/ablation" },
+  { label: "More", to: "#" },
 ];
 
 export function TopNavBar() {
@@ -31,12 +31,12 @@ export function TopNavBar() {
           <Search size={13} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="text"
-            placeholder="🔍 搜索 (Ctrl+K)"
+            placeholder="🔍 Search (Ctrl+K)"
             className="w-full pl-7 pr-2 py-1 rounded text-xs bg-surface-muted border border-surface-border placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>
       </div>
-      <button className="bg-accent text-accent-foreground text-xs px-3 py-1 rounded">升级</button>
+      <button className="bg-accent text-accent-foreground text-xs px-3 py-1 rounded">Upgrade</button>
       <div className="w-8 h-8 bg-surface-muted rounded-full" aria-label="User" />
     </header>
   );

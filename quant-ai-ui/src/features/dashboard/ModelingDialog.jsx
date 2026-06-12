@@ -31,18 +31,18 @@ import { useModelsForTickerByLabelType } from "@/api/queries";
 // stronger XGBoost as default preset since prod has libgomp1 + xgboost wheel.
 const PRESETS = {
   direction: [
-    { id: "xgb_dir_default", label: "⚡ 快速 XGBoost", model_type: "xgboost", horizon_days: 5 },
-    { id: "logistic_dir", label: "🎯 稳健 Logistic", model_type: "logistic", horizon_days: 5 },
+    { id: "xgb_dir_default", label: "⚡ Fast XGBoost", model_type: "xgboost", horizon_days: 5 },
+    { id: "logistic_dir", label: "🎯 Robust Logistic", model_type: "logistic", horizon_days: 5 },
   ],
   volatility: [
-    { id: "xgb_vol_default", label: "⚡ 快速 XGBoost", model_type: "xgboost", horizon_days: 5 },
-    { id: "rf_vol_default", label: "🌲 稳健 RandomForest", model_type: "random_forest", horizon_days: 5 },
+    { id: "xgb_vol_default", label: "⚡ Fast XGBoost", model_type: "xgboost", horizon_days: 5 },
+    { id: "rf_vol_default", label: "🌲 Robust RandomForest", model_type: "random_forest", horizon_days: 5 },
   ],
 };
 
 const LABEL_TYPES = [
-  { value: "direction", label: "方向 (baseline)" },
-  { value: "volatility", label: "波动率 (V4 P2)" },
+  { value: "direction", label: "Direction (baseline)" },
+  { value: "volatility", label: "Volatility (V4 P2)" },
   // meta_label + regime deferred to V4 P3+
 ];
 
@@ -82,9 +82,9 @@ export function ModelingDialog({ ticker, children }) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>🧪 建模 · {ticker}</DialogTitle>
+          <DialogTitle>🧪 Modeling · {ticker}</DialogTitle>
           <DialogDescription>
-            选择 <b>预测目标</b> 和建模方式。V4 Pivot 支持多目标(方向 / 波动率)。
+            Choose a <b>prediction target</b> and modeling approach. V4 Pivot supports multiple targets (direction / volatility).
           </DialogDescription>
         </DialogHeader>
 
@@ -108,15 +108,15 @@ export function ModelingDialog({ ticker, children }) {
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="grid grid-cols-3">
-            <TabsTrigger value="mine">我的模型</TabsTrigger>
-            <TabsTrigger value="preset">预设模板</TabsTrigger>
-            <TabsTrigger value="custom">自定义训练</TabsTrigger>
+            <TabsTrigger value="mine">My Models</TabsTrigger>
+            <TabsTrigger value="preset">Presets</TabsTrigger>
+            <TabsTrigger value="custom">Custom Train</TabsTrigger>
           </TabsList>
 
           {/* Mine · list of models filtered by label_type via G3 backend */}
           <TabsContent value="mine" className="min-h-[240px]">
             {modelsQ.isLoading ? (
-              <p className="text-sm text-muted py-4">加载中…</p>
+              <p className="text-sm text-muted py-4">Loading…</p>
             ) : (modelsQ.data ?? []).length === 0 ? (
               <EmptyMine labelType={labelType} />
             ) : (
@@ -154,7 +154,7 @@ export function ModelingDialog({ ticker, children }) {
           {/* Custom · minimal form */}
           <TabsContent value="custom" className="min-h-[240px] space-y-3">
             <div>
-              <Label>算法</Label>
+              <Label>Algorithm</Label>
               <select
                 value={customModelType}
                 onChange={(e) => setCustomModelType(e.target.value)}
@@ -168,7 +168,7 @@ export function ModelingDialog({ ticker, children }) {
               </select>
             </div>
             <div>
-              <Label>预测 horizon (天)</Label>
+              <Label>Forecast horizon (days)</Label>
               <Input
                 type="number"
                 min={1}
@@ -190,18 +190,18 @@ export function ModelingDialog({ ticker, children }) {
                 })
               }
             >
-              {trainM.isPending ? "训练中…" : `训练 ${customModelType} · ${labelType}`}
+              {trainM.isPending ? "Training…" : `Train ${customModelType} · ${labelType}`}
             </Button>
           </TabsContent>
         </Tabs>
 
         {trainM.isError && (
-          <p className="text-xs text-down">训练失败: {String(trainM.error?.message ?? trainM.error)}</p>
+          <p className="text-xs text-down">Training failed: {String(trainM.error?.message ?? trainM.error)}</p>
         )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
-            关闭
+            Close
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -226,7 +226,7 @@ function ModelRow({ model, onUse }) {
         </div>
       </div>
       <Button size="sm" onClick={onUse}>
-        使用此模型
+        Use this model
       </Button>
     </li>
   );
@@ -242,9 +242,9 @@ function PresetCard({ preset, disabled, onUse }) {
     >
       <div className="text-sm font-semibold">{preset.label}</div>
       <div className="text-[11px] text-muted mt-1">
-        {preset.model_type} · horizon {preset.horizon_days}d · 默认 ta_basic
+        {preset.model_type} · horizon {preset.horizon_days}d · default ta_basic
       </div>
-      <div className="text-[11px] text-accent mt-2">点击训练 →</div>
+      <div className="text-[11px] text-accent mt-2">Click to train →</div>
     </button>
   );
 }
@@ -252,9 +252,9 @@ function PresetCard({ preset, disabled, onUse }) {
 function EmptyMine({ labelType }) {
   return (
     <div className="text-xs text-muted py-6 text-center border border-dashed border-border rounded">
-      还没有 label_type=<b>{labelType}</b> 的模型。
+      No models yet for label_type=<b>{labelType}</b>.
       <br />
-      去 <b>预设模板</b> 或 <b>自定义训练</b> 标签训练一个。
+      Train one from the <b>Presets</b> or <b>Custom Train</b> tab.
     </div>
   );
 }
