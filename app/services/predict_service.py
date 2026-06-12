@@ -121,6 +121,15 @@ class PredictionService:
                     "ticker": ticker,
                 }
 
+            # Align to the model's training feature set. _build_features emits
+            # the full technical-indicator set, but the model was fit on its
+            # feature_groups subset and errors on columns unseen at fit time.
+            expected = getattr(model, "feature_names", None)
+            if not expected and getattr(model, "metadata", None):
+                expected = getattr(model.metadata, "feature_names", None)
+            if expected:
+                X = X.reindex(columns=list(expected), fill_value=0.0)
+
             model_type = getattr(model, "model_type", "unknown")
 
             # Make prediction — timed for Prometheus histogram
