@@ -23,10 +23,12 @@ localStorage.setItem('quant-ai:demo-banner-dismissed', '1');
 
 # (filename, route, settle seconds)
 PAGES = [
-    ("dashboard", "/dashboard?ticker=AAPL", 10),
-    ("portfolio", "/portfolio", 10),
-    ("screener", "/screener", 8),
-    ("leaderboard", "/leaderboard", 8),
+    # dashboard/portfolio call the agents API (model inference) — give them
+    # longer to settle so prediction + summary cards are populated.
+    ("dashboard", "/dashboard?ticker=AAPL", 28),
+    ("portfolio", "/portfolio", 22),
+    ("screener", "/screener", 10),
+    ("leaderboard", "/leaderboard", 10),
 ]
 
 
@@ -41,7 +43,7 @@ with sync_playwright() as p:
     browser = p.chromium.launch()
 
     # Clean page shots (overlays pre-dismissed)
-    ctx = browser.new_context(viewport={"width": 1440, "height": 900})
+    ctx = browser.new_context(viewport={"width": 1440, "height": 900}, locale="en-US")
     ctx.add_init_script(DISMISS_OVERLAYS)
     page = ctx.new_page()
     for name, route, settle in PAGES:
@@ -49,7 +51,7 @@ with sync_playwright() as p:
     ctx.close()
 
     # One shot WITH the first-visit tour visible (it's a selling point)
-    ctx2 = browser.new_context(viewport={"width": 1440, "height": 900})
+    ctx2 = browser.new_context(viewport={"width": 1440, "height": 900}, locale="en-US")
     page2 = ctx2.new_page()
     shoot(page2, "tour", "/screener", 8)
     ctx2.close()
