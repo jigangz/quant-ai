@@ -16,6 +16,19 @@ Production-grade **multi-task ML platform** for financial markets: direction bas
 
 ---
 
+## Screenshots
+
+**Dashboard** — one screen per ticker: live price + candles, AI direction prediction, volatility gauge, SHAP "why", AI-written summary.
+![Dashboard](docs/screenshots/dashboard.png)
+
+**Portfolio** — your whole watchlist scored in one call: bullish/neutral/bearish split + per-ticker probability.
+![Portfolio](docs/screenshots/portfolio.png)
+
+**Leaderboard** — honest model scoreboard: active models per task with primary metric + live hit-rate from the prediction log.
+![Leaderboard](docs/screenshots/leaderboard.png)
+
+---
+
 ## How you use it
 
 **👀 Visitor — 2 minutes, zero setup**
