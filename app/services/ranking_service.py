@@ -143,3 +143,79 @@ class RankingService:
             "rankings": rankings,
             "score_semantics": SCORE_SEMANTICS,
         }
+
+
+def backtest_ranking(
+    model_id: Optional[str] = None,
+    top_pct: float = 0.10,
+    cost_bps: int = 10,
+    long_short: bool = False,
+    *,
+    model=None,
+    universe: Optional[list[str]] = None,
+    prices: Optional[dict] = None,
+) -> dict:
+    """Out-of-sample Top-N portfolio backtest of the ranking model (V5 Phase E).
+
+    Loads the xs model, builds the held-out (test-split) panel, runs the
+    cross-sectional backtest, and returns compact equity curves + metrics
+    (NET of costs) for the strategy and the equal-weight-universe benchmark —
+    shaped for the frontend Backtest card.
+    """
+    from app.backtest.xs_portfolio import backtest_xs_portfolio, build_backtest_panel
+
+    H = 5
+    if model is None:
+        mid = model_id or default_xs_model_id()
+        if not mid:
+            return _fail("No xs_strong model available. Publish one first.")
+        model = get_model(mid)
+        model_id = mid
+        if model is None:
+            return _fail(f"Model {mid} could not be loaded.")
+
+    universe = universe or list(getattr(getattr(model, "metadata", None), "tickers", []) or [])
+    if not universe:
+        return _fail("Empty universe.")
+    if prices is None:
+        prices = get_prices_batch(universe)
+
+    panel, factor_cols = build_backtest_panel(model, prices, H=H)
+    if panel is None or panel.empty:
+        return _fail("No out-of-sample data to backtest.")
+
+    bt = backtest_xs_portfolio(
+        panel, model, factor_cols=factor_cols,
+        top_pct=top_pct, H=H, cost_bps=cost_bps, long_short=long_short,
+    )
+    if not bt.get("success"):
+        return _fail(bt.get("error", "Backtest produced no rebalances."))
+
+    def _slim(cell: dict) -> dict:
+        m = cell["metrics"]
+        return {
+            "sharpe": m.get("sharpe"), "cagr": m.get("cagr"),
+            "max_drawdown": m.get("max_drawdown"), "total_return": m.get("total_return"),
+            "equity": cell["equity"],
+        }
+
+    dates = bt["dates"]
+    return {
+        "success": True,
+        "model_id": model_id,
+        "oos_start": dates[0] if dates else None,
+        "oos_end": dates[-1] if dates else None,
+        "n_rebalances": bt["n_rebalances"],
+        "top_pct": top_pct,
+        "cost_bps": cost_bps,
+        "long_short": long_short,
+        "avg_turnover": round(bt["avg_turnover"], 4),
+        "dates": dates,
+        "strategy": _slim(bt["net"]),       # net of transaction costs (the honest one)
+        "benchmark": _slim(bt["benchmark"]),
+        "caveat": (
+            f"Out-of-sample (held-out test split, ~{bt['n_rebalances']} rebalances) net of "
+            f"{cost_bps}bps/side vs an equal-weight-universe benchmark. Short, single-regime "
+            "window — a directional read, not a robust Sharpe estimate."
+        ),
+    }

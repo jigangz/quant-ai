@@ -6,6 +6,7 @@ import { LoadingOverlay } from "../components/LoadingSpinner";
 import ErrorState from "../components/ErrorState";
 import EmptyState from "../components/EmptyState";
 import { useRanking } from "../api/queries";
+import BacktestCard from "../features/ranking/BacktestCard";
 import { RefreshCw, Trophy, Info } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -110,6 +111,8 @@ export default function RankingPage() {
           )}
         </CardContent>
       </Card>
+
+      <BacktestCard />
     </div>
   );
 }

@@ -58,6 +58,13 @@ export function getRanking(topN = 20) {
   return request(`/predict/ranking?top_n=${encodeURIComponent(topN)}`);
 }
 
+// V5 Phase E · Out-of-sample Top-N portfolio backtest
+export function getRankingBacktest({ topPct = 0.1, costBps = 10, longShort = false } = {}) {
+  return request(
+    `/backtest/ranking?top_pct=${topPct}&cost_bps=${costBps}&long_short=${longShort}`
+  );
+}
+
 // ===================================
 // SHAP Explain
 // ===================================

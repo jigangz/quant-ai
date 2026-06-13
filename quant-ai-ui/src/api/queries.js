@@ -38,6 +38,14 @@ export const useRanking = (topN = 20) =>
     staleTime: 5 * 60_000, // board moves once per close
   });
 
+// ===== Ranking portfolio backtest (V5 Phase E) =====
+export const useRankingBacktest = (opts = {}) =>
+  useQuery({
+    queryKey: ["ranking-backtest", opts.topPct ?? 0.1, opts.costBps ?? 10, opts.longShort ?? false],
+    queryFn: () => api.getRankingBacktest(opts),
+    staleTime: 30 * 60_000, // backtest changes once per close; first call is slow
+  });
+
 export const useScreenerTickers = () =>
   useQuery({
     queryKey: ["screener", SCREENER_TICKERS],

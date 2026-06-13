@@ -178,3 +178,49 @@ def test_build_backtest_panel_since_override():
     panel, _ = build_backtest_panel(_ModelWithMeta(), prices, H=5, since="2024-09-01")
     # explicit `since` overrides the metadata boundary
     assert (panel["date"] > pd.Timestamp("2024-09-01")).all()
+
+
+# ===================================================================
+# E4 — backtest_ranking service + /backtest/ranking endpoint
+# ===================================================================
+
+def test_backtest_ranking_returns_curves():
+    from app.services.ranking_service import backtest_ranking
+
+    prices = _synth_prices(["AA", "BB", "CC", "DD", "EE", "FF", "GG", "HH"])
+    out = backtest_ranking(
+        model=_ModelWithMeta(), universe=list(prices), prices=prices,
+        top_pct=0.30, cost_bps=10,
+    )
+    assert out["success"], out.get("error")
+    n = out["n_rebalances"]
+    assert n >= 2
+    assert len(out["strategy"]["equity"]) == n
+    assert len(out["benchmark"]["equity"]) == n
+    assert len(out["dates"]) == n
+    assert "sharpe" in out["strategy"] and "sharpe" in out["benchmark"]
+    assert out["oos_start"] is not None and out["oos_end"] is not None
+    assert "caveat" in out
+
+
+def test_backtest_ranking_endpoint_shape(monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    canned = {
+        "success": True, "model_id": "m1", "oos_start": "2026-02-09",
+        "oos_end": "2026-06-04", "n_rebalances": 17, "top_pct": 0.1,
+        "cost_bps": 10, "long_short": False, "avg_turnover": 0.41,
+        "dates": ["2026-02-09", "2026-02-16"],
+        "strategy": {"sharpe": 1.75, "cagr": 69.0, "max_drawdown": 8.77,
+                     "total_return": 20.0, "equity": [1.02, 1.05]},
+        "benchmark": {"sharpe": 0.48, "cagr": 7.6, "max_drawdown": 7.54,
+                      "total_return": 2.5, "equity": [1.005, 1.01]},
+        "caveat": "short window",
+    }
+    monkeypatch.setattr("app.api.backtest.backtest_ranking", lambda **k: canned)
+    r = TestClient(app).get("/backtest/ranking?top_pct=0.1&cost_bps=10")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["success"] and body["strategy"]["sharpe"] == 1.75
+    assert len(body["strategy"]["equity"]) == len(body["dates"])

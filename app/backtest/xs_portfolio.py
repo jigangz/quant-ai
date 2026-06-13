@@ -116,7 +116,7 @@ def backtest_xs_portfolio(
         return {"success": False, "error": "Not enough rebalance dates.",
                 "n_rebalances": len(rebals)}
 
-    long_rets, bench_rets, turnovers = [], [], []
+    long_rets, bench_rets, turnovers, used_dates = [], [], [], []
     prev_long: set = set()
     prev_short: set = set()
 
@@ -148,6 +148,7 @@ def backtest_xs_portfolio(
         long_rets.append(period_ret)
         bench_rets.append(float(gg["future_return"].mean()))
         turnovers.append(turn)
+        used_dates.append(pd.Timestamp(t).date().isoformat())
         prev_long = cur_long
 
     if len(long_rets) < 2:
@@ -167,6 +168,7 @@ def backtest_xs_portfolio(
     return {
         "success": True,
         "n_rebalances": len(long_rets),
+        "dates": used_dates,
         "H": H,
         "top_pct": top_pct,
         "long_short": long_short,
