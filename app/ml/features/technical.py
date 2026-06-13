@@ -89,6 +89,23 @@ def add_technical_features(df: pd.DataFrame) -> pd.DataFrame:
     df["price_vs_ma20"] = (df["close"] - df["ma_20"]) / df["ma_20"]
     df["price_vs_ma50"] = (df["close"] - df["ma_50"]) / df["ma_50"]
 
+    # ===== V5 cross-sectional factors (relative quantities, comparable across
+    # names; the absolute-level factors above are weak in a cross-section) =====
+    # Momentum
+    df["returns_60d"] = df["close"].pct_change(60)
+    df["mom_accel"] = df["returns_5d"] - df["returns_20d"]          # momentum acceleration
+    df["mom_12_1"] = df["close"].shift(21) / df["close"].shift(252) - 1.0  # 12-1 momentum
+    # Liquidity
+    df["dollar_volume"] = df["close"] * df["volume"]
+    df["amihud_illiq"] = df["returns_1d"].abs() / (df["dollar_volume"] + 1.0)
+    # Downside risk
+    df["downside_vol_20"] = df["returns_1d"].clip(upper=0).rolling(20).std()
+    # 52-week price position
+    high_252 = df["high"].rolling(252, min_periods=60).max()
+    low_252 = df["low"].rolling(252, min_periods=60).min()
+    df["dist_52w_high"] = df["close"] / high_252 - 1.0
+    df["dist_52w_low"] = df["close"] / low_252 - 1.0
+
     # Clean up intermediate columns
     df = df.drop(columns=["bb_std"], errors="ignore")
 

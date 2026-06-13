@@ -18,11 +18,10 @@ def get_engine():
         # statements — each transaction may land on a different backend, so
         # psycopg3's auto-prepare (after 5 reuses of a statement) throws
         # "prepared statement already exists" on bulk operations. Disable it.
-        _engine = create_engine(
-            settings.DATABASE_URL,
-            pool_pre_ping=True,
-            connect_args={"prepare_threshold": None},
-        )
+        # Only valid for psycopg (postgres); sqlite (tests) rejects the kwarg.
+        url = settings.DATABASE_URL
+        connect_args = {"prepare_threshold": None} if "postgres" in url else {}
+        _engine = create_engine(url, pool_pre_ping=True, connect_args=connect_args)
     return _engine
 
 
