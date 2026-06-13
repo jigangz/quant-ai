@@ -6,7 +6,7 @@
 [![React](https://img.shields.io/badge/react-19-61DAFB?logo=react&logoColor=black)](#tech-stack)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 
-Production-grade **multi-task ML platform** for financial markets: direction baseline + volatility forecasting + meta-labeling signal quality. Full-stack (FastAPI + React), containerized, observable, deployable to Kubernetes.
+Production-grade **multi-task ML platform** for financial markets: direction baseline + volatility forecasting + meta-labeling signal quality + **cross-sectional stock ranking**. Full-stack (FastAPI + React), containerized, observable, deployable to Kubernetes.
 
 **Live:** Frontend [quant-ai-ui.vercel.app](https://quant-ai-ui.vercel.app) · Backend [quant-ai-qzrg.onrender.com](https://quant-ai-qzrg.onrender.com) · [API docs](https://quant-ai-qzrg.onrender.com/docs)
 
@@ -56,6 +56,7 @@ Production-grade **multi-task ML platform** for financial markets: direction bas
 - **Predicts** stock direction with 6 model types (logistic, random forest, XGBoost, LightGBM, CatBoost, ensemble voting/stacking) — kept as a baseline.
 - **Forecasts realized volatility** with regression head sharing the same 6-model architecture (MAE / RMSE / MAPE / QLIKE / R²); dynamic-vol-aware barriers feed the meta-labeling stage.
 - **Scores signal reliability** (López de Prado Ch.3) — primary signal (4 rule strategies OR the direction model) → triple-barrier with vol-scaled TP/SL → meta-classifier predicts "is this signal trade-worthy?". Purged K-Fold CV with embargo (Ch.7).
+- **Ranks the cross-section** — recasts "predict up/down" as "rank relative strength": each day labels the S&P 500's top-30% forward return as the *strong* group, z-scores every factor **within that day's cross-section** (leakage-free, scaler-less — same transform at train and serve), and trains a learning-to-rank model on a Phase-B-selected factor set (28 candidates → IC + correlation de-dup → 12). Honest result on 527 names: **Rank IC ≈ 0.05 / precision@30% ≈ 0.37** — a real edge where single-stock direction has none (AUC 0.53). Survivorship-corrected point-in-time universe (reconstructed from S&P 500 change logs). `GET /predict/ranking` serves today's Top-N strength board.
 - **Gates Paper Trading orders** — opt-in meta-score threshold + half-Kelly sizing before any order is placed.
 - **Tracks live accuracy** — every `/predict*` and `/api/signal-score` call writes a row to `prediction_log` (Supabase). `GET /models/{id}/accuracy` lazily resolves rows past their horizon by fetching market closes, returns 30-day hit-rate / realized R / vol MAE.
 - **Quantifies feature contribution** — `POST /api/ablation/run` trains 6 models (3 targets × 2 feature sets) with default params and returns a delta matrix. Frontend `/ablation` renders the heatmap; honest reporting when sentiment doesn't help — absent metrics render as `n/a`, never a fake `0.0`, and mock-provider sentiment columns are labeled ℹ️ in the UI.
@@ -73,6 +74,7 @@ Production-grade **multi-task ML platform** for financial markets: direction bas
 | Page | Route | What you can do |
 |------|-------|-----------------|
 | Screener | `/screener` | 10 hot tickers with real Supabase prices, sort by change% or volume, click-through to Dashboard |
+| Strength Ranking | `/ranking` | Cross-sectional Top-N strong stocks scored by the xs_strong model — rank, ticker, strength bar, score, percentile; "relative rank, not a price target" disclaimer |
 | Dashboard | `/dashboard?ticker=AAPL` | Lightweight Charts K-line + volume, 5-day prediction, Volatility Gauge + 7d signal-quality sparkline, SHAP explain panel, model selector dialog |
 | Portfolio | `/portfolio` | Whole watchlist scored in one call via the portfolio agent — bullish/neutral/bearish distribution bar, per-ticker P(up), add/remove tickers, one-click into Dashboard |
 | Signal Console | `/signal-console` | Watchlist × 4-strategy matrix of meta-models with AUC + E[R] cells; click a cell to preview latest reliability score, expected R, recommended action and half-Kelly sizing; one-click "Train meta" CTA fires `POST /api/meta-label/train` |
@@ -94,13 +96,14 @@ Frontend stack: **React 19 + Vite + Tailwind v3 + Tremor** (charts/KPI) **+ shad
 | Market prices | **Real** — Supabase price store, daily candles |
 | Live accuracy | **Real** — every `/predict*` call writes to `prediction_log`; `GET /models/{id}/accuracy` resolves outcomes once the horizon passes |
 | Training & CV | **Real** — chronological splits (no look-ahead), Purged K-Fold + embargo for event-indexed meta-labels |
+| Cross-sectional ranking | **Real** — Rank IC ~0.05 / precision@30% ~0.37 on 527 S&P names, survivorship-corrected point-in-time universe; an honest mid-tier edge, reported not inflated (sells the tool, not the signal) |
 | News sentiment | **Mock provider in this build** — labeled ℹ️ in the Ablation UI; its deltas measure pipeline wiring, not news alpha |
 | Paper trading | Virtual money only |
 | Hosting | Free tiers (Render + Vercel + Supabase) — first request after idle takes ~30s to wake; the UI says so instead of looking broken |
 
 ---
 
-## Backend API surface (~58 endpoints)
+## Backend API surface (~59 endpoints)
 
 | Category | Representative endpoints |
 |----------|-------------------------|
@@ -108,7 +111,7 @@ Frontend stack: **React 19 + Vite + Tailwind v3 + Tremor** (charts/KPI) **+ shad
 | **Market Data** | `/data/market`, `/data/sentiment`, `/data/news` |
 | **ML Training** | `/train`, `/runs`, `/runs/{id}`, `/runs/{id}/reproduce` |
 | **Models** | `/models?label_type=&ticker=`, `/models/{id}`, `/models/{id}/promote`, `/models/types` |
-| **Prediction** | `/predict` (GET legacy + POST), **`POST /predict/volatility`** |
+| **Prediction** | `/predict` (GET legacy + POST), **`POST /predict/volatility`**, **`GET /predict/ranking?top_n=`** (cross-sectional Top-N strength board) |
 | **Meta-Labeling** | **`POST /api/meta-label/train`** (event-indexed labels via triple-barrier + Purged K-Fold), **`POST /api/signal-score`** (3-mode inference: explicit signal / auto-trigger / fallback), **`GET /api/meta-label/coverage?strategy=`** (per-strategy coverage + best AUC) |
 | **Live Accuracy + Ablation** | **`GET /models/{id}/accuracy?window_days=30`** (lazy-resolves prediction_log rows past horizon, returns hit-rate / realized R / vol MAE), **`POST /api/ablation/run`** (synchronous 3-target × N-feature-set trainer with delta matrix + summary) |
 | **Backtest** | `/backtest`, `/backtest/report` |
