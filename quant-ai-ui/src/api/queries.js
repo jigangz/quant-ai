@@ -30,6 +30,14 @@ export const useMarket = (ticker, opts = {}) =>
     ...opts,
   });
 
+// ===== Cross-sectional ranking (V5 Phase D) =====
+export const useRanking = (topN = 20) =>
+  useQuery({
+    queryKey: ["ranking", topN],
+    queryFn: () => api.getRanking(topN),
+    staleTime: 5 * 60_000, // board moves once per close
+  });
+
 export const useScreenerTickers = () =>
   useQuery({
     queryKey: ["screener", SCREENER_TICKERS],

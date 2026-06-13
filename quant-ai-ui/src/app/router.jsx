@@ -5,6 +5,7 @@ import { LoadingOverlay } from "../components/LoadingSpinner";
 
 // Lazy-load each page — each becomes its own chunk, first-page load time drops ~75%
 const ScreenerPage = lazy(() => import("../pages/ScreenerPage"));
+const RankingPage = lazy(() => import("../pages/RankingPage"));
 const DashboardPage = lazy(() => import("../pages/DashboardPage"));
 const TrainingPage = lazy(() => import("../pages/TrainingPage"));
 const StrategyPage = lazy(() => import("../pages/StrategyPage"));
@@ -29,6 +30,7 @@ export default function AppRouter() {
       <Route path="/" element={<AppShell />}>
         <Route index element={<Navigate to="/screener" replace />} />
         <Route path="screener" element={<PageSuspense><ScreenerPage /></PageSuspense>} />
+        <Route path="ranking" element={<PageSuspense><RankingPage /></PageSuspense>} />
         <Route path="dashboard" element={<PageSuspense><DashboardPage /></PageSuspense>} />
         <Route path="training" element={<PageSuspense><TrainingPage /></PageSuspense>} />
         <Route path="strategy" element={<PageSuspense><StrategyPage /></PageSuspense>} />

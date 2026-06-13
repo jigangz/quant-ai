@@ -53,6 +53,11 @@ export function predictVolatility({ ticker, model_id = null, horizon_days = 5 })
   });
 }
 
+// V5 Phase D · Cross-sectional Top-N strength ranking
+export function getRanking(topN = 20) {
+  return request(`/predict/ranking?top_n=${encodeURIComponent(topN)}`);
+}
+
 // ===================================
 // SHAP Explain
 // ===================================

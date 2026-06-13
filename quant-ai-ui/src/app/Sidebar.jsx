@@ -7,12 +7,14 @@ import {
   LineChart,
   Lightbulb,
   Briefcase,
+  Trophy,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "../components/ui/tooltip";
 import { cn } from "../lib/utils";
 
 const NAV_ITEMS = [
   { to: "/screener", label: "Screener", icon: BarChart2 },
+  { to: "/ranking", label: "Strength Ranking", icon: Trophy },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/portfolio", label: "Portfolio", icon: Briefcase },
   { to: "/training", label: "Training", icon: Brain },

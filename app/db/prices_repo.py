@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional
 
 import pandas as pd
@@ -54,6 +55,45 @@ def get_prices(
         return []
 
     return list(rows)
+
+
+def get_prices_batch(
+    tickers: List[str],
+    since_days: int = 520,
+) -> Dict[str, pd.DataFrame]:
+    """Fetch recent OHLCV for many tickers in ONE query (V5 Phase D ranking).
+
+    Avoids N round-trips when scoring the whole universe. Returns a dict mapping
+    each ticker to its rows as an ascending-by-date DataFrame; tickers with no
+    rows in the window are absent. Empty/error → {}.
+    """
+    if not tickers:
+        return {}
+
+    since = datetime.now(timezone.utc).date() - timedelta(days=since_days)
+    sql = text("""
+        select ticker, date, open, high, low, close, volume
+        from prices
+        where ticker = any(:tickers) and date >= :since
+        order by ticker, date
+    """)
+    try:
+        with engine.begin() as conn:
+            rows = conn.execute(
+                sql,
+                {"tickers": [t.upper() for t in tickers], "since": since},
+            ).mappings().all()
+    except OperationalError:
+        return {}
+
+    grouped: Dict[str, list] = {}
+    for r in rows:
+        grouped.setdefault(r["ticker"], []).append(dict(r))
+
+    return {
+        t: pd.DataFrame(v).sort_values("date").reset_index(drop=True)
+        for t, v in grouped.items()
+    }
 
 
 def get_prices_df(
