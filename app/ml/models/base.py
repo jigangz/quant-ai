@@ -50,6 +50,9 @@ class ModelMetadata(PydanticModel):
     # Date range
     train_start_date: str | None = None
     train_end_date: str | None = None
+    # Start of the held-out TEST split (val/test boundary). The honest OOS cutoff
+    # for a backtest — everything after this was never used for fit OR tuning.
+    test_start_date: str | None = None
 
     # Hyperparameters
     params: dict[str, Any] = {}
@@ -208,6 +211,7 @@ class BaseModel(ABC):
         val_samples: int,
         train_start_date: str | None = None,
         train_end_date: str | None = None,
+        test_start_date: str | None = None,
         metrics: dict[str, float] | None = None,
     ) -> None:
         """Set model metadata after training."""
@@ -221,6 +225,7 @@ class BaseModel(ABC):
             val_samples=val_samples,
             train_start_date=train_start_date,
             train_end_date=train_end_date,
+            test_start_date=test_start_date,
             params=self.params,
             metrics=metrics or {},
         )

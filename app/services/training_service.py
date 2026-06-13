@@ -304,6 +304,8 @@ class TrainingService:
                 val_samples=dataset.metadata.val_samples,
                 train_start_date=dataset.metadata.train_date_range[0],
                 train_end_date=dataset.metadata.train_date_range[1],
+                # test-split start = the honest OOS boundary (after val + tuning)
+                test_start_date=dataset.metadata.test_date_range[0],
                 metrics=metrics,
             )
 
