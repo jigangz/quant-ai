@@ -14,7 +14,15 @@ def get_engine():
     """Return the SQLAlchemy engine, creating it lazily on first call."""
     global _engine
     if _engine is None:
-        _engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
+        # Supabase's transaction pooler (port 6543) does NOT support prepared
+        # statements — each transaction may land on a different backend, so
+        # psycopg3's auto-prepare (after 5 reuses of a statement) throws
+        # "prepared statement already exists" on bulk operations. Disable it.
+        _engine = create_engine(
+            settings.DATABASE_URL,
+            pool_pre_ping=True,
+            connect_args={"prepare_threshold": None},
+        )
     return _engine
 
 
