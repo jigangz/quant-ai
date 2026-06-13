@@ -26,7 +26,7 @@ export default function PortfolioPage() {
   const removeTicker = (t) => setTickers((prev) => prev.filter((x) => x !== t));
 
   return (
-    <div className="p-6 space-y-4 max-w-7xl mx-auto">
+    <div className="space-y-4">
       <header>
         <h1 className="text-2xl font-semibold text-foreground">Portfolio</h1>
         <p className="text-sm text-muted">
