@@ -17,7 +17,7 @@ export default function SignalDetail({ selection }) {
 
   if (!selection) {
     return (
-      <div className="p-6 text-sm text-slate-500 bg-slate-900/40 rounded-lg">
+      <div className="p-6 text-sm text-muted bg-surface-muted rounded-lg">
         Select a cell in the matrix to see signal detail.
       </div>
     );
@@ -25,7 +25,7 @@ export default function SignalDetail({ selection }) {
 
   if (preview.isPending || !resp) {
     return (
-      <div className="p-6 text-sm text-slate-400 bg-slate-900/40 rounded-lg">
+      <div className="p-6 text-sm text-muted bg-surface-muted rounded-lg">
         Loading signal score for {selection.ticker} × {selection.strategy}...
       </div>
     );
@@ -33,8 +33,8 @@ export default function SignalDetail({ selection }) {
 
   if (!resp.triggered) {
     return (
-      <div className="p-6 bg-slate-900/40 rounded-lg space-y-2">
-        <div className="text-xs text-slate-400">{selection.ticker} × {selection.strategy}</div>
+      <div className="p-6 bg-surface-muted rounded-lg space-y-2">
+        <div className="text-xs text-muted">{selection.ticker} × {selection.strategy}</div>
         <div className="text-sm text-amber-300">
           Strategy silent at latest close — {resp.reason || "did not trigger"}
         </div>
@@ -48,12 +48,12 @@ export default function SignalDetail({ selection }) {
   const sizing = resp.sizing_hint ?? {};
 
   return (
-    <div className="p-6 bg-slate-900/40 rounded-lg space-y-4">
+    <div className="p-6 bg-surface-muted rounded-lg space-y-4">
       <div>
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-muted">
           {selection.ticker} × {selection.strategy}
         </div>
-        <div className="text-sm text-slate-500">Model: {resp.meta_model?.id}</div>
+        <div className="text-sm text-muted">Model: {resp.meta_model?.id}</div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -69,13 +69,13 @@ export default function SignalDetail({ selection }) {
       <div className={`text-lg font-bold ${actionColor}`}>Action: {action}</div>
 
       {sizing.half_kelly_fraction !== undefined && (
-        <div className="text-xs text-slate-400 space-y-1">
+        <div className="text-xs text-muted space-y-1">
           <div>Sizing hint (half-Kelly): {(sizing.half_kelly_fraction * 100).toFixed(1)}% of capital</div>
           <div>Raw Kelly: {(sizing.raw_kelly * 100).toFixed(1)}% · Cap: {(sizing.cap * 100).toFixed(0)}%</div>
         </div>
       )}
 
-      <div className="text-[10px] text-slate-500 pt-2 border-t border-slate-800">
+      <div className="text-[10px] text-muted pt-2 border-t border-surface-border">
         Primary: {resp.meta_model?.primary_source} · Timestamp: {resp.timestamp}
       </div>
     </div>
@@ -84,9 +84,9 @@ export default function SignalDetail({ selection }) {
 
 function Metric({ label, value }) {
   return (
-    <div className="bg-slate-800/50 rounded px-3 py-2">
-      <div className="text-[10px] uppercase text-slate-500">{label}</div>
-      <div className="text-lg font-semibold text-slate-100">{value}</div>
+    <div className="bg-surface-muted rounded px-3 py-2">
+      <div className="text-[10px] uppercase text-muted">{label}</div>
+      <div className="text-lg font-semibold text-foreground">{value}</div>
     </div>
   );
 }

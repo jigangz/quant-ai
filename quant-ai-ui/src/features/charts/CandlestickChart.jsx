@@ -10,12 +10,12 @@ export default function CandlestickChart({ data, markers = [], height = 420 }) {
     if (!containerRef.current) return;
     // Lightweight Charts parser only accepts comma-separated rgb() or hex — not Tailwind's space-separated syntax
     const COLORS = {
-      bg: "#18181b",        // zinc-900
-      text: "#a1a1aa",      // zinc-400
-      grid: "#27272a",      // zinc-800
-      border: "#3f3f46",    // zinc-700
-      up: "#10b981",        // emerald-500
-      down: "#f43f5e",      // rose-500
+      bg: "#ffffff",        // light page
+      text: "#71717a",      // zinc-500
+      grid: "#e5e7eb",      // gray-200
+      border: "#d4d4d8",    // zinc-300
+      up: "#059669",        // emerald-600
+      down: "#e11d48",      // rose-600
     };
 
     const chart = createChart(containerRef.current, {

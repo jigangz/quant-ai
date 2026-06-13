@@ -37,7 +37,7 @@ export default function SignalConsolePage() {
     <div className="p-6 space-y-4 max-w-7xl mx-auto">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">Signal Console</h1>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-muted">
           Meta-label signal quality across strategies × tickers. Click a cell to preview its latest signal score.
           {initialStrategy && <span className="ml-2 text-emerald-400">· filtered: {initialStrategy}</span>}
         </p>

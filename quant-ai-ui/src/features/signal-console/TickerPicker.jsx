@@ -26,8 +26,8 @@ export default function TickerPicker({ selected = [], onChange }) {
   };
 
   return (
-    <div className="flex flex-wrap gap-2 p-3 bg-slate-900/40 rounded-lg">
-      <div className="text-xs text-slate-400 mr-2 self-center">Watchlist:</div>
+    <div className="flex flex-wrap gap-2 p-3 bg-surface-muted rounded-lg">
+      <div className="text-xs text-muted mr-2 self-center">Watchlist:</div>
       {available.map((t) => (
         <button
           key={t}
@@ -36,13 +36,13 @@ export default function TickerPicker({ selected = [], onChange }) {
           className={`px-2 py-1 text-xs rounded border ${
             selected.includes(t)
               ? "bg-emerald-600/20 border-emerald-600/50 text-emerald-300"
-              : "bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200"
+              : "bg-surface-muted border-surface-border text-muted hover:text-foreground"
           }`}
         >
           {t}
         </button>
       ))}
-      <div className="text-xs text-slate-500 ml-auto self-center">
+      <div className="text-xs text-muted ml-auto self-center">
         {selected.length}/{MAX_SELECTED} selected
       </div>
     </div>

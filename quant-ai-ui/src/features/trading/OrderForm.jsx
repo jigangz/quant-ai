@@ -82,7 +82,7 @@ export default function OrderForm() {
           </div>
         )}
       </div>
-      <div className="border-t border-slate-800 pt-4">
+      <div className="border-t border-surface-border pt-4">
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="checkbox"
@@ -95,12 +95,12 @@ export default function OrderForm() {
         {metaEnabled && (
           <div className="mt-3 space-y-3 pl-6">
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Meta model</label>
+              <label className="block text-xs text-muted mb-1">Meta model</label>
               <select
                 data-testid="meta-model-select"
                 value={metaModelId}
                 onChange={(e) => setMetaModelId(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-sm"
+                className="w-full bg-surface-muted border border-surface-border rounded px-2 py-1 text-sm"
               >
                 <option value="">— select a model —</option>
                 {(metaModels.data || []).map((m) => {
@@ -116,7 +116,7 @@ export default function OrderForm() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-slate-400 mb-1" htmlFor="meta-threshold">
+              <label className="block text-xs text-muted mb-1" htmlFor="meta-threshold">
                 Threshold: {metaThreshold.toFixed(2)}
               </label>
               <input
@@ -140,7 +140,7 @@ export default function OrderForm() {
               Preview score
             </button>
             {metaScore?.triggered && (
-              <div className="p-3 bg-slate-800/50 rounded text-xs space-y-1">
+              <div className="p-3 bg-surface-muted rounded text-xs space-y-1">
                 <div>
                   Score: <span className="font-semibold">{metaScore.reliability_score.toFixed(2)}</span>
                   {" · "}E[R]: {(metaScore.expected_R ?? 0).toFixed(2)}
@@ -152,7 +152,7 @@ export default function OrderForm() {
                   }>{metaScore.recommended_action}</span>
                 </div>
                 {metaScore.sizing_hint && (
-                  <div className="text-slate-400">
+                  <div className="text-muted">
                     Sizing hint: {(metaScore.sizing_hint.half_kelly_fraction * 100).toFixed(1)}% of capital
                   </div>
                 )}

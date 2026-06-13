@@ -46,12 +46,12 @@ export default function MetaSparkline({ ticker }) {
 
   if (!model) return null;
   if (loading && series.length === 0) {
-    return <div className="text-[10px] text-slate-500 mt-2">Loading signal quality...</div>;
+    return <div className="text-[10px] text-muted mt-2">Loading signal quality...</div>;
   }
 
   const values = series.filter((v) => v !== null);
   if (values.length === 0) {
-    return <div className="text-[10px] text-slate-500 mt-2">No recent triggers</div>;
+    return <div className="text-[10px] text-muted mt-2">No recent triggers</div>;
   }
 
   // Simple inline SVG sparkline (no dep)
@@ -71,11 +71,11 @@ export default function MetaSparkline({ ticker }) {
 
   return (
     <div className="mt-2 flex items-center gap-2">
-      <div className="text-[10px] text-slate-400">7d signal quality:</div>
+      <div className="text-[10px] text-muted">7d signal quality:</div>
       <svg width={W} height={H} className="overflow-visible">
         <polyline points={points} fill="none" stroke="rgb(16 185 129)" strokeWidth="1.5" />
       </svg>
-      <div className="text-[10px] text-slate-500">
+      <div className="text-[10px] text-muted">
         {values[values.length - 1].toFixed(2)}
       </div>
     </div>

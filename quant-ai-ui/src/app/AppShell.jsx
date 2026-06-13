@@ -7,18 +7,13 @@ import { GlobalRagButton } from "@/components/layout/GlobalRagButton";
 import DemoBanner from "@/components/DemoBanner";
 import Tour from "@/features/onboarding/Tour";
 
-// Dashboard + Portfolio render in the light design-language; others stay dark.
-const LIGHT_PATHS = ["/dashboard", "/portfolio"];
-
 export default function AppShell() {
   const { pathname } = useLocation();
   const onDashboard = pathname.startsWith("/dashboard");
 
-  // Sync <html data-theme> so shell chrome (sidebar / top nav) also picks up
-  // the route's theme. ThemeScope inside the page is redundant but harmless.
+  // Unified light design-language across every page (the "Research" look).
   useEffect(() => {
-    const theme = LIGHT_PATHS.some((p) => pathname.startsWith(p)) ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.setAttribute("data-theme", "light");
   }, [pathname]);
 
   return (

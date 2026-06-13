@@ -5,11 +5,11 @@ import { PerformancePills } from "./PerformancePills";
 // Hex colors for Lightweight Charts canvas — CSS vars not supported in canvas context
 const CHART_COLORS = {
   bg: "transparent",
-  text: "#a1a1aa",
-  grid: "#27272a",
-  border: "#3f3f46",
-  up: "#10b981",
-  down: "#f43f5e",
+  text: "#71717a",
+  grid: "#e5e7eb",
+  border: "#d4d4d8",
+  up: "#059669",
+  down: "#e11d48",
 };
 
 const RANGE_TO_DAYS = {

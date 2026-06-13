@@ -16,7 +16,7 @@ export default function MetaLabelCoverageBadge({ strategyName }) {
 
   const bg = variant === "good" ? "bg-emerald-500/15 text-emerald-400"
     : variant === "warn" ? "bg-amber-500/15 text-amber-400"
-    : "bg-slate-500/15 text-slate-300";
+    : "bg-surface-muted text-muted";
 
   return (
     <button
