@@ -126,6 +126,87 @@ def calculate_regression_metrics(
     }
 
 
+def calculate_xs_metrics(
+    scores: np.ndarray,
+    future_return: np.ndarray,
+    dates: np.ndarray,
+    top_pct: float = 0.30,
+    min_names: int = 5,
+) -> dict[str, float | None]:
+    """Cross-sectional ranking metrics (V5 Phase C) — the numbers that matter
+    for stock SELECTION, not global AUC.
+
+    For each date with at least ``min_names`` names:
+      - precision@top_pct: of our top-k highest-score names, the fraction that
+        were truly in the date's top-k by realized forward return.
+      - rank IC: Spearman correlation of predicted score vs realized
+        future_return across that date's cross-section.
+    Returns the mean over evaluated dates (+ IR, base rate, lift). Mirrors
+    scripts/xs_eval.py:112-129. All-thin input → n_days=0 and None metrics.
+
+    Args:
+        scores: model score per row (higher = predicted stronger).
+        future_return: realized forward return per row.
+        dates: the cross-section key per row (same length as scores).
+        top_pct: strong-group fraction (matches the label definition).
+        min_names: skip dates with fewer names (too thin to rank).
+    """
+    from scipy.stats import spearmanr
+
+    df = pd.DataFrame(
+        {"date": np.asarray(dates), "score": np.asarray(scores, dtype=float),
+         "fwd": np.asarray(future_return, dtype=float)}
+    )
+
+    precisions: list[float] = []
+    rank_ics: list[float] = []
+    base_rates: list[float] = []
+
+    for _, g in df.groupby("date"):
+        if len(g) < min_names:
+            continue
+        k = max(1, int(len(g) * top_pct))
+        cutoff = g["fwd"].quantile(1.0 - top_pct)
+        true_strong = (g["fwd"] >= cutoff).astype(int)
+        picked = g.nlargest(k, "score").index
+        precisions.append(float(true_strong.loc[picked].mean()))
+        base_rates.append(float(true_strong.mean()))
+        # Rank IC undefined when either side is constant (e.g. a date where the
+        # model emits identical scores) — skip rather than warn.
+        if g["score"].nunique() > 1 and g["fwd"].nunique() > 1:
+            ic, _ = spearmanr(g["score"], g["fwd"])
+            if ic == ic:  # not NaN
+                rank_ics.append(float(ic))
+
+    n_days = len(precisions)
+    if n_days == 0:
+        return {
+            "precision_at_top": None,
+            "rank_ic": None,
+            "rank_ic_ir": None,
+            "base_rate": None,
+            "lift": None,
+            "n_days": 0,
+        }
+
+    mean_precision = float(np.mean(precisions))
+    mean_base = float(np.mean(base_rates))
+    mean_ic = float(np.mean(rank_ics)) if rank_ics else None
+    ir = (
+        float(np.mean(rank_ics) / (np.std(rank_ics) + 1e-9))
+        if len(rank_ics) > 1
+        else None
+    )
+    return {
+        "precision_at_top": round(mean_precision, 4),
+        "rank_ic": round(mean_ic, 4) if mean_ic is not None else None,
+        "rank_ic_ir": round(ir, 4) if ir is not None else None,
+        "base_rate": round(mean_base, 4),
+        "lift": round(mean_precision / mean_base, 4) if mean_base > 0 else None,
+        "n_days": n_days,
+    }
+
+
 def calculate_strategy_metrics(
     returns: pd.Series,
     benchmark_returns: pd.Series | None = None,

@@ -26,11 +26,25 @@ class LabelConfig(BaseModel):
     - return:    Regression — raw future_return.
     - volatility: Regression — realized volatility over next N days. [V4 P2]
     - meta_label: Binary/regression — signal quality score for rule triggers. [V4 P3]
+    - xs_strong: Cross-sectional classification — each date's top `top_pct`
+                 forward-return names = strong group (1). The per-date label is
+                 assigned post-concat in DatasetBuilder, not per-ticker. [V5 Phase C]
     """
 
-    label_type: Literal["direction", "return", "volatility", "meta_label"] = "direction"
+    label_type: Literal[
+        "direction", "return", "volatility", "meta_label", "xs_strong"
+    ] = "direction"
     horizon_days: int = Field(default=5, ge=1, le=60)
     threshold: float = Field(default=0.0, description="Threshold for direction labels")
+
+    # V5 Phase C · xs_strong: fraction of each date's cross-section labeled
+    # "strong" (1). Ignored for other label_types.
+    top_pct: float = Field(
+        default=0.30,
+        gt=0,
+        lt=1,
+        description="xs_strong per-date strong-group fraction (top X% forward return).",
+    )
 
     # V4 Phase 2 · Volatility options (ignored for other label_types)
     volatility_annualize: bool = Field(
@@ -66,12 +80,20 @@ class DatasetConfig(BaseModel):
 
     # Features
     feature_groups: list[str] = Field(default=["ta_basic"])
+    # Explicit feature override (V5 Phase C): when set, these columns are used
+    # verbatim instead of resolving feature_groups — lets xs_strong train on the
+    # Phase-B-selected factor set (incl. factors not exposed by any group).
+    feature_names: list[str] | None = None
 
     # Labels
     label_config: LabelConfig = Field(default_factory=LabelConfig)
 
     # Split
     split_config: SplitConfig = Field(default_factory=SplitConfig)
+
+    # Data source (V5 Phase C): None → settings.MARKET_PROVIDER (yahoo). Set to
+    # "db" for cross-sectional training off the backfilled prices table.
+    market_provider: str | None = None
 
     # Options
     drop_na_features: bool = False  # If True, drop rows with NaN features
@@ -137,6 +159,9 @@ class DatasetOutput:
         X_test: pd.DataFrame,
         y_test: pd.Series,
         metadata: DatasetResult,
+        groups_train: pd.DataFrame | None = None,
+        groups_val: pd.DataFrame | None = None,
+        groups_test: pd.DataFrame | None = None,
     ):
         self.X_train = X_train
         self.y_train = y_train
@@ -145,6 +170,12 @@ class DatasetOutput:
         self.X_test = X_test
         self.y_test = y_test
         self.metadata = metadata
+        # V5 Phase C: per-split [date, future_return] for cross-sectional eval
+        # (Rank IC / precision@top_pct). Populated only for label_type='xs_strong';
+        # None for the single-ticker label paths.
+        self.groups_train = groups_train
+        self.groups_val = groups_val
+        self.groups_test = groups_test
 
     def __repr__(self) -> str:
         return (

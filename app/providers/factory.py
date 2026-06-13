@@ -50,6 +50,12 @@ class ProviderFactory:
         if cache_key not in cls._instances:
             if name == "yahoo":
                 cls._instances[cache_key] = YahooMarketProvider()
+            elif name == "db":
+                # V5 Phase C: read the backfilled prices table (cross-sectional
+                # training source; same data prod serves).
+                from app.providers.market.prices_db import PricesDBProvider
+
+                cls._instances[cache_key] = PricesDBProvider()
             # Future: add polygon, alpha_vantage, etc.
             else:
                 raise ValueError(f"Unknown market provider: {name}")

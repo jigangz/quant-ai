@@ -43,6 +43,10 @@ LABEL_TYPE_TO_TASK: dict[str, str] = {
     "return": "regression",
     "volatility": "regression",
     "meta_label": "classification",  # P3 will decide; default binary for now.
+    # V5 Phase C: own task kind so _evaluate routes to cross-sectional metrics
+    # (Rank IC / precision@top_pct), not global AUC. The underlying model is a
+    # plain binary classifier (created with task='classification').
+    "xs_strong": "xs_strong",
 }
 
 
@@ -61,12 +65,20 @@ class TrainRequest(BaseModel):
     start_date: date | None = None
     end_date: date | None = None
 
+    # Data source (V5 Phase C): "db" reads the prices table; None → yahoo.
+    market_provider: str | None = None
+
     # Features
     feature_groups: list[str] = Field(default=["ta_basic", "momentum"])
 
     # Labels
     horizon_days: int = Field(default=5, ge=1, le=60)
     label_type: str = "direction"
+    # V5 Phase C · xs_strong per-date strong-group fraction (ignored otherwise).
+    top_pct: float = Field(default=0.30, gt=0, lt=1)
+
+    # Features
+    feature_names: list[str] | None = None  # explicit override (V5 Phase C)
 
     # Model
     model_type: str = "logistic"
@@ -188,9 +200,12 @@ class TrainingService:
                 start_date=request.start_date,
                 end_date=request.end_date,
                 feature_groups=request.feature_groups,
+                feature_names=request.feature_names,
+                market_provider=request.market_provider,
                 label_config=LabelConfig(
                     horizon_days=request.horizon_days,
                     label_type=request.label_type,
+                    top_pct=request.top_pct,
                 ),
                 split_config=SplitConfig(
                     train_ratio=request.train_ratio,
@@ -239,8 +254,11 @@ class TrainingService:
 
             # 3. Create model with best params
             task = _task_for_label_type(request.label_type)
+            # xs_strong is a binary top-pct classifier under the hood; only the
+            # EVAL task differs (cross-sectional metrics). Create as classification.
+            model_task = "classification" if task == "xs_strong" else task
             if request.model_type == "ensemble":
-                if task != "classification":
+                if model_task != "classification":
                     raise ValueError(
                         f"Ensemble model not yet supported for task='{task}' "
                         f"(label_type='{request.label_type}'). V4 Pivot limitation; "
@@ -248,13 +266,20 @@ class TrainingService:
                     )
                 model = get_model("ensemble", ensemble_config=request.ensemble_config)
             else:
-                model = get_model(request.model_type, task=task, **model_params)
+                model = get_model(request.model_type, task=model_task, **model_params)
 
             # 4. Train
             logger.info("Training model...")
             model.fit(dataset.X_train, dataset.y_train)
 
-            # 4. Evaluate — dispatch on task (classification vs regression)
+            # 4. Evaluate — dispatch on task (classification / regression / xs_strong)
+            groups = None
+            if task == "xs_strong":
+                groups = {
+                    "train": dataset.groups_train,
+                    "val": dataset.groups_val,
+                    "test": dataset.groups_test,
+                }
             metrics = self._evaluate(
                 model,
                 dataset.X_train,
@@ -264,6 +289,8 @@ class TrainingService:
                 dataset.X_test,
                 dataset.y_test,
                 task=task,
+                groups=groups,
+                top_pct=request.top_pct,
             )
 
             logger.info(f"Metrics: {metrics}")
@@ -337,15 +364,46 @@ class TrainingService:
         X_test,
         y_test,
         task: str = "classification",
+        groups: dict | None = None,
+        top_pct: float = 0.30,
     ) -> dict[str, float]:
-        """Evaluate model on all splits — dispatches on task (classification/regression)."""
-        metrics = {}
-
-        for split_name, X, y in [
+        """Evaluate model on all splits — dispatches on task
+        (classification / regression / xs_strong)."""
+        splits = [
             ("train", X_train, y_train),
             ("val", X_val, y_val),
             ("test", X_test, y_test),
-        ]:
+        ]
+
+        # V5 Phase C: cross-sectional ranking — score each split, group by date,
+        # compute Rank IC + precision@top_pct (NOT AUC). Needs the carried
+        # [date, future_return] groups, aligned row-wise to X.
+        if task == "xs_strong":
+            from app.backtest.metrics import calculate_xs_metrics
+
+            groups = groups or {}
+            metrics = {}
+            for split_name, X, _y in splits:
+                if len(X) == 0:
+                    continue
+                g = groups.get(split_name)
+                if g is None or len(g) == 0:
+                    continue
+                scores = model.predict_proba(X)[:, 1]
+                xs = calculate_xs_metrics(
+                    scores,
+                    g["future_return"].to_numpy(),
+                    g["date"].to_numpy(),
+                    top_pct=top_pct,
+                )
+                for k, v in xs.items():
+                    if v is not None:
+                        metrics[f"{split_name}_{k}"] = v
+            return metrics
+
+        metrics = {}
+
+        for split_name, X, y in splits:
             if len(X) == 0:
                 continue
 

@@ -27,6 +27,12 @@ from app.ml.dataset.schemas import (
 
 logger = logging.getLogger(__name__)
 
+# V5 Phase C: minimum names a date must have to form a rankable cross-section.
+# Dates below this are dropped from xs_strong training (mirrors the eval-time
+# min_names floor in calculate_xs_metrics) so degenerate edge dates — a lone
+# survivor, or a date with no return spread — can't inject spurious labels.
+MIN_CROSS_SECTION = 5
+
 
 class DatasetBuilder:
     """
@@ -52,7 +58,10 @@ class DatasetBuilder:
 
     def __init__(self, config: DatasetConfig):
         self.config = config
-        self.market_provider = get_market_provider()
+        # V5 Phase C: config.market_provider="db" reads the prices table; None
+        # falls back to settings.MARKET_PROVIDER (yahoo) — single-ticker paths
+        # are unaffected.
+        self.market_provider = get_market_provider(config.market_provider)
 
     def build(self) -> DatasetOutput:
         """
@@ -62,6 +71,10 @@ class DatasetBuilder:
             DatasetOutput with X_train, y_train, X_val, y_val, X_test, y_test, metadata
         """
         logger.info(f"Building dataset for {len(self.config.tickers)} tickers")
+
+        # V5 Phase C: cross-sectional label needs the full panel; the per-ticker
+        # label here is only provisional (see _add_labels).
+        is_xs = self.config.label_config.label_type == "xs_strong"
 
         # 1. Fetch and process data for each ticker
         all_data = []
@@ -101,8 +114,12 @@ class DatasetBuilder:
                             df["date"].max().isoformat(),
                         ),
                         # str() keys: pydantic 2.12+ no longer coerces int keys
-                        # for dict[str, int] — raw value_counts() keys are int64
-                        label_distribution={
+                        # for dict[str, int] — raw value_counts() keys are int64.
+                        # xs_strong's per-ticker label is provisional (assigned
+                        # cross-sectionally post-concat), so skip the breakdown.
+                        label_distribution={}
+                        if is_xs
+                        else {
                             str(k): int(v)
                             for k, v in df["label"].value_counts().items()
                         },
@@ -124,6 +141,25 @@ class DatasetBuilder:
 
         logger.info(f"Combined dataset: {len(combined_df)} samples")
 
+        # 2b. V5 Phase C — cross-sectional steps on the combined panel ONLY.
+        # Assign the real per-date top-top_pct label, then z-score each factor
+        # within each date (leak-free across the later time split because each
+        # date normalizes against its own cross-section). Matches scripts/xs_eval.
+        if is_xs:
+            from app.ml.labels.xs_strong import add_xs_strong_label
+            from app.ml.features.cross_section import cross_section_normalize
+
+            combined_df = add_xs_strong_label(combined_df, self.config.label_config)
+            feature_cols = self._get_feature_columns(combined_df)
+            combined_df = cross_section_normalize(combined_df, feature_cols)
+            combined_df = combined_df.dropna(subset=feature_cols).reset_index(drop=True)
+            # Drop dates too thin to rank (after feature dropna, so the count is
+            # the real per-date name count entering training).
+            date_sizes = combined_df.groupby("date")["ticker"].transform("size")
+            combined_df = combined_df[date_sizes >= MIN_CROSS_SECTION].reset_index(
+                drop=True
+            )
+
         # 3. Get feature columns
         feature_cols = self._get_feature_columns(combined_df)
 
@@ -137,6 +173,16 @@ class DatasetBuilder:
         y_val = val_df["label"]
         X_test = test_df[feature_cols]
         y_test = test_df["label"]
+
+        # 5b. V5 Phase C — carry [date, future_return] per split for the
+        # cross-sectional metrics (Rank IC / precision@top_pct). Row order matches
+        # X_* exactly (same split frame), so positional alignment is preserved.
+        groups_train = groups_val = groups_test = None
+        if is_xs:
+            gcols = ["date", "future_return"]
+            groups_train = train_df[gcols].reset_index(drop=True)
+            groups_val = val_df[gcols].reset_index(drop=True)
+            groups_test = test_df[gcols].reset_index(drop=True)
 
         # 6. Build metadata
         metadata = DatasetResult(
@@ -176,6 +222,9 @@ class DatasetBuilder:
             X_test=X_test,
             y_test=y_test,
             metadata=metadata,
+            groups_train=groups_train,
+            groups_val=groups_val,
+            groups_test=groups_test,
         )
 
     def _process_ticker(self, ticker: str) -> pd.DataFrame:
@@ -213,13 +262,27 @@ class DatasetBuilder:
         V4 Pivot refactor (2026-04-22): previously inlined direction/return logic;
         now delegates to `app.ml.labels.registry.add_labels` to support the full
         multi-task target set (direction / return / volatility / meta_label).
+
+        V5 Phase C: xs_strong is cross-sectional — the per-ticker step here only
+        computes future_return + a provisional label (so the tail dropna works);
+        the real per-date 0/1 label is assigned post-concat in build().
         """
+        if self.config.label_config.label_type == "xs_strong":
+            from app.ml.labels.xs_strong import add_xs_forward_return
+
+            return add_xs_forward_return(df, self.config.label_config)
         return add_labels(df, self.config.label_config)
 
     def _get_feature_columns(self, df: pd.DataFrame) -> list[str]:
-        """Get feature column names based on configured feature groups."""
-        # Use feature registry to get feature names
-        feature_cols = feature_registry.get_feature_names(self.config.feature_groups)
+        """Get feature column names — explicit override (V5) or feature groups."""
+        # V5 Phase C: explicit feature_names override (e.g. Phase-B-selected
+        # factor set, incl. factors no feature group exposes).
+        if self.config.feature_names:
+            feature_cols = self.config.feature_names
+        else:
+            feature_cols = feature_registry.get_feature_names(
+                self.config.feature_groups
+            )
 
         # Filter to only columns that exist in the DataFrame
         existing_cols = [col for col in feature_cols if col in df.columns]
